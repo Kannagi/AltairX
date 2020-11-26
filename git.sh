@@ -12,7 +12,7 @@ git add Pipeline.txt
 git add MemoryMap.txt
 git add VLIW_Unit.txt
 git add ISA.txt
-
+git add README.md
 
 git commit -m "$message"
 git remote add origin https://github.com/Kannagi/Altair.git/ 
