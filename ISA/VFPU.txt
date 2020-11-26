@@ -1,0 +1,67 @@
+-------------------------
+VFPU
+
+;calcul (x = reserved)
+ii0x xlll lssv vvvv
+vvvv vvvv vvvv vvvv
+
+fadd.x v0,v0,v1
+faddv,fmulv,fsubv,fmuladdv //xyzw = xyzw + x
+dadd,dsub,dmul,dmuladd
+fadd,fsub,fmul,fmuladd  //xyzw = xyzw + xyzw
+fipr, //x = x1*x2 + y1*y2 + z1*z2 + w1*w2
+fmulva,fmuladdva //ACC = xyzw + x
+fmuladdvao //xyzw = ACC + xyzw * x
+
+
+;copie
+ii10 0000 0000 0000
+ssvv vvvv vvvv vvvv
+
+move.x v0,v1
+
+;convert Float/Double
+ii10 1000 0000 0000
+00lv vvvv vvvv vvvv
+
+movefd v0,v1
+movedf v0,v1
+
+;convert int/float
+ii10 1100 llll ssss
+000r rrrr rvvv vvvv
+
+itof0.x v0,r0b
+
+itof0,itof4,itof8,itof15,
+ftoi0,ftoi4,ftoi8,ftoi15,
+
+itod0,itod4,itod8,itod15,
+dtoi0,dtoi4,dtoi8,dtoi15,
+
+;imm
+;1 bit signe/8 bits exposant/10 mantisse
+ii11 0mmm mmmm mmmm
+mmmm mmmm mvvv vvvv
+
+move.f v0,imm
+
+;1 bit signe/8 bits exposant/11 mantisse
+ii11 1mmm mmmm mmmm
+mmmm mmmm mmvv vvvv
+
+move.d v0,imm
+
+-------------------------
+VDIV
+ii10 1010 0l0v vvvv
+vvvv vvvv vvvv vvvv
+
+fdiv v0,v0,v1
+fsqrt v0,v0,v1
+
+ii10 1010 0l10 00vv
+vvvv vvvv vvvv vvvv
+ddiv v0,v0,v1
+dsqrt v0,v0,v1
+

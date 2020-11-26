@@ -1,0 +1,51 @@
+----------------
+AGU
+
+ii00 lss+ aaaa aaaa
+aaaa rrrr rrrr rrrr
+
+ldm.b r0,2(r60)
+stm.w r0,2(r60)
+
+ii01 lss+ aaaa aaaa
+aaaa rrrr rrrr rrrr
+ldc.b r0,2(r60+)
+stc.w r0,2(r60)
+
+
+;----------------
+
+
+;-----adr/registre
+ii10 lss0 0rrr rrra
+aaaa aaaa aaaa aaaa
+in.b 0,r0
+out.w 2,r2
+
+;-----adr/imm
+ii10 lss1 mmmm mmmm
+aaaa aaaa aaaa aaaa
+ini.b 0,$FF
+outi.w 2,$40
+
+
+ii10 lss0 1rrr rrra
+aaaa aaaa aaaa aaaa
+????
+;----------------------
+
+
+;-----adr/registre float/double
+ii11 l0+a aaaa aaaa
+aaar rrrr rvvv vvvv
+
+ldm.f v0,2(r58+)
+stm.f v0,2(r58+)
+
+ii11 l1+a aaaa aaaa
+aaaa rrrr rrvv vvvv
+ldc.d v0,2(r58+)
+stc.d v0,2(r58+)
+
+
+

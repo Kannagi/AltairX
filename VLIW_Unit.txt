@@ -1,0 +1,25 @@
+Unit 0
+BRU/VFPU1/ALU1/AGU/XCHG
+LSU/VFPU2/ALU2/AGU
+
+Unit 1
+BRU/VFPU1/ALU3/AGU
+LSU/VFPU2/ALU4/AGU
+
+
+-----------OR---------------
+Unit 0
+BRU/VFPU1/ALU1/XCHG
+LSU/VFPU2/ALU2/AGU
+
+Unit 1
+ALU3
+ALU4
+
+
+-------
+4 ALU
+2 VFPU
+1 LSU/BRU/AGU
+total 9
+

@@ -1,0 +1,7 @@
+
+VFPU = fmul,fadd,fsub,fmuladd,dmul,dadd,dsub,dmuladd,fmulv,faddv,fsubv,fmuladdv ,fipr ,fmulva,fmuladdva,fmuladdvao
+ALU = move,add,sub,muls,mulu,divs,divu,and,or,xor,asl,asr,lsr,lsl
+FDIV : FDIV,DDIV,FSQRT
+AGU : load,store
+BRU : cmp,bcc,jsr,ret
+

@@ -1,0 +1,56 @@
+Memory MAP
+
+0x00 0000 0000 - 0x00 FFFF FFFF ------- I/O (+DMA)
+
+0x01 0000 0000 - 0x01 FFFF FFFF ------- VRAM
+0x02 0000 0000 - 0x02 FFFF FFFF ------- Sound DRAM
+0x03 0000 0000 - 0x03 FFFF FFFF ------- L2 & L3 cache
+
+0x08 0000 0000 - 0x0F FFFF FFFF ------- SSD RAM
+0x10 0000 0000 - 0xFF FFFF FFFF ------- RAM        (960 Go max )
+
+Memory MAP SRAM/cache
+0x00000 - 0x1FFFF ------- SRAM Data
+0x20000 - 0x2FFFF ------- SRAM Instruction
+
+
+I/O coproc
+
+I/O CPU
+FFFF 0100 - FFFF 0200 READ (0 start,1 stop ,2 stop MMU )
+
+
+FFFF 0000 SRC
+FFFF 0008 DST
+FFFF 0010 CMD/CORE_SELECT/SIZE
+CMD | CS<<8 | SIZE<<16
+
+Write
+CMD : 00 NOP
+CMD : 01 RAM -> SRAM cache
+CMD : 02 SRAM cache -> RAM
+CMD : 03 RAM -> MMU (8+8 * 8)
+CMD : 04 flush cache
+CMD : 08 Start
+CMD : 09 Stop
+
+I/O GPU
+FFFF 1000 SRC
+FFFF 1008 DST
+FFFF 1010 CMD
+FFFF 1018 SIZE
+CMD : 00 NOP
+CMD : 01 RAM  -> VRAM
+CMD : 02 VRAM -> RAM
+CMD : 08 Start (command line adress)
+
+
+
+
+
+VFPU = fmul,fadd,fsub,fmuladd,dmul,dadd,dsub,dmuladd,fmulv,faddv,fsubv,fmuladdv ,fipr ,fmulva,fmuladdva,fmuladdvao
+ALU = move,add,sub,muls,mulu,divs,divu,and,or,xor,asl,asr,lsr,lsl
+FDIV : FDIV,DDIV,fSQRT
+AGU : move,load,store
+BRU : cmp,bcc,jsr,ret
+

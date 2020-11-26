@@ -1,0 +1,61 @@
+-------------------------
+ALU
+
+;--------calcul reg/reg
+ii00 0000 llll ssrr
+rrrr rrrr rrrr rrrr
+
+add r0,r1,r0
+asl r0,r1,r0
+
+
+;------calcul registre/imm
+
+ii00 1lll lssm mmmm
+mmmm rrrr rrrr rrrr
+
+add r0,r2,imm
+
+;------calcul registre/imm
+
+ii01 llll ssmm mmmm
+mmmm mmmm mmrr rrrr
+
+add r0,imm
+
+ii01 llll ss00 0000
+0000 mmmm mmrr rrrr
+asl r0,imm
+
+;------move reg/reg
+ii00 0001 ss00 0000
+0000 rrrr rrrr rrrr
+
+move r0,r1
+
+;-----mov reg/imm
+ii1b mmmm mmmm mmmm
+mmmm mmmm mmrr rrrr
+
+move r0,imm
+
+
+;-------SIMD---------
+;------move reg/reg
+ii00 0011 0lll llrr
+rrrr rrrr rrrr rrrr
+
+add,sub,muls,mulu,and,or,eor
+add1x8
+add2x4
+add4x2
+
+;------nop 
+ii00 0010 0000 0000
+0000 0000 0000 0cce
+
+e = end
+cc = change insturction /cycle
+00 = 2
+01 = 4
+10 = 6

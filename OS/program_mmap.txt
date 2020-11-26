@@ -1,0 +1,15 @@
+100 ko code
+256ko pile
+520 ko buffer cache/info
+heap 128ko
+256 Buffer IO
+512 Buffer malloc init
+
+memory map
+info/cache/config
+ROM
+pile
+Buffer I/O
+BSS
+Buffer Malloc
+

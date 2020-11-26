@@ -1,0 +1,32 @@
+64 octet OS
+
+Write only
+sourix X / souris Y (2*2 octet)
+cmd event 1 octet (reduce/zoom/close,mini)
+16 octet clavier
+
+
+Read/Write
+cmd 1 byte + 1 octet push
+windows w/h (2*2 octet)
+
+----------------
+0 write buffer
+1 cmd OS (printf/scanf, etc etc)
+2-5 windows w/h (2*2 octet)
+6-9 sourix X / souris Y (2*2 octet)
+10-25 clavier
+
+26-63 ?
+-------------------
+pseudo instruction in/out adresse(1byte) :
+
+
+
+code (100ko)
+data (pile 64ko + global)
+buffer in/out (1Mo)
+buffer 4Mo
+mini 8 Mega mini
+
+

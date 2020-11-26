@@ -1,0 +1,51 @@
+
+
+IF : Fetch (load opcode Memory SRAM instruction)
+ID : decode instruction / load register flag
+RR : Read Register general
+EX : execution
+MEM : L/S memory SRAM data
+WB : write back ( write register)
+
+
+loadm/storem 6+ cycle (rr,exe,mem,dma,---,edma) (memory DRAM)
+loadc/storec 5 cycles (rr,exe,mem,mem,wb) (load/store cache)
+
+load 4 cycle (rr,exe,mem,wb)
+store 4 cycle (rr,exe,mem,nop)
+all reg/imm-reg/reg 3 cycle (rr,exe,wb)
+mul 4 cycle (rr,exe,exe,wb)
+div 5 cycle (rr,div,div,div,wb)
+
+float 5 cycle (rr,fexe,fexe,fexe,wb)
+fdiv 8 cycles (rr,fdiv,fdiv,fdiv,fdiv,fdiv,fdiv,wb)
+
+
+Example pipeline :
+
+load IF
+nop  ID
+nop  RR
+nop  EX
+add  MEM/IF
+nop  WB/ID
+nop  --/RR
+------------------------------------
+cmp IF
+nop ID
+nop RR
+nop EX
+BRA WB/IF
+nop --/ID
+
+----------------Pipeline Stall--------------------
+add IF
+add ID/IF
+nop RR/ID
+nop EX/RR
+--- WB/RR
+--- --/RR
+nop IF/EX
+nop ID/WB
+
+
