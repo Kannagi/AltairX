@@ -45,10 +45,7 @@ move r0,imm
 ii00 0011 0lll llrr
 rrrr rrrr rrrr rrrr
 
-add,sub,muls,mulu,and,or,eor
-add1x8
-add2x4
-add4x2
+
 
 ;------nop 
 ii00 0010 0000 0000
@@ -58,4 +55,3 @@ e = end
 cc = change insturction /cycle
 00 = 2
 01 = 4
-10 = 6
