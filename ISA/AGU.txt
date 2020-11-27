@@ -1,13 +1,14 @@
 ---------------------
-00 VFPU
-01 VFPU2
-10 ALU
+00 BRU
+01 LSU
+10 ALU/XCHG
 11 VDIV
 
-00 LSU (load/store mem)
-01 AGU (load/store cache)
+00 AGU (load/store RAM)
+01 LSU (load/store sram/cache)
 10 ALU
-11 BRU
+11 VFPU
+
 -----------------
 r60-r63 LS adr RAM
 r58-r59 LS adr cache

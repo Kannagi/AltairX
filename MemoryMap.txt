@@ -9,10 +9,12 @@ Memory MAP
 0x08 0000 0000 - 0x0F FFFF FFFF ------- SSD RAM
 0x10 0000 0000 - 0xFF FFFF FFFF ------- RAM        (960 Go max )
 
-Memory MAP SRAM/cache
+Memory MAP SRAM/scratchpad
 0x00000 - 0x1FFFF ------- SRAM Data
-0x20000 - 0x2FFFF ------- SRAM Instruction
+0x00000 - 0x1FFFF ------- SRAM Instruction
 
+0x03 0000 0000 - 0x03 00FF FFFF ------- L2 cache
+0x03 0100 0000 - 0x03 0FFF FFFF ------- L3 cache
 
 I/O coproc
 
