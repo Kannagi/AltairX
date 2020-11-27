@@ -46,11 +46,3 @@ CMD : 08 Start (command line adress)
 
 
 
-
-
-VFPU = fmul,fadd,fsub,fmuladd,dmul,dadd,dsub,dmuladd,fmulv,faddv,fsubv,fmuladdv ,fipr ,fmulva,fmuladdva,fmuladdvao
-ALU = move,add,sub,muls,mulu,divs,divu,and,or,xor,asl,asr,lsr,lsl
-FDIV : FDIV,DDIV,fSQRT
-AGU : move,load,store
-BRU : cmp,bcc,jsr,ret
-
