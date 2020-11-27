@@ -1,51 +1,60 @@
-----------------
+---------------------
+00 VFPU
+01 VFPU2
+10 ALU
+11 VDIV
+
+00 LSU (load/store mem)
+01 AGU (load/store cache)
+10 ALU
+11 BRU
+-----------------
+r60-r63 LS adr RAM
+r58-r59 LS adr cache
+r42-r57 LS size
+-------------------------
 AGU
+1,2
+16-32-64 bytes
 
-ii00 lss+ aaaa aaaa
-aaaa rrrr rrrr rrrr
+;Memory intern <=> Memory RAM
+ii0l srrR aaaa aaaa
+aaaa mmmm mmmm mmmm
 
-ldm.b r0,2(r60)
-stm.w r0,2(r60)
-
-ii01 lss+ aaaa aaaa
-aaaa rrrr rrrr rrrr
-ldc.b r0,2(r60+)
-stc.w r0,2(r60)
+ldm.1 0xFFF(R58),2(r60) (Load RAM adress SP 32 bytes -> 0xFFF*32) 32-64 bytes
+stm.2 0xFFF(R59),2(r61) (Load RAM adress SP 32 bytes -> 0xFFF*32)
 
 
-;----------------
+;Memory List
+ii1l 0000 0Rrr rrrr
+mmmm mmmm mmmm mmmm
+src/size (7 bytes)
+ldma  0xFFFF(r58),r0
+sdma  0xFFFF(r58),r0
+arg1 = adresse Memory list DMA
+arg3 = size
 
-
-;-----adr/registre
-ii10 lss0 0rrr rrra
+ii1l 01Rm mmmm mmmm
 aaaa aaaa aaaa aaaa
-in.b 0,r0
-out.w 2,r2
+src/size (7 bytes)
+ldma  0xFFFF(r58),imm
+sdma  0xFFFF(r58),imm
+arg1 = adresse Memory list DMA
+arg3 = size
 
-;-----adr/imm
-ii10 lss1 mmmm mmmm
-aaaa aaaa aaaa aaaa
-ini.b 0,$FF
-outi.w 2,$40
+ii1l 1rrr rRrr rrrr
+mmmm mmmm mmmm mmmm
 
+ldm  0xFFFF(r58),r0,r2
+stm  0xFFFF(r58),r0,r2
+arg1 = adresse Memory
+arg2 = adresse Memory RAM
+arg3 = size
 
-ii10 lss0 1rrr rrra
-aaaa aaaa aaaa aaaa
-????
-;----------------------
-
-
-;-----adr/registre float/double
-ii11 l0+a aaaa aaaa
-aaar rrrr rvvv vvvv
-
-ldm.f v0,2(r58+)
-stm.f v0,2(r58+)
-
-ii11 l1+a aaaa aaaa
-aaaa rrrr rrvv vvvv
-ldc.d v0,2(r58+)
-stc.d v0,2(r58+)
-
+;command list
+ii10 0010 0Rrr rrrr
+mmmm mmmm mmmm mmmm
+cmd/src/size/dst (10 bytes)
+dma  r0,R58
 
 
