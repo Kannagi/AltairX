@@ -16,5 +16,6 @@ git add die.png
 git add README.md
 
 git commit -m "$message"
-git remote add origin https://github.com/Kannagi/Altair.git/ 
-git push -u origin master
+#git remote add origin https://github.com/Kannagi/Altair.git/ 
+#git push -u origin master
+git push
