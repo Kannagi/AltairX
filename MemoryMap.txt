@@ -2,19 +2,21 @@ Memory MAP
 
 0x00 0000 0000 - 0x00 FFFF FFFF ------- I/O (+DMA)
 
-0x01 0000 0000 - 0x01 FFFF FFFF ------- VRAM
-0x02 0000 0000 - 0x02 FFFF FFFF ------- Sound DRAM
-0x03 0000 0000 - 0x03 FFFF FFFF ------- L2 & L3 cache
+0x01 0000 0000 - 0x01 FFFF FFFF ------- L2 & L3 cache
+0x02 0000 0000 - 0x02 FFFF FFFF ------- Sound DRAM (4 GB max )
+0x03 0000 0000 - 0x03 FFFF FFFF ------- VRAM1      (4 GB max )
+0x10 0000 0000 - 0x1F FFFF FFFF ------- VRAM2 (GPU)(16 GB max )
 
-0x08 0000 0000 - 0x0F FFFF FFFF ------- SSD RAM
-0x10 0000 0000 - 0xFF FFFF FFFF ------- RAM        (960 Go max )
+0x20 0000 0000 - 0x7F FFFF FFFF ------- SSD RAM    (384 GB max )
+0x80 0000 0000 - 0xFF FFFF FFFF ------- RAM        (512 GB max )
 
 Memory MAP SRAM/scratchpad
 0x00000 - 0x1FFFF ------- SRAM Data
 0x00000 - 0x1FFFF ------- SRAM Instruction
 
-0x03 0000 0000 - 0x03 00FF FFFF ------- L2 cache
-0x03 0100 0000 - 0x03 0FFF FFFF ------- L3 cache
+0x01 0000 0000 - 0x03 000F FFFF ------- L2 cache (associate)
+0x01 1000 0000 - 0x03 1FFF FFFF ------- L2 cache (main core only)
+0x01 2000 0000 - 0x03 2FFF FFFF ------- L3 cache (main core only)
 
 I/O coproc
 

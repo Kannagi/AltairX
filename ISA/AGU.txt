@@ -16,7 +16,7 @@ r42-r57 LS size
 -------------------------
 AGU
 1,2
-16-32-64 bytes
+32-64 bytes
 
 ;Memory intern <=> Memory RAM
 ii0l srrR aaaa aaaa

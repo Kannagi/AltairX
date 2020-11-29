@@ -1,13 +1,17 @@
 -------------------------
 BRU
 ;compare reg/reg
-ii00 0000 ss00 0000
+ii00 00ss 0000 0000
 0000 rrrr rrrr rrrr
 cmp.w r0,r1
 
-ii00 0001 0000 0000
+ii00 1000 0000 0000
 00vv vvvv vvvv vvvv
 fcmp v0,v1
+
+ii00 0100 0000 0000
+0000 vvvv vvvv vvvv
+dcmp v0,v1
 
 ;compare reg/imm
 ii01 ssbm mmmm mmmm
@@ -23,7 +27,7 @@ mmmm mmmm mmvv vvvv
 dcmpi v0,imm
 
 ;branch-----------------
-ii00 0010 0d00 llll
+ii00 1100 llll 0000
 00mm mmmm mmmm mmmm
 bcc label (*8)
 ==
@@ -34,34 +38,29 @@ bcs
 bcc
 bos
 boc
-bra
-
-iibb 0010 1drr rrrr
-mmmm mmmm mmmm mmmm
-
-dbra r0,label
 
 
-ii00 0011 0000 0lll
+
+
+
+ii00 1110 lll0 0000
 0mmm mmmm mmmm mmmm
 fbcc label
 ==
 != >,<,>=,<=
 
 ;jmp call
-ii00 010l 0000 0000
+ii00 1101 ll00 0000
 mmmm mmmm mmmm mmmm
 call label
 jmp label
+callr label
+jmpr label
 
-ii00 01ll 0000 0000
-0000 0000 00rr rrrr
-call r0
-jmp r0
-ret r0
+ii00 1111 0000 0000
+0000 0000 0000 0000
+ret
 
-ii00 01ll 1R00 0000
-0000 0000 00rr rrrr
-call r0,(R58)
-jmp  r0,(R58)
+
+
 -------------------------

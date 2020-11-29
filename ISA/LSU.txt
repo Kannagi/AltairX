@@ -1,29 +1,32 @@
 ----------------
 LSU
 
-ii00 lss+ aaaa aaaa
+ii00 +lss aaaa aaaa
 aaaa rrrr rrrr rrrr
 
 ldm.b r0,2(r60)
 stm.w r0,2(r60)
 
-ii01 lss+ aaaa aaaa
+ii01 +lss aaaa aaaa
 aaaa rrrr rrrr rrrr
 ldc.b r0,2(r60+)
 stc.w r0,2(r60)
 
 
 ;----------------
-
+ii10 0lss 1aaa aaaa
+aaaa aaaa arrr rrrr
+ldmx.b r0,$FFFF(r60)
+stmx.w r0,$FFFF(r60)
 
 ;-----adr/registre
-ii10 lss0 0000 0000
-0000 0000 aaaa aaaa
+ii10 0lss 0000 0000
+aaaa aaaa 00rr rrrr
 in.b 0,r0
 out.w 2,r2
 
 ;-----adr/imm
-ii10 lss1 mmmm mmmm
+ii10 1lss mmmm mmmm
 mmmm mmmm aaaa aaaa
 ini.b 0,$FF
 outi.w 2,$40
@@ -42,13 +45,13 @@ stm.v v0,2(r58+)
 ii11 l0+a aaaa aaaa
 aaar rrrr rvvv vvvv
 
-ldm.f v0,2(r58+)
-stm.f v0,2(r58+)
+ldmf v0,2(r58+)
+stmf v0,2(r58+)
 
 ii11 l1+a aaaa aaaa
 aaaa rrrr rrvv vvvv
-ldc.d v0,2(r58+)
-stc.d v0,2(r58+)
+ldcd v0,2(r58+)
+stcd v0,2(r58+)
 
 
 

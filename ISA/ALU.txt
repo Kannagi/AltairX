@@ -14,18 +14,18 @@ asl r0,r1,r0
 ii00 1lll lssm mmmm
 mmmm rrrr rrrr rrrr
 
-addi r0,r2,imm
+add r0,r2,imm
 
 ;------calcul registre/imm
 
 ii01 llll ssmm mmmm
 mmmm mmmm mmrr rrrr
 
-addim r0,imm
+add r0,imm
 
 ii01 llll ss00 0000
 0000 mmmm mmrr rrrr
-aslim r0,imm
+asl r0,imm
 
 ;------move reg/reg
 ii00 0001 ss00 0000
@@ -37,7 +37,7 @@ move r0,r1
 ii1b mmmm mmmm mmmm
 mmmm mmmm mmrr rrrr
 
-movei r0,imm
+move r0,imm
 
 
 ;-------SIMD---------
@@ -48,16 +48,14 @@ rrrr rrrr rrrr rrrr
 
 
 ;------nop 
-ii00 0010 0000 0000
-0000 0000 0000 0cce
+ii00 001x e000 0000
+0000 0000 0000 0000
 
 nop
 nop.e
 
-xchg1
-xchg2
+xchg
 
 e = end
-cc = change insturction /cycle
-00 = 2
-01 = 4
+c = change insturction /cycle
+

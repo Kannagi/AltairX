@@ -2,7 +2,7 @@
 VFPU
 
 ;calcul (x = reserved)
-ii0x xlll lssv vvvv
+ii0l lllx xssv vvvv
 vvvv vvvv vvvv vvvv
 
 fadd.x v0,v0,v1
@@ -15,10 +15,12 @@ fmuladdvao //xyzw = ACC + xyzw * x
 
 
 ;copie
-ii10 0000 0000 0000
-ssvv vvvv vvvv vvvv
+ii10 0000 ss00 0000
+00vv vvvv vvvv vvvv
 
 move.x v0,v1
+
+
 
 ;convert Float/Double
 ii10 1000 0000 0000
@@ -28,16 +30,19 @@ movefd v0,v1
 movedf v0,v1
 
 ;convert int/float
-ii10 1100 llll ssss
-000r rrrr rvvv vvvv
+ii10 0100 llll l00s
+sssv vvvv vvrr rrrr
 
-itof0.x v0,r0b
+itof0.x v0,r0
 
-itof0,itof4,itof8,itof15,
-ftoi0,ftoi4,ftoi8,ftoi15,
+stof0,stof4,stof8,stof15,
+ftos0,ftos4,ftos8,ftos15,
 
-itod0,itod4,itod8,itod15,
-dtoi0,dtoi4,dtoi8,dtoi15,
+itod0,itod4,itod8,itod16,
+dtoi0,dtoi4,dtoi8,dtoi16,
+
+ltof0,----,----,----
+dtol0,----,----,----
 
 ;imm
 ;1 bit signe/8 bits exposant/10 mantisse
@@ -54,13 +59,13 @@ move.d v0,imm
 
 -------------------------
 VDIV
-ii10 1010 0l0v vvvv
+ii10 1110 l00v vvvv
 vvvv vvvv vvvv vvvv
 
 fdiv v0,v0,v1
 fsqrt v0,v0,v1
 
-ii10 1010 0l10 00vv
+ii10 1111 l000 00vv
 vvvv vvvv vvvv vvvv
 ddiv v0,v0,v1
 dsqrt v0,v0,v1
