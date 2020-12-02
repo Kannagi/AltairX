@@ -50,8 +50,8 @@ stmf v0,2(r58+)
 
 ii11 1ls+ aaaa aaaa
 aaaa rrrr rvvv vvvv
-ldmf v0,2(r58+)
-stmf v0,2(r58+)
+ldmd v0,2(r58+)
+stmd v0,2(r58+)
 
 
 

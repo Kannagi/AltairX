@@ -3,7 +3,7 @@ New computer and new CPU PoC
 
 The main processor of the Altair K1 is a VLIW In Order CPU.  
 It has 4 internal memory:  
-A SRAM (Scratchpad) memory for instructions of 128 KiB.  
+A SRAM (Scratchpad) memory for 128 KiB instructions.
 Another SRAM memory for 128 KiB data.  
 A 32 KiB cache memory.  
 256B SRAM memory for I / O.  
@@ -23,7 +23,7 @@ This is a technique used on consoles like the Playstation 2 and 3, we have to ma
 
 The L1 I/O SRAM, is not made to read / write hardware, but to control another CPU.  
 The configuration thought is that the main processor can indicate I/O for the other cores, while keeping a security (for the OS).  
-The main processor also has an I/O SRAM, if you want, for example, to have 2 processors on a machine. 
+The main core also has an I/O SRAM, if you want, for example, to have 2 processors on a machine. 
 
 For the calculation unit, it has: 4ALU 2VFPU FDIV DIV BRU LSU AGU
 
