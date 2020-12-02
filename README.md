@@ -21,14 +21,7 @@ For this, the compiler will have to do two things:
 
 This is a technique used on consoles like the Playstation 2 and 3, we have to make a double buffer, and therefore execute and read our data in buffer 1, while we preload our data in buffer 2, so on. .
 
-For the calculation unit, it has:
--4 ALU
--2VFPU
--FDIV
--DIV
--BRU
--LSU
--AGU
+For the calculation unit, it has: 4ALU 2VFPU FDIV DIV BRU LSU AGU
 
 The advantage of this processor is that it has a simple design, and requires little transistor for "high performance" and therefore consume / cost less than RISC Out Of Order processors.
 
