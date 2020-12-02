@@ -10,9 +10,9 @@ A 32 KiB cache memory.
 
 The processor has no branch prediction, it will be based on the delay slot (1 cycle for Fetch) and 1 decode cycle + Jump (Delay)
 
-He can also change the number of instructions / cycle with an xchg instruction.  
-Which allows you to switch to 2 or 4 instruction / cycle mode.  
-all this to avoid too many "nops" and therefore not waste unnecessary space in the SRAM.
+He can also change the number of instructions with an xchg instruction.  
+Which allows you to switch to 2 or 4 instructions / cycle mode.  
+all this to avoid too many "nop" and therefore not waste unnecessary space in the SRAM.
 
 The goal of this processor is to reach the minimum of latency, and thus to solve the problem of latency of the RAM.  
 For this, the compiler will have to do two things:  
