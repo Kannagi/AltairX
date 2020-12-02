@@ -35,7 +35,7 @@ The advantage of this processor is that it has a simple design, and requires lit
 - Translate the IR code (Clang) for Altair
 - Make the virtual machine
 
-# Pipeline Main Core
+# Pipeline
 <img src="Pipeline3.png?raw=true" alt="Pipeline" width="640" height="785">
 
 # CPU Die
