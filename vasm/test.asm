@@ -18,12 +18,13 @@
 	nop
 	xchg
 
+	;ALU
 	movei r63,4
 
-	add.b r7,r1,r3
-	sub.w r7,r1,r3
-	muls.l r7,r1,r3
-	mulu.q r7,r1,r3
+	add.b r7,r1,r3    ;8 bits
+	sub.w r7,r1,r3    ;16 bits
+	muls.l r7,r1,r3   ;32 bits
+	mulu.q r7,r1,r3   ;64 bits
 
 	divs r7,r1,r3
 	divu r7,r1,r3
@@ -75,6 +76,8 @@
 
 	addi.b r7,r1,0
 	move.b r7,r1
+
+	;BRU
 
 	cmp r1,r3
 	cmpi.w r1,$FFFF
