@@ -1,25 +1,31 @@
-Unit 0
-BRU/VFPU1/ALU1/LSU/XCHG
-AGU/VFPU2/ALU2/LSU
+---------------------
+ii
+00 BRU
+01 LSU
+10 ALU/XCHG
+11 VDIV
 
-Unit 1
-BRU/VFPU1/ALU3/LSU
-AGU/VFPU2/ALU4/LSU
+00 AGU (load/store RAM with DMA)
+01 LSU (load/store sram/cache)
+10 ALU
+11 VFPU
 
+10 ALU
 
------------OR---------------
-Unit 0
+10 ALU
+------
+
 BRU/VFPU1/ALU1/XCHG
-AGU/VFPU2/ALU2/LSU
+AGU(DMA)/VFPU2/ALU2/LSU
 
-Unit 1
+----XCHG----
 ALU3
 ALU4
 
 
 -------
-4 ALU
-2 VFPU
+4 ALU (1 DIV)
+2 VFPU (1 FDIV)
 1 LSU/BRU/AGU
 total 9
 

@@ -1,13 +1,4 @@
----------------------
-00 BRU
-01 LSU
-10 ALU/XCHG
-11 VDIV
 
-00 AGU (load/store RAM)
-01 LSU (load/store sram/cache)
-10 ALU
-11 VFPU
 
 -----------------
 r60-r63 LS adr SRAM
