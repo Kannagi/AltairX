@@ -21,7 +21,7 @@ For this, the compiler will have to do two things:
 
 This is a technique used on consoles like the Playstation 2 and 3, we have to make a double buffer, and therefore execute and read our data in buffer 1, while we preload our data in buffer 2. 
 
-The L1 I/O SRAM, is not made to read / write hardware, but to control another CPU.  
+The L1 I/O SRAM, is not made to read / write hardware, but to control another CPU or core.  
 The configuration thought is that the main processor can indicate I/O for the other cores, while keeping a security (for the OS).  
 The main core also has an I/O SRAM, if you want, for example, to have 2 processors on a machine. 
 
