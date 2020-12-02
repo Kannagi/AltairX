@@ -11,11 +11,15 @@ asl r0,r1,r0
 
 ;------calcul registre/imm
 
-ii00 1lll lssm mmmm
+ii10 llll ssmm mmmm
 mmmm rrrr rrrr rrrr
 
 add r0,r2,imm
 
+ii10 llll ssmm mmmm
+0000 rrrr rrrr rrrr
+
+asl r0,r2,imm
 ;------calcul registre/imm
 
 ii01 llll ssmm mmmm
@@ -23,38 +27,29 @@ mmmm mmmm mmrr rrrr
 
 add r0,imm
 
-ii01 llll ss00 0000
-0000 mmmm mmrr rrrr
+ii01 llll ssmm mmmm
+0000 0000 00rr rrrr
 asl r0,imm
 
-;------move reg/reg
-ii00 0001 ss00 0000
-0000 rrrr rrrr rrrr
-
-move r0,r1
-
 ;-----mov reg/imm
-ii1b mmmm mmmm mmmm
+ii11 mmmm mmmm mmmm
 mmmm mmmm mmrr rrrr
 
 move r0,imm
 
 
-;-------SIMD---------
-;------move reg/reg
-ii00 0011 0lll llrr
-rrrr rrrr rrrr rrrr
-
 
 
 ;------nop 
-ii00 001x e000 0000
+ii00 011x 0000 0000
 0000 0000 0000 0000
 
 nop
 nop.e
 
 xchg
+ii00 0100 0000 0000
+0000 0000 0000 0000
 
 e = end
 c = change insturction /cycle

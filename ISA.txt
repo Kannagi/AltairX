@@ -1,3 +1,13 @@
+---------------------
+00 BRU
+01 VFPU1
+10 ALU1
+11 LSU 
+
+00 AGU
+01 VFPU2
+10 ALU2
+11 LSU
 
 VFPU = fmul,fadd,fsub,fmuladd,dmul,dadd,dsub,dmuladd,fmulv,faddv,fsubv,fmuladdv ,fipr ,fmulva,fmuladdva,fmuladdvao
 ALU = move,add,sub,muls,mulu,divs,divu,and,or,xor,asl,asr,lsr,lsl

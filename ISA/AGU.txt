@@ -10,7 +10,7 @@
 11 VFPU
 
 -----------------
-r60-r63 LS adr RAM
+r60-r63 LS adr SRAM
 r58-r59 LS adr cache
 r42-r57 LS size
 -------------------------

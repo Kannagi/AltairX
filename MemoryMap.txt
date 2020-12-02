@@ -5,7 +5,7 @@ Memory MAP
 0x01 0000 0000 - 0x01 FFFF FFFF ------- L2 & L3 cache
 0x02 0000 0000 - 0x02 FFFF FFFF ------- Sound DRAM (4 GB max )
 0x03 0000 0000 - 0x03 FFFF FFFF ------- VRAM1      (4 GB max )
-0x10 0000 0000 - 0x1F FFFF FFFF ------- VRAM2 (GPU)(16 GB max )
+0x10 0000 0000 - 0x1F FFFF FFFF ------- VRAM2 (GPU)(64 GB max )
 
 0x20 0000 0000 - 0x7F FFFF FFFF ------- SSD RAM    (384 GB max )
 0x80 0000 0000 - 0xFF FFFF FFFF ------- RAM        (512 GB max )

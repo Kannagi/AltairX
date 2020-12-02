@@ -18,7 +18,7 @@ fmuladdvao //xyzw = ACC + xyzw * x
 ii10 0000 ss00 0000
 00vv vvvv vvvv vvvv
 
-move.x v0,v1
+movef.x v0,v1
 
 
 
@@ -38,24 +38,21 @@ itof0.x v0,r0
 stof0,stof4,stof8,stof15,
 ftos0,ftos4,ftos8,ftos15,
 
-itod0,itod4,itod8,itod16,
-dtoi0,dtoi4,dtoi8,dtoi16,
-
-ltof0,----,----,----
-dtol0,----,----,----
+itod,dtoi
+ltof,dtol
 
 ;imm
 ;1 bit signe/8 bits exposant/10 mantisse
 ii11 0mmm mmmm mmmm
 mmmm mmmm mvvv vvvv
 
-move.f v0,imm
+movefi v0,imm
 
 ;1 bit signe/8 bits exposant/11 mantisse
 ii11 1mmm mmmm mmmm
 mmmm mmmm mmvv vvvv
 
-move.d v0,imm
+movedi v0,imm
 
 -------------------------
 VDIV

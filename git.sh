@@ -14,6 +14,7 @@ git add VLIW_Unit.txt
 git add ISA.txt
 git add die.png
 git add README.md
+git add vasm
 
 git commit -m "$message"
 #git remote add origin https://github.com/Kannagi/Altair.git/ 

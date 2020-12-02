@@ -14,26 +14,26 @@ stc.w r0,2(r60)
 
 
 ;----------------
-ii10 0lss 1aaa aaaa
+ii10 00ls saaa aaaa
 aaaa aaaa arrr rrrr
-ldmx.b r0,$FFFF(r60)
-stmx.w r0,$FFFF(r60)
+ldmx.b r0,$3FFF(r60)
+stmx.w r0,$3FFF(r60)
 
 ;-----adr/registre
-ii10 0lss 0000 0000
+ii10 10ls s000 0000
 aaaa aaaa 00rr rrrr
 in.b 0,r0
 out.w 2,r2
 
 ;-----adr/imm
-ii10 1lss mmmm mmmm
+ii10 01ls mmmm mmmm
 mmmm mmmm aaaa aaaa
 ini.b 0,$FF
 outi.w 2,$40
 
 
-ii10 l+rr 1rrr aaaa
-aaaa aaaa aavv vvvv
+ii10 11lr rrrr aaaa
+aaaa aaaa aaaa vvvv
 ????
 
 ldm.v v0,2(r58+)
@@ -41,17 +41,17 @@ stm.v v0,2(r58+)
 ;----------------------
 
 
-;-----adr/registre float/double
-ii11 l0+a aaaa aaaa
+;-----adr/registre float
+ii11 0ls+ aaaa aaaa
 aaar rrrr rvvv vvvv
 
 ldmf v0,2(r58+)
 stmf v0,2(r58+)
 
-ii11 l1+a aaaa aaaa
-aaaa rrrr rrvv vvvv
-ldcd v0,2(r58+)
-stcd v0,2(r58+)
+ii11 1ls+ aaaa aaaa
+aaaa rrrr rvvv vvvv
+ldmf v0,2(r58+)
+stmf v0,2(r58+)
 
 
 
