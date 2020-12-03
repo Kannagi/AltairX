@@ -48,13 +48,8 @@ ArResult arCreateProcessor(ArVirtualMachine virtualMachine, const ArProcessorCre
     assert(pInfo);
     assert(pInfo->sType == AR_STRUCTURE_TYPE_PROCESSOR_CREATE_INFO);
     assert(pInfo->pBootCode);
-    assert(pInfo->bootCodeSize > 0);
+    assert(pInfo->bootCodeSize % 4 != 0);
     assert(pProcessor);
-
-    if(pInfo->bootCodeSize % 4 != 0)
-    {
-        return AR_ERROR_INVALID_CODE;
-    }
 
     const ArProcessor output = malloc(sizeof(ArProcessor_T));
     if(!output)
