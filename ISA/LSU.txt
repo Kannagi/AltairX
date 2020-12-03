@@ -32,26 +32,26 @@ ini.b 0,$FF
 outi.w 2,$40
 
 
-ii10 11lr rrrr aaaa
-aaaa aaaa aaaa vvvv
+ii10 11lc aaaa aaaa
+aaaa aaaa rrrv vvvv
 ????
 
-ldm.v v0,2(r58+)
-stm.v v0,2(r58+)
+ldmv v0,2(r58+)
+stmv v0,2(r58+)
 ;----------------------
 
 
 ;-----adr/registre float
-ii11 0ls+ aaaa aaaa
-aaar rrrr rvvv vvvv
+ii11 0cls +aaa aaaa
+aaaa aaaa rvvv vvvv
 
 ldmf v0,2(r58+)
 stmf v0,2(r58+)
 
-ii11 1ls+ aaaa aaaa
-aaaa rrrr rvvv vvvv
-ldmd v0,2(r58+)
-stmd v0,2(r58+)
+ii11 1cls +aaa aaaa
+aaaa aaaa arvv vvvv
+ldmd v0,2(r62+)
+stmd v0,2(r62+)
 
 
 

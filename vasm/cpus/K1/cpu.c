@@ -401,7 +401,7 @@ dblock *eval_instruction(instruction *p,section *sec,taddr pc)
         type = (opcode>>2)&0xF;
         if(type == 9)
         {
-            opcode |= ( (k1ext&3)<<7);
+            opcode |= ( (k1ext&1)<<7);
             opcode |= (operand1.val<<24) + (operand2.val<<8);
         }
 

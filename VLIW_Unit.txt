@@ -1,12 +1,12 @@
 ---------------------
 ii
 00 BRU
-01 LSU
+01 LSU1 (Load only)
 10 ALU/XCHG
 11 VDIV
 
 00 AGU (load/store RAM with DMA)
-01 LSU (load/store sram/cache)
+01 LSU2 (load/store sram/cache)
 10 ALU
 11 VFPU
 
@@ -26,6 +26,7 @@ ALU4
 -------
 4 ALU (1 DIV)
 2 VFPU (1 FDIV)
-1 LSU/BRU/AGU
-total 9
+1 LSU
+1 BRU/AGU
+total 10
 
