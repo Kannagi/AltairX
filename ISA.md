@@ -175,3 +175,148 @@ stc.w r4, $02[r30] -> 0001'0001 1110'0000 0000'0010 0110'1001
 Load or store memory in SDRAM (float (ieee-single-precision) and double (ieee-double-precision) version)
 
 To be determined
+
+## II.3) ALU
+
+| 31 - 4    | 3 - 2       | 1 - 0 |
+| :-------: | :---------: | :---: |
+| Dependent | *Category*  | 2     |
+
+| *Category* value | Instruction category       |
+| :--------------: | :------------------------: |
+| 0                | NOP or XCHG or REG-REG-REG |
+| 1                | REG-REG-IMM                |
+| 2                | REG-IMM                    |
+| 3                | MOVEI                      |
+
+Depending on the value of *Category* the decoding steps will differ.
+
+### II.3.1) NOP and XCHG
+
+| 31 - 7    | 6 - 4  | 3 - 2 | 1 - 0 |
+| :-------: | :---:  | :---: | :---: |
+| Dependent | *Type* | 0     | 2     |
+
+| *Type* value  | Instruction  |
+| :-----------: | :----------: |
+| 0 - 1         | Illegal      |
+| 2             | XCHG         |
+| 3 - 5         | Illegal      |
+| 6             | NOP          |
+| 7             | Illegal      |
+
+Depending on the value of *Type* the decoding steps will differ.
+
+#### II.3.1.1) NOP
+
+Does nothing. May be used to add cycle-accurate delay and also used to indicate end-of-program (mov.e).
+
+| 31 - 8 | 7     | 6 - 4 | 3 - 2 | 1 - 0 |
+| :----: | :---: | :---: | :---: | :---: |
+| 0      | *End* | 6     | 0     | 2     |
+
+* *End*: if 1 then we reached the end of the program, otherwise this does nothing.
+
+#### II.3.1.2) XCHG
+
+Change the amount of instructions decoded each cycle. This instruction flip the XCHG bit.
+If the XCHG bit is 1, 4 instructions are decoded each cycle, if it is 0, 2 instructions are decoded each cycle.
+This is useful to avoid too many "nop" and therefore not waste unnecessary space in the ISRAM.
+
+| 31 - 7 | 6 - 4 | 3 - 2 | 1 - 0 |
+| :----: | :---: | :---: | :---: |
+| 0      | 2     | 0     | 2     |
+
+### II.3.2) Arithmetic and bitwise instructions
+
+All arithmetic and bitwise instructions can be used with one of the 3 operand configurations.
+
+##### REG-REG-REG
+
+`OP R1, R2, R3` where `OP` the operation (see below), `R1`, `R2` and `R3` are general-use registers.
+
+`R1` is where the result will be stored.
+`R2` and `R3` are the operands. 
+Pseudo-code equivalent: `R1 <- R2 OP R3`
+
+| 31 - 26       | 25 - 20    | 19 - 14    | 13 - 12 | 11 - 8 | 7 - 4 | 3 - 2 | 1 - 0 |
+| :-----------: | :--------: | :--------: | :-----: | :----: | :---: | :---: | :---: |
+| *Destination* | *Source 2* | *Source 1* | *Size*  | *OP*   | 0     | 0     | 2     |
+
+* *OP*: The operation (see below)
+* *Size*: if 0, then the operation is done on 1 byte, if 1, then the operation is done on 2 byte, if 2 then the operation is done on 4 byte, if 3, then the operation is done on 8 byte.
+* *Source 1*: the first operand register
+* *Source 2*: the second operand register
+* *Destination*: the register in which the result is stored
+
+##### REG-REG-IMM
+
+`OP R1, R2, I` where OP the operation (see below), `R1`, `R2` are general-use registers, `I` is a value.
+All REG-REG-IMM instructions suffixed by `i` (`OPi`).
+
+`R1` is where the result will be stored. 
+`R2` and `I` are the operands.
+Pseudo-code equivalent: `R1 <- R2 OP I`
+
+| 31 - 26       | 25 - 20    | 19 - 10     | 9 - 8  | 7 - 4 | 3 - 2 | 1 - 0 |
+| :-----------: | :--------: | :---------: | :----: | :---: | :---: | :---: |
+| *Destination* | *Source 2* | *Immediate* | *Size* | *OP*  | 1     | 2     |
+
+* *OP*: The operation (see below)
+* *Size*: if 0, then the operation is done on 1 byte, if 1, then the operation is done on 2 byte, if 2 then the operation is done on 4 byte, if 3, then the operation is done on 8 byte.
+* *Immediate*: the first operand value (10-bits)
+* *Source 2*: the second operand register
+* *Destination*: the register in which the result is stored
+
+##### REG-IMM
+
+`OP R, I` where OP the operation (see below), `R` is a general-use register, `I` is a value.
+All REG-IMM instructions are suffixed by `q` (`OPq`).
+
+`R` is where the result will be stored.
+`R` and `I` is the second operand.
+Pseudo-code equivalent: `R <- R OP I`
+
+| 31 - 26       | 25 - 10     | 9 - 8  | 7 - 4 | 3 - 2 | 1 - 0 |
+| :-----------: | :---------: | :----: | :---: | :---: | :---: |
+| *Destination* | *Immediate* | *Size* | *OP*  | 2     | 2     |
+
+* *OP*: The operation (see below)
+* *Size*: if 0, then the operation is done on 1 byte, if 1, then the operation is done on 2 byte, if 2 then the operation is done on 4 byte, if 3, then the operation is done on 8 byte.
+* *Immediate*: the first operand value (16-bits)
+* *Destination*: the register in which the result is stored
+
+##### Operations
+
+| Opcode | OP   | Name                           | Notes         |
+| :----: | :--: | :----------------------------: | :-----------: |
+| 0      | ADD  | Addition                       |               |
+| 1      | SUB  | Substraction                   |               |
+| 2      | MULS | Multiplication                 | Sign-extended |
+| 3      | MULU | Multiplication                 |               |
+| 4      | DIVS | Division                       | Sign-extended |
+| 5      | DIVU | Division                       |               |
+| 6      | AND  | Bitwise AND                    |               |
+| 7      | OR   | Bitwise OR                     |               |
+| 8      | XOR  | Bitwise XOR                    |               |
+| 9      | ASL  | Arithmetic bitwise left shift  | Sign-extended |
+| 10     | LSL  | Logical bitwise left shift     |               |
+| 11     | ASR  | Arithmetic bitwise right shift | Sign-extended |
+| 12     | LSR  | Logical bitwise right shift    |               |
+
+### II.3.3) MOVEI
+
+Write a value in a register.
+
+| 31 - 26        | 25 - 4      | 3 - 2 | 1 - 0 |
+| :------------: | :---------: | :---: | :---: |
+| *Destination*  | *Immediate* | 3     | 2     |
+
+* *Immediate*: the value to be written (22-bits)
+* *Destination*: the register in which the value is stored
+
+### II.3.4) MOVE
+
+Write the value of a register in another one.
+
+`move r1, r2` is a syntaxic sugar. It generate the same opcode as `addi r1, r2, 0`.
