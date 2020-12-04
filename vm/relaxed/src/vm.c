@@ -59,16 +59,8 @@ ArResult arCreateProcessor(ArVirtualMachine virtualMachine, const ArProcessorCre
 
     memset(output, 0, sizeof(ArProcessor_T));
 
-    output->code = malloc(pInfo->bootCodeSize * sizeof(uint32_t));
-    if(!output->code)
-    {
-        free(output);
-        return AR_ERROR_HOST_OUT_OF_MEMORY;
-    }
-
     output->parent = virtualMachine;
-    memcpy(output->code, pInfo->pBootCode, pInfo->bootCodeSize * sizeof(uint32_t));
-    output->codeSize = pInfo->bootCodeSize;
+    memcpy(output->isram, pInfo->pBootCode, pInfo->bootCodeSize * sizeof(uint32_t));
 
     insertProcessor(virtualMachine, output);
     *pProcessor = output;
@@ -150,7 +142,6 @@ void arDestroyProcessor(ArVirtualMachine virtualMachine, ArProcessor processor)
         previous->next = processor->next;
     }
 
-    free(processor->code);
     free(processor);
 }
 

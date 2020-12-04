@@ -9,40 +9,11 @@ typedef struct ArVirtualMachine_T
     ArPhysicalMemory memory;
 } ArVirtualMachine_T;
 
-typedef struct ArProcessor_T
-{
-    ArProcessor next;
-    ArVirtualMachine parent;
-
-    uint8_t dsram [128 * 1024];
-    uint8_t isram [128 * 1024];
-    uint8_t cache [32  * 1024];
-    uint8_t iosram[256];
-
-    uint64_t intRegisters  [64];
-    uint32_t floatRegisters[128];
-
-    uint32_t programCounter;
-    uint32_t opcodes[4];
-    uint32_t xchg;
-
-    uint32_t* code;
-    size_t codeSize;
-
-} ArProcessor_T;
-
-typedef struct ArPhysicalMemory_T
-{
-    ArPhysicalMemory next;
-    ArVirtualMachine parent;
-
-    uint8_t* memory;
-    size_t size;
-
-} ArPhysicalMemory_T;
 
 typedef enum OpCodes
 {
+    OPCODE_UNKNOWN,
+
     //LSU
     OPCODE_LDM,
     OPCODE_STM,
@@ -134,8 +105,49 @@ typedef enum OpCodes
 
 typedef struct Operation
 {
-    OpCodes op;
-    uint32_t operands[MAX_OPERANDS];
+    OpCodes op; //< the op code
+    uint32_t operands[MAX_OPERANDS]; //< either register or immediate values
+    uint32_t size; //< 0 = byte, 1 = word, 2 = doubleword, 3 = quadword
+    uint32_t data; //< additionnal data, op dependent
 } Operation;
+
+#define DSRAM_SIZE     (128u * 1024u)
+#define ISRAM_SIZE     (128u * 1024u)
+#define CACHE_SIZE     (32u * 1024u)
+#define IOSRAM_SIZE    (256u)
+#define INTREG_COUNT   (64u)
+#define FLOATREG_COUNT (128u)
+#define MAX_OPCODE     (4u)
+
+typedef struct ArProcessor_T
+{
+    ArProcessor next;
+    ArVirtualMachine parent;
+
+    uint8_t dsram [DSRAM_SIZE];
+    uint8_t isram [ISRAM_SIZE];
+    uint8_t cache [CACHE_SIZE];
+    uint8_t iosram[IOSRAM_SIZE];
+
+    uint64_t intRegisters  [INTREG_COUNT];
+    uint32_t floatRegisters[FLOATREG_COUNT]; //It must be aligned on 64bits, previous field should force it, but it should be checked on every untested implementation
+
+    uint32_t programCounter;
+    uint32_t opcodes[MAX_OPCODE];
+    uint32_t xchg;
+
+    Operation operations[MAX_OPCODE];
+
+} ArProcessor_T;
+
+typedef struct ArPhysicalMemory_T
+{
+    ArPhysicalMemory next;
+    ArVirtualMachine parent;
+
+    uint8_t* memory;
+    size_t size;
+
+} ArPhysicalMemory_T;
 
 #endif

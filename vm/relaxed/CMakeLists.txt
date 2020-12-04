@@ -7,6 +7,7 @@ project(ALTAIR_VM_RELAXED
 add_library(altair_vm_relaxed STATIC
             src/vm.h
 
-            src/vm.c)
+            src/vm.c
+            src/processor.c)
 
 target_link_libraries(altair_vm_relaxed PRIVATE altair_vm_base)
