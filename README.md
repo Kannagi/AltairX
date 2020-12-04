@@ -14,18 +14,21 @@ He can also change the number of instructions with an xchg instruction.
 Which allows you to switch to 2 or 4 instructions / cycle mode.  
 all this to avoid too many "nop" and therefore not waste unnecessary space in the SRAM.
 
-The goal of this processor is to reach the minimum of latency, and thus to solve the problem of latency of the RAM.  
+The goal of this processor is to reach the minimum of latency, and to solve the problem of latency of the RAM.  
 For this, the compiler will have to do two things:  
 - resolve pipeline conflicts  
 - preload the data in advance with a DMA
 
-This is a technique used on consoles like the Playstation 2 and 3, we have to make a double buffer, and therefore execute and read our data in buffer 1, while we preload our data in buffer 2. 
+This is a technique used on consoles like the Playstation 2 and 3, we have to make a double buffer, and therefore execute and read our data in buffer 1, while we preload our data in buffer 2.  
+Then we execute the buffer 2 and we preload the buffer 1 and so on.
 
 The L1 I/O SRAM, is not made to read / write hardware, but to control another CPU or core.  
 The configuration thought is that the main processor can indicate I/O for the other cores, while keeping a security (for the OS).  
 The main core also has an I/O SRAM, if you want, for example, to have 2 processors on a machine. 
 
-For the calculation unit, it has: 4ALU 2VFPU FDIV DIV BRU LSU AGU
+
+For the calculation unit it has:  
+4ALU 2VFPU 2LSU FDIV DIV BRU AGU
 
 The advantage of this processor is that it has a simple design, and requires little transistor for "high performance" and therefore consume / cost less than RISC Out Of Order processors.
 
