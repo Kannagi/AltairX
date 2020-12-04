@@ -197,27 +197,18 @@ Depending on the value of *Category* the decoding steps will differ.
 | :-------: | :---:  | :---: | :---: |
 | Dependent | *Type* | 0     | 2     |
 
-| *Type* value  | Instruction  |
-| :-----------: | :----------: |
-| 0 - 1         | Illegal      |
-| 2             | XCHG         |
-| 3 - 5         | Illegal      |
-| 6             | NOP          |
-| 7             | Illegal      |
+| *Type* value  | Instruction |
+| :-----------: | :---------: |
+| 0             | REG-REG-REG |
+| 1             | Illegal     |
+| 2             | XCHG        |
+| 3 - 5         | Illegal     |
+| 6             | NOP         |
+| 7             | Illegal     |
 
 Depending on the value of *Type* the decoding steps will differ.
 
-#### II.3.1.1) NOP
-
-Does nothing. May be used to add cycle-accurate delay and also used to indicate end-of-program (mov.e).
-
-| 31 - 8 | 7     | 6 - 4 | 3 - 2 | 1 - 0 |
-| :----: | :---: | :---: | :---: | :---: |
-| 0      | *End* | 6     | 0     | 2     |
-
-* *End*: if 1 then we reached the end of the program, otherwise this does nothing.
-
-#### II.3.1.2) XCHG
+#### II.3.1.1) XCHG
 
 Change the amount of instructions decoded each cycle. This instruction flip the XCHG bit.
 If the XCHG bit is 1, 4 instructions are decoded each cycle, if it is 0, 2 instructions are decoded each cycle.
@@ -226,6 +217,16 @@ This is useful to avoid too many "nop" and therefore not waste unnecessary space
 | 31 - 7 | 6 - 4 | 3 - 2 | 1 - 0 |
 | :----: | :---: | :---: | :---: |
 | 0      | 2     | 0     | 2     |
+
+#### II.3.1.2) NOP
+
+Does nothing. May be used to add cycle-accurate delay and also used to indicate end-of-program (mov.e).
+
+| 31 - 8 | 7     | 6 - 4 | 3 - 2 | 1 - 0 |
+| :----: | :---: | :---: | :---: | :---: |
+| 0      | *End* | 6     | 0     | 2     |
+
+* *End*: if 1 then we reached the end of the program, otherwise this does nothing.
 
 ### II.3.2) Arithmetic and bitwise instructions
 
@@ -303,6 +304,9 @@ Pseudo-code equivalent: `R <- R OP I`
 | 10     | LSL  | Logical bitwise left shift     |               |
 | 11     | ASR  | Arithmetic bitwise right shift | Sign-extended |
 | 12     | LSR  | Logical bitwise right shift    |               |
+| 13     | ILL  | Illegal                        |               |
+| 14     | ILL  | Illegal                        |               |
+| 15     | ILL  | Illegal                        |               |
 
 ### II.3.3) MOVEI
 

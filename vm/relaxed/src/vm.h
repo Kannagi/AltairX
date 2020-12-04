@@ -10,7 +10,7 @@ typedef struct ArVirtualMachine_T
 } ArVirtualMachine_T;
 
 
-typedef enum OpCodes
+typedef enum Opcode
 {
     OPCODE_UNKNOWN,
 
@@ -98,13 +98,13 @@ typedef enum OpCodes
     OPCODE_JMPR,
     OPCODE_CALLR,
     OPCODE_RET,
-} OpCodes;
+} Opcode;
 
 #define MAX_OPERANDS 3
 
 typedef struct Operation
 {
-    OpCodes op; //< the op code
+    Opcode op; //< the op code
     uint32_t operands[MAX_OPERANDS]; //< either register or immediate values
     uint32_t size; //< 0 = byte, 1 = word, 2 = doubleword, 3 = quadword
     uint32_t data; //< additionnal data, op dependent
