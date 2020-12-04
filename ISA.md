@@ -1,3 +1,9 @@
+# Table of Contents
+
+* [I) General opcode structure](#I-General-opcode-structure)
+* * [I.1) Basic opcode structure](#I.1-Basic-opcode-structure)
+* [II) Compute units opcodes](#II-Compute-units-opcodes)
+
 # I) General opcode structure
 
 Opcodes are 32-bits little-endian unsigned integers.
@@ -53,7 +59,7 @@ Load or store memory in DSRAM
 * *Incrementation*: if 1 then the value of *Source* will be incremented after the operation.
 * *Store*: if 1 then the operation is STM (store-memory), otherwise it's LDM (load-memory).
 * *Size*: if 0, then one byte is loaded or stored, if 1, then 2 bytes are loaded or stored, if 2 then 4 bytes are loaded or stored, if 3, then 8 bytes are loaded or stored.
-* *Immediate*: base address of the memory to be loaded or the base address of the memory destination in DSRAM.
+* *Immediate*: base address (12-bits) of the memory to be loaded or the base address of the memory destination in DSRAM.
 * *Source*: a register containing the address of the memory to be loaded or the address of the memory destination. The value in this register will be added to *Immediate* to compute the final address.
 * *Register*: a register, in case of load it is where the memory load will be stored, in case of store it represents the value to be written. 
 
@@ -88,7 +94,7 @@ Load or store memory in DSRAM (extended)
 
 * *Store*: if 1 then the operation is STMX (store-memory), otherwise it's LDMX (load-memory).
 * *Size*: if 0, then one byte is loaded or stored, if 1, then 2 bytes are loaded or stored, if 2 then 4 bytes are loaded or stored, if 3, then 8 bytes are loaded or stored.
-* *Immediate*: base address of the memory to be loaded or the base address of the memory destination in DSRAM.
+* *Immediate*: base address (16-bits) of the memory to be loaded or the base address of the memory destination in DSRAM.
 * *Source*: a register, either r62 (0) or r63 (1), containing the address of the memory to be loaded or the address of the memory destination. The value in this register will be added to *Immediate* to compute the final address.
 * *Register*: a register, in case of load it is where the memory load will be stored, in case of store it represents the value to be written. 
 
@@ -144,9 +150,9 @@ To be determined
 
 Load or store memory in cache
 
-| 31 - 26     | 25 - 20 | 19 - 8    | 7 - 6 | 5       | 4                | 3 - 2 | 1 - 0        |
-| :-----------: | :-------: | :---------: | :-----: | :-----: | :--------------: | :-----: | :------------: |
-| *Register*    | *Source*  | *Immediate* | *Size*  | *Store* | *Incrementation* | 1       | 1              |
+| 31 - 26    | 25 - 20  | 19 - 8      | 7 - 6  | 5       | 4                | 3 - 2 | 1 - 0 |
+| :--------: | :------: | :---------: | :----: | :-----: | :--------------: | :---: | :---: |
+| *Register* | *Source* | *Immediate* | *Size* | *Store* | *Incrementation* | 2     | 1     |
 
 * *Incrementation*: if 1 then the value of *Source* will be incremented after the operation.
 * *Store*: if 1 then the operation is STC (store-cache), otherwise it's LDM (load-cache).
@@ -157,8 +163,8 @@ Load or store memory in cache
 
 Examples:
 ```
-ldc r3, $80[r60+] -> 0000'1111 1100'0000 1000'0000 1101'0101
-stc.w r4, $02[r30]  -> 0001'0001 1110'0000 0000'0010 0110'0101
+ldc r3, $80[r60+]  -> 0000'1111 1100'0000 1000'0000 1101'1001
+stc.w r4, $02[r30] -> 0001'0001 1110'0000 0000'0010 0110'1001
 ```
 
 ### II.2.4) LDF/STF and LDD/STD
