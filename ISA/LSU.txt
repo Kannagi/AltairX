@@ -26,9 +26,9 @@ in.b 0,r0
 out.w 2,r2
 
 ;-----adr/imm
-ii10 01ls mmmm mmmm
+ii10 010s mmmm mmmm
 mmmm mmmm aaaa aaaa
-ini.b 0,$FF
+
 outi.w 2,$40
 
 

@@ -16,8 +16,8 @@
   "in",     {OP_IMM,OP_REG,      },{K1,(0x1)+(0x005<<2)},
   "out",    {OP_IMM,OP_REG,      },{K1,(0x1)+(0x015<<2)},
 
-  "ini",    {OP_IMM,OP_IMM,      },{K1,(0x1)+(0x009<<2)},
-  "outi",   {OP_IMM,OP_IMM,      },{K1,(0x1)+(0x019<<2)},
+  ;"ini",    {OP_IMM,OP_IMM,      },{K1,(0x1)+(0x009<<2)},
+  "outi",   {OP_IMM,OP_IMM,      },{K1,(0x1)+(0x009<<2)},
 
 
   //ALU

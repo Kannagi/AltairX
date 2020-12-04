@@ -11,8 +11,6 @@
 
 	in.b 1,r7
 	out.w 0,r2
-
-	ini.b 1,$F
 	outi.w 4,$F0
 
 	nop
