@@ -5,7 +5,7 @@ The main processor of the Altair K1 is a VLIW In Order CPU.
 It has 4 internal memory:  
 A SRAM (Scratchpad) memory for 128 KiB instructions.
 Another SRAM memory for 128 KiB data.  
-A 32 KiB cache memory. (Direct mapped) 
+A 32 KiB cache memory. (Direct mapped)  
 256B SRAM memory for I / O.  
 
 The processor has no branch prediction, it will be based on the delay slot (1 cycle for Fetch) and 1 decode cycle + Jump (Delay)
