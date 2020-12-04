@@ -1,8 +1,11 @@
 # Table of Contents
 
 * [I) General opcode structure](#I-General-opcode-structure)
-* * [I.1) Basic opcode structure](#I.1-Basic-opcode-structure)
+  * [I.1) Basic opcode structure](#I-1-Basic-opcode-structure)
 * [II) Compute units opcodes](#II-Compute-units-opcodes)
+  * [II.1) AGU and BRU](#II-1-AGU-and-BRU)
+  * [II.2) LSU](#II-2-LSU)
+     * [II.2.1) LDM/STM](#II-2-1-LDM-STM)
 
 # I) General opcode structure
 
