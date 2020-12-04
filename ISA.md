@@ -5,7 +5,7 @@
 * [II) Compute units opcodes](#II-Compute-units-opcodes)
   * [II.1) AGU and BRU](#II-1-AGU-and-BRU)
   * [II.2) LSU](#II-2-LSU)
-     * [II.2.1) LDM/STM](#II-2-1-LDM-STM)
+    * [II.2.1) LDM/STM](#II-2-1-LDM-STM)
 
 # I) General opcode structure
 
@@ -117,7 +117,7 @@ Load or store memory in IOSRAM
 
 * *Store*: if 1 then the operation is OUT (store-memory), otherwise it's IN (load-memory).
 * *Size*: if 0, then one byte is loaded or stored, if 1, then 2 bytes are loaded or stored, if 2 then 4 bytes are loaded or stored, if 3, then 8 bytes are loaded or stored.
-* *Address*: base address of the memory to be loaded or the base address of the memory destination in IOSRAM.
+* *Address*: base address (8-bits) of the memory to be loaded or the base address of the memory destination in IOSRAM.
 * *Register*: a register, in case of load it is where the memory load will be stored, in case of store it represents the value to be written. 
 
 Examples:
@@ -136,7 +136,7 @@ Store memory in IOSRAM (immediate)
 
 * *Size*: if 0, then one byte is stored, if 1, then 2 bytes are stored.
 * *Immediate*: a value (16-bits), it represents the value to be written. 
-* *Address*: base address of the memory to be loaded or the base address of the memory destination in IOSRAM.
+* *Address*: base address (8-bits) of the memory to be loaded or the base address of the memory destination in IOSRAM.
 
 Examples:
 ```

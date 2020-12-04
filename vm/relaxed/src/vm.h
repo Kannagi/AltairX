@@ -23,7 +23,6 @@ typedef enum OpCodes
     OPCODE_STMX,
     OPCODE_IN,
     OPCODE_OUT,
-    OPCODE_INI,
     OPCODE_OUTI,
 
     //ALU

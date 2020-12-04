@@ -7,17 +7,6 @@
 
 static int decodeLSU(uint32_t opcode, Operation* restrict output)
 {
-    //LDM  : 0x00
-    //STM  : 0x08
-    //LDC  : 0x02
-    //STC  : 0x0A
-    //LDMX : 0x01
-    //STMX : 0x11
-    //IN   : 0x05
-    //OUT  : 0x15
-    //INI  : 0x09
-    //OUTI : 0x19
-
     const uint32_t type = opcode & (0x03u << 2u);
 
     if(type == 0) //LDM/STM
@@ -26,57 +15,94 @@ static int decodeLSU(uint32_t opcode, Operation* restrict output)
         const uint32_t store = opcode & (0x0001u << 5u);
         const uint32_t size  = opcode & (0x0003u << 6u);
         const uint32_t value = opcode & (0x0FFFu << 8u);
-        const uint32_t reg   = opcode & (0x003Fu << 20u);
+        const uint32_t src   = opcode & (0x003Fu << 20u);
         const uint32_t dest  = opcode & (0x003Fu << 26u);
 
         output->data = incr;
         output->op   = store ? OPCODE_STM : OPCODE_LDM;
         output->size = size;
         output->operands[0] = value;
-        output->operands[1] = reg;
+        output->operands[1] = src;
         output->operands[2] = dest;
     }
-    else if(type == 1) //LDC/STC
+    else if(type == 1) //Subtypes
+    {
+        const uint32_t subtype = opcode & (0x03u << 4u);
+
+        if(subtype == 0) // LDMX/STMX
+        {
+            const uint32_t store = opcode & (0x0001u << 6u);
+            const uint32_t size  = opcode & (0x0003u << 7u);
+            const uint32_t value = opcode & (0xFFFFu << 9u);
+            const uint32_t src   = opcode & (0x0001u << 25u);
+            const uint32_t dest  = opcode & (0x003Fu << 26u);
+
+            output->data = 0;
+            output->op   = store ? OPCODE_STMX : OPCODE_LDMX;
+            output->size = size;
+            output->operands[0] = value;
+            output->operands[1] = src + 62;
+            output->operands[2] = dest;
+        }
+        else if(subtype == 1) //IN/OUT
+        {
+            const uint32_t store = opcode & (0x01u << 6u);
+            const uint32_t size  = opcode & (0x03u << 7u);
+            const uint32_t value = opcode & (0xFFu << 16u);
+            const uint32_t dest  = opcode & (0x3Fu << 26u);
+
+            output->data = 0;
+            output->op   = store ? OPCODE_OUT : OPCODE_IN;
+            output->size = size;
+            output->operands[0] = value;
+            output->operands[1] = 0;
+            output->operands[2] = dest;
+        }
+        else if(subtype == 2) //OUTI
+        {
+            const uint32_t size  = opcode & (0x0001u << 7u);
+            const uint32_t value = opcode & (0xFFFFu << 16u);
+            const uint32_t dest  = opcode & (0x00FFu << 26u);
+
+            output->data = 0;
+            output->op   = OPCODE_OUTI;
+            output->size = size;
+            output->operands[0] = value;
+            output->operands[1] = 0;
+            output->operands[2] = dest;
+        }
+        else //LDV/STV
+        {
+            return 0;
+        }
+    }
+    else if(type == 2) //LDC/STC
     {
         const uint32_t incr  = opcode & (0x0001u << 4u);
         const uint32_t store = opcode & (0x0001u << 5u);
         const uint32_t size  = opcode & (0x0003u << 6u);
         const uint32_t value = opcode & (0x0FFFu << 8u);
-        const uint32_t reg   = opcode & (0x003Fu << 20u);
+        const uint32_t src   = opcode & (0x003Fu << 20u);
         const uint32_t dest  = opcode & (0x003Fu << 26u);
 
         output->data = incr;
         output->op   = store ? OPCODE_STC : OPCODE_LDC;
         output->size = size;
         output->operands[0] = value;
-        output->operands[1] = reg;
+        output->operands[1] = src;
         output->operands[2] = dest;
-    }
-    else if(type == 2) //Others
-    {
-        const uint32_t subtype = opcode & (0x03u << 4u);
-
-        if(subtype == 0)
-        {
-
-        }
-        else if(subtype == 1)
-        {
-
-        }
-        else if(subtype == 2)
-        {
-
-        }
-        else
-        {
-
-        }
     }
     else //LDF/STF-LDD/STD
     {
         return 0;
     }
+
+    return 1;
+}
+
+static int decodeALU(uint32_t opcode, Operation* restrict output)
+{
+    return 1;
 }
 
 static int decode(uint32_t opcode, Operation* restrict output)
@@ -100,13 +126,13 @@ static int decode(uint32_t opcode, Operation* restrict output)
             return decodeLSU(opcode, output);
 
         case ALU:
-            return 1;
+            return decodeALU(opcode, output);
 
-        //case COMPUTE_UNIT_FPU:
+        //case FPU:
         //   return 1;
 
         default:
-            return 1;
+            return 0;
     }
 }
 
