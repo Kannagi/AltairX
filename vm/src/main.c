@@ -128,10 +128,10 @@ static int runVirtualMachine(uint32_t* code, uint32_t code_size)
     ArResult result;
     VirtualMachineContext context = {0};
 
-    if((result = makeVirtualMachine(code, code_size, &context)) != AR_SUCCESS)
+    result = makeVirtualMachine(code, code_size, &context);
+    if(result != AR_SUCCESS)
     {
         printf("Failed to initialize the virtual machine.");
-
         return 1;
     }
 
