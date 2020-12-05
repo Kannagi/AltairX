@@ -12,23 +12,23 @@ cmpi.w r0,imm
 
 --------
 ii00 1000 0000 0000
-00vv vvvv vvvv vvvv
-fcmp v0,v1
+00ff ffff ffff ffff
+fcmp f0,f1
 
 ii00 0100 0000 0000
-0000 vvvv vvvv vvvv
-dcmp v0,v1
+0000 dddd dddd dddd
+dcmp d0,d1
 
 ------
 ;1 bit de signe , 8 mantisse , 12 exposant
 ii01 mmmm mmmm mmmm
-mmmm mmmm mvvv vvvv
-fcmpi v0,imm
+mmmm mmmm mfff ffff
+fcmpi f0,imm
 
 ;1 bit de signe , 11 mantisse , 10 exposant
 ii11 mmmm mmmm mmmm
-mmmm mmmm mmvv vvvv
-dcmpi v0,imm
+mmmm mmmm mmdd dddd
+dcmpi d0,imm
 
 ;branch-----------------
 ii00 1100 llll mmmm

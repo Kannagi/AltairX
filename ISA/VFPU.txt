@@ -15,22 +15,25 @@ faddv.xyz v0,v0,f5
 
 ii00 00ss 10ll 0000
 0fff ffff vvvv vvvv
-fmulva //ACC = xyzw + x
+fmulva //ACC = xyzw * x
 fmuladdva //ACC += xyzw * y
-fmuladdva //ACC += xyzw * z
 fmuladdvao //xyzw = ACC + xyzw * w
 
 fmulvax v0,f4
 fmuladdvao v1,v0,f4
 
-
-
-ii00 00ss 1100 0000
+ii00 00ss 1011 0000
 0fff ffff vvvv vvvv
 fipr, //x = x1*x2 + y1*y2 + z1*z2 + w1*w2
 
 fipr.xyz f0,v0,v1
 
+
+ii00 00ll 1100 00dd
+dddd dddd dddd dddd
+
+dadd,dsub,dmul,dmuladd
+dadd d0,d0,d1
 
 
 
