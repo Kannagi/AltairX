@@ -27,12 +27,12 @@ Altair K1 has the following compute units:
 
 Each cycle 2 or 4 opcodes are decoded and executed. Each opcode as an index in the range [0; 3], which is its index in the 2 (or 4) uint32 opcodes buffer. Compute units are bound to some index, you can only use some compute units on some indices.
 
-| Opcode index | Available compute units for index                         |
-| :----------: | :-------------------------------------------------------: |
-| 0            | ALU#1 or LSU#1 (load-only) or VFPU or VDIV or BRU or XCHG |
-| 1            | ALU#2 or LSU#2 or VFPU or AGU                             |
-| 2            | ALU#3                                                     |
-| 3            | ALU#4                                                     |
+| Opcode index | Available compute units for index                           |
+| :----------: | :---------------------------------------------------------: |
+| 0            | ALU#1 or LSU#1 (load-only) or VFPU#1 or VDIV or BRU or XCHG |
+| 1            | ALU#2 or LSU#2 or VFPU#2 or AGU                             |
+| 2            | ALU#3                                                       |
+| 3            | ALU#4                                                       |
 
 ## I.2) Basic opcode structure
 
@@ -77,7 +77,7 @@ Here is a table with all *Compute Unit* and opcode index possible values:
 
 | 31 - 4    | 3 - 2   | 1 - 0 |
 | :-------: | :-----: | :---: |
-| Dependent | *Type*  | 1     |
+| Dependent | *Type*  | 0     |
 
 | *Type* value | Instruction                  |
 | :----------: | :--------------------------: |
@@ -92,7 +92,7 @@ Depending on the value of *Type* the decoding steps will differ.
 
 | 31 - 6    | 5 - 4         | 3 - 2 | 1 - 0 |
 | :-------: | :-----------: | :---: | :---: |
-| Dependent | *Instruction* | 0     | 1     |
+| Dependent | *Instruction* | 0     | 0     |
 
 | *Instruction* value | Instruction |
 | :-----------------: | :---------: |
@@ -109,7 +109,7 @@ Update the comparison flags based on integer comparison.
 
 | 31 - 26    | 25 - 20     | 19 - 10 | 9 - 8  | 7 - 6 | 5 - 4 | 3 - 2 | 1 - 0 |
 | :--------: | :---------: | :-----: | :----: | :---: | :---: | :---: | :---: |
-| *Source 2* | *Source 1*  | 0       | *Size* | 0     | 0     | 0     | 1     |
+| *Source 2* | *Source 1*  | 0       | *Size* | 0     | 0     | 0     | 0     |
 
 * *Size*: if 0, then the operation is done on 1 byte, if 1, then the operation is done on 2 byte, if 2 then the operation is done on 4 byte, if 3, then the operation is done on 8 byte.
 * *Source 1*: The first register to compare with *Source 2* (right operand)
@@ -121,7 +121,7 @@ Update the comparison flags base on single-precision float comparison.
 
 | 31 - 25    | 24 - 18    | 17 - 6 | 5 - 4 | 3 - 2 | 1 - 0 |
 | :--------: | :--------: | :----: | :---: | :---: | :---: |
-| *Source 2* | *Source 1* | 0      | 1     | 0     | 1     |
+| *Source 2* | *Source 1* | 0      | 1     | 0     | 0     |
 
 * *Source 1*: The first register to compare with *Source 2* (right operand)
 * *Source 2*: The second register (left operand)
@@ -132,7 +132,7 @@ Update the comparison flags base on double-precision float comparison.
 
 | 31 - 26    | 25 - 20    | 19 - 6 | 5 - 4 | 3 - 2 | 1 - 0 |
 | :--------: | :--------: | :----: | :---: | :---: | :---: |
-| *Source 2* | *Source 1* | 0      | 2     | 0     | 1     |
+| *Source 2* | *Source 1* | 0      | 2     | 0     | 0     |
 
 * *Source 1*: The first register to compare with *Source 2* (right operand)
 * *Source 2*: The second register (left operand)
@@ -141,7 +141,7 @@ Update the comparison flags base on double-precision float comparison.
 
 | 31 - 8    | 7 - 6      | 5 - 4 | 3 - 2 | 1 - 0 |
 | :-------: | :--------: | :---: | :---: | :---: |
-| Dependent | *Category* | 3     | 0     | 1     |
+| Dependent | *Category* | 3     | 0     | 0     |
 
 | *Category* value | Category       |
 | :--------------: | :------------: |
@@ -158,7 +158,7 @@ Jumps to the specified label if conditional flag is true for the specified compa
 
 | 31 - 26 | 25 - 12 | 11 - 8       | 7 - 6 | 5 - 4 | 3 - 2 | 1 - 0 |
 | :-----: | :-----: | :----------: | :---: | :---: | :---: | :---: |
-| 0       | *Label* | *Comparator* | 0     | 3     | 0     | 1     |
+| 0       | *Label* | *Comparator* | 0     | 3     | 0     | 0     |
 
 | *Comparator* value | Comparator       | Notes         | Mnemonic |
 | :----------------: | :--------------: | :-----------: | :------: |
@@ -188,7 +188,7 @@ Jumps to the specified label, based on absolute or relative address.
 
 | 31 - 26 | 25 - 12 | 11 - 10 | 9 - 8     | 7 - 6 | 5 - 4 | 3 - 2 | 1 - 0 |
 | :-----: | :-----: | :-----: | :-------: | :---: | :---: | :---: | :---: |
-| 0       | *Label* | 0       | *Subtype* | 2     | 3     | 0     | 1     |
+| 0       | *Label* | 0       | *Subtype* | 2     | 3     | 0     | 0     |
 
 | *Subtype* value | Instruction   | Mnemonic |
 | :-------------: | :-----------: | :------: |
@@ -206,7 +206,7 @@ Jump to the next instruction following the last call.
 
 | 31 - 8 | 7 - 6 | 5 - 4 | 3 - 2 | 1 - 0 |
 | :----: | :---: | :---: | :---: | :---: |
-| 0      | 3     | 3     | 0     | 1     |
+| 0      | 3     | 3     | 0     | 0     |
 
 ### II.1.2) CMPI
 
@@ -214,7 +214,7 @@ Update the comparison flags based on integer comparison.
 
 | 31 - 26  | 25 - 6      | 5 - 4  | 3 - 2 | 1 - 0 |
 | :------: | :---------: | :----: | :---: | :---: |
-| *Source* | *Immediate* | *Size* | 1     | 1     |
+| *Source* | *Immediate* | *Size* | 1     | 0     |
 
 * *Size*: if 0, then the operation is done on 1 byte, if 1, then the operation is done on 2 byte, if 2 then the operation is done on 4 byte, if 3, then the operation is done on 8 byte.
 * *Immediate*: The value to compare with *Source*
@@ -226,7 +226,7 @@ Update the comparison flags based on integer comparison.
 
 | 31 - 25  | 24 - 4      | 3 - 2 | 1 - 0 |
 | :------: | :---------: | :---: | :---: |
-| *Source* | *Immediate* | 2     | 1     |
+| *Source* | *Immediate* | 2     | 0     |
 
 * *Size*: if 0, then the operation is done on 1 byte, if 1, then the operation is done on 2 byte, if 2 then the operation is done on 4 byte, if 3, then the operation is done on 8 byte.
 * *Immediate*: The value to compare with *Source* (21-bits).
@@ -250,14 +250,14 @@ Update the comparison flags based on integer comparison.
 
 | 31 - 26  | 25 - 4      | 3 - 2 | 1 - 0 |
 | :------: | :---------: | :---: | :---: |
-| *Source* | *Immediate* | 3     | 1     |
+| *Source* | *Immediate* | 3     | 0     |
 
 * *Immediate*: The value to compare with *Source* (22-bits).
 * *Source*: The register to be compared with.
 
 *Immediate* has a non-standard IEEE-754 format:
 
-| 21     | 20 - 10    | 9 - 0     |
+| 21     | 20 - 10    | 9 - 0      |
 | :----: | :--------: | :--------: |
 | *Sign* | *Exponent* | *Mantissa* |
 
