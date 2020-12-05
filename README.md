@@ -39,7 +39,7 @@ The advantage of this processor is that it has a simple design, and requires lit
 - Make the virtual machine
 
 # Pipeline
-<img src="Pipeline3.png?raw=true" alt="Pipeline" width="640" height="785">
+<img src="Pipeline4.png?raw=true" alt="Pipeline" width="887" height="785">
 
 # CPU Die
 <img src="CPU.png?raw=true" alt="CPU" width="500" height="400">

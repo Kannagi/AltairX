@@ -8,6 +8,7 @@ git add OS/
 git add CPU.png
 git add Pipeline2.png
 git add Pipeline3.png
+git add Pipeline4.png
 git add Pipeline.txt
 git add MemoryMap.txt
 git add VLIW_Unit.txt
