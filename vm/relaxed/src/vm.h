@@ -9,7 +9,6 @@ typedef struct ArVirtualMachine_T
     ArPhysicalMemory memory;
 } ArVirtualMachine_T;
 
-
 typedef enum Opcode
 {
     OPCODE_UNKNOWN,
@@ -138,6 +137,14 @@ typedef struct ArProcessor_T
     Operation operations[MAX_OPCODE];
 
 } ArProcessor_T;
+
+typedef struct Vector4f
+{
+    float x;
+    float y;
+    float z;
+    float w;
+} Vector4f;
 
 typedef struct ArPhysicalMemory_T
 {

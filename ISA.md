@@ -10,10 +10,33 @@
 # I) General opcode structure
 
 Opcodes are 32-bits little-endian unsigned integers.
-In this documents, all bitsets are written in natural order (i.e. big-endian, 31 -> 15 -> 7 -> 0) because it's easier and the more common.
-Bits fiels bounds are inclusive (3 - 0 means both bits 3, 2, 1 and 0)
+In this documents, all bitsets are written in natural order (i.e. big-endian, 31 -> 15 -> 7 -> 0) because it's easier and the most common.
+Bitfiels bounds are inclusive (3 - 0 means both bits 3, 2, 1 and 0)
 
-## I.1) Basic opcode structure
+## I.1) Compute units
+
+Altair K1 has the following compute units:
+
+* 4 ALU
+* 2 VFPU 
+* 1 FDIV 
+* 1 DIV 
+* 1 BRU 
+* 1 LSU 
+* 1 AGU
+
+Each cycle 2 or 4 opcodes are decoded and executed. Each opcode as an index in the range [0; 3], which is its index in the 2 (or 4) uint32 opcodes buffer. Compute units are bound to some index, you can only use some compute units on some indices.
+
+| Opcode index | Available compute units for index                         |
+| :----------: | :-------------------------------------------------------: |
+| 0            | ALU#1 or LSU#1 (load-only) or VFPU or VDIV or BRU or XCHG |
+| 1            | ALU#2 or LSU#2 or VFPU or AGU                             |
+| 2            | ALU#3                                                     |
+| 3            | ALU#4                                                     |
+
+
+
+## I.2) Basic opcode structure
 
 The following table is applicable to **ALL** opcodes
 
@@ -26,24 +49,45 @@ The following table is applicable to **ALL** opcodes
 | 0                    | AGU or BRU   |
 | 1                    | LSU          |
 | 2                    | ALU          |
-| 3                    | VFPU         |
+| 3                    | VFPU or VDIV |
 
-Depending on the value of *Compute Unit* the decoding steps will differ.
+Depending on the value of *Compute Unit*, and of opcode index, the decoding steps will differ.
+Here is a table with all *Compute Unit* and opcode index possible values:
+
+| *Compute Unit* | Opcode index | Compute Unit |
+| :------------: | :----------: | :----------: |
+| 0              | 0            | BRU          |
+| 0              | 1            | LSU          |
+| 0              | 2            | ALU or XCHG  |
+| 0              | 3            | VFPU or VDIV |
+| 1              | 0            | AGU          |
+| 1              | 1            | LSU          |
+| 1              | 2            | ALU          |
+| 1              | 3            | VFPU         |
+| 2              | 0            | Illegal      |
+| 2              | 1            | Illegal      |
+| 2              | 2            | ALU          |
+| 2              | 3            | Illegal      |
+| 3              | 0            | Illegal      |
+| 3              | 1            | Illegal      |
+| 3              | 2            | ALU          |
+| 3              | 3            | Illegal      |
+
 
 # II) Compute units opcodes
 
-## II.1) AGU and BRU
+## II.1) BRU
 
 | 31 - 4    | 3 - 2   | 1 - 0 |
 | :-------: | :-----: | :---: |
 | Dependent | *Type*  | 1     |
 
-| *Type* value  | Instruction             |
-| :-----------: | :---------------------: |
-| 0             | Comparison or Branch    |
-| 1             | CMPI                    |
-| 2             | FCMPI                   |
-| 3             | DCMPI                   |
+| *Type* value  | Instruction          |
+| :-----------: | :------------------: |
+| 0             | Comparison or Branch |
+| 1             | CMPI                 |
+| 2             | FCMPI                |
+| 3             | DCMPI                |
 
 Depending on the value of *Type* the decoding steps will differ.
 
@@ -91,19 +135,19 @@ Jumps to the specified label if previous comparaison is true for the specified c
 | :-----: | :-----: | :----------: | :---: | :----: | :----: | :---: | :---: |
 | 0       | *Label* | *Comparator* | 0     | 3      | 3      | 0     | 1     |
 
-| *Comparator* value | Comparator        | Notes         | Mnemonic |
-| :----------------: | :---------------: | :-----------: | :------: |
-| 0                  | Not equal         |               | |
-| 1                  | Equal             |               | |
-| 2                  | Less              |               | |
-| 3                  | Less or equal     |               | |
-| 4                  | Greater           |               | |
-| 5                  | Greater or equal  |               | |
-| 6                  | Less              | Sign-extended | |
-| 7                  | Less or equal     | Sign-extended | |
-| 8                  | Greater           | Sign-extended | |
-| 9                  | Greater or equal  | Sign-extended | |
-| 10-15              | Illegal           |               | |
+| *Comparator* value | Comparator       | Notes         | Mnemonic |
+| :----------------: | :--------------: | :-----------: | :------: |
+| 0                  | Not equal        |               | BNE      |
+| 1                  | Equal            |               | BEQ      |
+| 2                  | Less             |               | BLU      |
+| 3                  | Less or equal    |               | BLEU     |
+| 4                  | Greater          |               | BGU      |
+| 5                  | Greater or equal |               | BGEU     |
+| 6                  | Less             | Sign-extended | BLS      |
+| 7                  | Less or equal    | Sign-extended | BLES     |
+| 8                  | Greater          | Sign-extended | BGS      |
+| 9                  | Greater or equal | Sign-extended | BGES     |
+| 10-15              | Illegal          |               |          |
 
 * *Label*: the address of the instruction to jump to in ISRAM
 * *Comparator*: the logical operation to perform 
@@ -412,3 +456,11 @@ Write a value in a register.
 Write the value of a register in another one.
 
 `move r1, r2` is a syntaxic sugar. It generate the same opcode as `addi r1, r2, 0`.
+
+## II.4) AGU
+
+## II.5) VFPU1
+
+## II.6) VFPU2
+
+## II.7) VDIV

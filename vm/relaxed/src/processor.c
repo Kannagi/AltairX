@@ -5,7 +5,7 @@
 
 #define MIN(x, y) (x < y ? x : y)
 
-static int decodeAGUBRU(uint32_t opcode, Operation* restrict output)
+static int decodeBRU(uint32_t opcode, Operation* restrict output)
 {
 
 
@@ -105,7 +105,7 @@ static int decodeLSU(uint32_t opcode, Operation* restrict output)
     return 1;
 }
 
-static const Opcode ALURegRegRegOpcodes[] =
+static const Opcode ALURegRegRegOpcodes[16] =
 {
     OPCODE_ADD,
     OPCODE_SUB,
@@ -125,7 +125,7 @@ static const Opcode ALURegRegRegOpcodes[] =
     OPCODE_UNKNOWN,
 };
 
-static const Opcode ALURegRegImmOpcodes[] =
+static const Opcode ALURegRegImmOpcodes[16] =
 {
     OPCODE_ADDI,
     OPCODE_SUBI,
@@ -145,7 +145,7 @@ static const Opcode ALURegRegImmOpcodes[] =
     OPCODE_UNKNOWN,
 };
 
-static const Opcode ALURegImmOpcodes[] =
+static const Opcode ALURegImmOpcodes[16] =
 {
     OPCODE_ADDQ,
     OPCODE_SUBQ,
@@ -257,7 +257,7 @@ static int decodeALU(uint32_t opcode, Operation* restrict output)
     return 1;
 }
 
-static int decodeFPU(uint32_t opcode, Operation* restrict output)
+static int decodeAGU(uint32_t opcode, Operation* restrict output)
 {
     (void)opcode;
     (void)output;
@@ -265,25 +265,66 @@ static int decodeFPU(uint32_t opcode, Operation* restrict output)
     return 1;
 }
 
-static int decode(uint32_t opcode, Operation* restrict output)
+static int decodeVFPU(uint32_t opcode, Operation* restrict output)
+{
+    (void)opcode;
+    (void)output;
+
+    return 1;
+}
+
+static int decode(uint32_t index, uint32_t opcode, Operation* restrict output)
 {
     const uint32_t compute_unit = opcode & 0x03;
 
-    if(compute_unit == 0) //AGU or BRU
+    if(index == 0)
     {
-        return decodeAGUBRU(opcode, output);
+        if(compute_unit == 0) //BRU
+        {
+            return decodeBRU(opcode, output);
+        }
+        else if(compute_unit == 1) //LSU
+        {
+            return decodeLSU(opcode, output);
+        }
+        else if(compute_unit == 2) //ALU
+        {
+            return decodeALU(opcode, output);
+        }
+        else //VFPU/VDIV
+        {
+            return decodeVFPU(opcode, output);
+        }
     }
-    else if(compute_unit == 1) //LSU
+    else if(index == 1)
     {
-        return decodeLSU(opcode, output);
+        if(compute_unit == 0) //AGU
+        {
+            return decodeAGU(opcode, output);
+        }
+        else if(compute_unit == 1) //LSU
+        {
+            return decodeLSU(opcode, output);
+        }
+        else if(compute_unit == 2) //ALU
+        {
+            return decodeALU(opcode, output);
+        }
+        else //VFPU
+        {
+            return decodeVFPU(opcode, output);
+        }
     }
-    else if(compute_unit == 2) //ALU
+    else //2 or 3
     {
-        return decodeALU(opcode, output);
-    }
-    else //FPU
-    {
-        return decodeFPU(opcode, output);
+        if(compute_unit == 2) //ALU
+        {
+            return decodeALU(opcode, output);
+        }
+        else //VFPU
+        {
+            return 0;
+        }
     }
 }
 
@@ -307,7 +348,7 @@ ArResult arDecodeInstruction(ArProcessor processor)
 
     for(uint32_t i = 0; i < size; ++i)
     {
-        if(!decode(processor->opcodes[i], &processor->operations[i]))
+        if(!decode(i, processor->opcodes[i], &processor->operations[i]))
         {
             return AR_ERROR_ILLEGAL_INSTRUCTION;
         }
