@@ -5,9 +5,135 @@
 
 #define MIN(x, y) (x < y ? x : y)
 
+static const Opcode BRUComparators[16] =
+{
+    OPCODE_BNE,
+    OPCODE_BEQ,
+    OPCODE_BL,
+    OPCODE_BLE,
+    OPCODE_BG,
+    OPCODE_BGE,
+    OPCODE_BLS,
+    OPCODE_BLES,
+    OPCODE_BGS,
+    OPCODE_BGES,
+    OPCODE_UNKNOWN,
+    OPCODE_UNKNOWN,
+    OPCODE_UNKNOWN,
+    OPCODE_UNKNOWN,
+    OPCODE_UNKNOWN,
+    OPCODE_UNKNOWN
+};
+
+static const Opcode BRUJumpsCalls[4] =
+{
+    OPCODE_CALL,
+    OPCODE_JMP,
+    OPCODE_CALLR,
+    OPCODE_JMPR
+};
+
 static int decodeBRU(uint32_t opcode, Operation* restrict output)
 {
+    const uint32_t type = (opcode >> 2u) & 0x03u;
 
+    if(type == 0) //REG-REG comparison or Branch
+    {
+        const uint32_t instruction = (opcode >> 4u) & 0x03u;
+
+        if(instruction == 0) //CMP
+        {
+            const uint32_t size  = (opcode >> 8u ) & 0x03;
+            const uint32_t right = (opcode >> 20u) & 0x3F;
+            const uint32_t left  = (opcode >> 26u) & 0x3F;
+
+            output->op = OPCODE_CMP;
+            output->size = size;
+            output->operands[0] = right;
+            output->operands[1] = left;
+        }
+        else if(instruction == 1) //FCMP
+        {
+            const uint32_t right = (opcode >> 18u) & 0x7F;
+            const uint32_t left  = (opcode >> 25u) & 0x7F;
+
+            output->op = OPCODE_FCMP;
+            output->operands[0] = right;
+            output->operands[1] = left;
+        }
+        else if(instruction == 2) //DCMP
+        {
+            const uint32_t right = (opcode >> 20u) & 0x3F;
+            const uint32_t left  = (opcode >> 26u) & 0x3F;
+
+            output->op = OPCODE_DCMP;
+            output->operands[0] = right;
+            output->operands[1] = left;
+        }
+        else //Branching
+        {
+            const uint32_t category = (opcode >> 6u) & 0x03u;
+
+            if(category == 0) //Branch (BCC, BCCS, FBCC, DBCC)
+            {
+                const uint32_t comp  = (opcode >> 8u ) & 0x0Fu;
+                const uint32_t label = (opcode >> 12u) & 0x3FFFu;
+
+                output->op = BRUComparators[comp];
+                output->operands[0] = label;
+
+                if(output->op == OPCODE_UNKNOWN)
+                {
+                    return 0;
+                }
+            }
+            else if(category == 1) //Illegal
+            {
+                return 0;
+            }
+            else if(category == 2) //Jumps or calls
+            {
+                const uint32_t subtype = (opcode >> 8u ) & 0x03u;
+                const uint32_t label   = (opcode >> 12u) & 0x3FFFu;
+
+                output->op = BRUJumpsCalls[subtype];
+                output->operands[0] = label;
+            }
+            else //Ret
+            {
+                output->op = OPCODE_RET;
+            }
+        }
+    }
+    else if(type == 1) //CMPI
+    {
+        const uint32_t size  = (opcode >> 4u ) & 0x000003;
+        const uint32_t value = (opcode >> 6u ) & 0x0FFFFF;
+        const uint32_t reg   = (opcode >> 26u) & 0x00003F;
+
+        output->op = OPCODE_CMPI;
+        output->size = size;
+        output->operands[0] = value;
+        output->operands[1] = reg;
+    }
+    else if(type == 2) //FCMPI
+    {
+        const uint32_t value = (opcode >> 4u ) & 0x1FFFFF;
+        const uint32_t reg   = (opcode >> 25u) & 0x00007F;
+
+        output->op = OPCODE_FCMPI;
+        output->operands[0] = value;
+        output->operands[1] = reg;
+    }
+    else //DCMPI
+    {
+        const uint32_t value = (opcode >> 4u ) & 0x3FFFFF;
+        const uint32_t reg   = (opcode >> 26u) & 0x00003F;
+
+        output->op = OPCODE_DCMPI;
+        output->operands[0] = value;
+        output->operands[1] = reg;
+    }
 
     return 1;
 }
@@ -333,7 +459,7 @@ ArResult arDecodeInstruction(ArProcessor processor)
     assert(processor);
 
     uint32_t size;
-    if(processor->xchg)
+    if(processor->flags & 0x01)
     {
         const uint32_t available = processor->programCounter - (ISRAM_SIZE / 4u); //we may overflow otherwise
         size = MIN(available, 4u);

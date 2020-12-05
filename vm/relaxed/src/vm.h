@@ -70,18 +70,18 @@ typedef enum Opcode
     OPCODE_LSRQ,
 
     //BRU
-    OPCODE_FBNE,
-    OPCODE_FBEQ,
-    OPCODE_FBL,
-    OPCODE_FBLE,
-    OPCODE_FBG,
-    OPCODE_FBGE,
+    //OPCODE_FBNE,
+    //OPCODE_FBEQ,
+    //OPCODE_FBL,
+    //OPCODE_FBLE,
+    //OPCODE_FBG,
+    //OPCODE_FBGE,
     OPCODE_BNE,
     OPCODE_BEQ,
-    OPCODE_BLU,
-    OPCODE_BLEU,
-    OPCODE_BGU,
-    OPCODE_BGEU,
+    OPCODE_BL,
+    OPCODE_BLE,
+    OPCODE_BG,
+    OPCODE_BGE,
     OPCODE_BLS,
     OPCODE_BLES,
     OPCODE_BGS,
@@ -132,7 +132,17 @@ typedef struct ArProcessor_T
 
     uint32_t programCounter;
     uint32_t opcodes[MAX_OPCODE];
-    uint32_t xchg;
+
+    /// \brief CPU Flags register
+    ///
+    /// Bit 0: XCHG flag, 1 is 4-way decode, 0 is 2-way
+    /// Bit 1: Z flag, 1 if not equal, 0 if equal
+    /// Bit 2: S flag, 1 if lesser, 0 if greater (signed comparison)
+    /// Bit 3: U flag, 1 if lesser, 0 if greater (unsigned comparison)
+    ///
+    /// Non-hardware
+    /// Bit 30-31: store the type of the last signed cmp type, 0 = int, 1 = float, 2 = double, 3 = nope
+    uint32_t flags;
 
     Operation operations[MAX_OPCODE];
 
