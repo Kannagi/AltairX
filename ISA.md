@@ -34,8 +34,6 @@ Each cycle 2 or 4 opcodes are decoded and executed. Each opcode as an index in t
 | 2            | ALU#3                                                     |
 | 3            | ALU#4                                                     |
 
-
-
 ## I.2) Basic opcode structure
 
 The following table is applicable to **ALL** opcodes
@@ -73,7 +71,6 @@ Here is a table with all *Compute Unit* and opcode index possible values:
 | 3              | 2            | ALU          |
 | 3              | 3            | Illegal      |
 
-
 # II) Compute units opcodes
 
 ## II.1) BRU
@@ -82,67 +79,95 @@ Here is a table with all *Compute Unit* and opcode index possible values:
 | :-------: | :-----: | :---: |
 | Dependent | *Type*  | 1     |
 
-| *Type* value  | Instruction          |
-| :-----------: | :------------------: |
-| 0             | Comparison or Branch |
-| 1             | CMPI                 |
-| 2             | FCMPI                |
-| 3             | DCMPI                |
+| *Type* value | Instruction                  |
+| :----------: | :--------------------------: |
+| 0            | REG-REG comparison or Branch |
+| 1            | CMPI                         |
+| 2            | FCMPI                        |
+| 3            | DCMPI                        |
 
 Depending on the value of *Type* the decoding steps will differ.
 
-### II.1.1) Comparison or Branch
+### II.1.1) REG-REG comparison or Branch
 
 | 31 - 6    | 5 - 4         | 3 - 2 | 1 - 0 |
 | :-------: | :-----------: | :---: | :---: |
 | Dependent | *Instruction* | 0     | 1     |
 
-| *Instruction* value  | Instruction |
-| :------------------: | :---------: |
-| 0                    | CMP         |
-| 1                    | FCMP        |
-| 2                    | DCMP        |
-| 3                    | Branching   |
+| *Instruction* value | Instruction |
+| :-----------------: | :---------: |
+| 0                   | CMP         |
+| 1                   | FCMP        |
+| 2                   | DCMP        |
+| 3                   | Branching   |
 
 Depending on the value of *Instruction* the decoding steps will differ.
 
 #### II.1.1.1) CMP
 
-#### II.1.1.3) FCMP
+Update the comparison flags based on integer comparison.
 
-#### II.1.1.2) DCMP
+| 31 - 26    | 25 - 20     | 19 - 10 | 9 - 8  | 7 - 6 | 5 - 4 | 3 - 2 | 1 - 0 |
+| :--------: | :---------: | :-----: | :----: | :---: | :---: | :---: | :---: |
+| *Source 2* | *Source 1*  | 0       | *Size* | 0     | 0     | 0     | 1     |
+
+* *Size*: if 0, then the operation is done on 1 byte, if 1, then the operation is done on 2 byte, if 2 then the operation is done on 4 byte, if 3, then the operation is done on 8 byte.
+* *Source 1*: The first register to compare with *Source 2* (right operand)
+* *Source 2*: The second register (left operand)
+
+#### II.1.1.2) FCMP
+
+Update the comparison flags base on single-precision float comparison.
+
+| 31 - 25    | 24 - 18    | 17 - 6 | 5 - 4 | 3 - 2 | 1 - 0 |
+| :--------: | :--------: | :----: | :---: | :---: | :---: |
+| *Source 2* | *Source 1* | 0      | 1     | 0     | 1     |
+
+* *Source 1*: The first register to compare with *Source 2* (right operand)
+* *Source 2*: The second register (left operand)
+
+#### II.1.1.3) DCMP
+
+Update the comparison flags base on double-precision float comparison.
+
+| 31 - 26    | 25 - 20    | 19 - 6 | 5 - 4 | 3 - 2 | 1 - 0 |
+| :--------: | :--------: | :----: | :---: | :---: | :---: |
+| *Source 2* | *Source 1* | 0      | 2     | 0     | 1     |
+
+* *Source 1*: The first register to compare with *Source 2* (right operand)
+* *Source 2*: The second register (left operand)
 
 #### II.1.1.4) Branching
 
-| 31 - 8    | 7 - 6      | 5 - 4  | 5 - 4  | 3 - 2 | 1 - 0 |
-| :-------: | :--------: | :----: | :----: | :---: | :---: |
-| Dependent | *Category* | 3      | 3      | 0     | 1     |
+| 31 - 8    | 7 - 6      | 5 - 4 | 3 - 2 | 1 - 0 |
+| :-------: | :--------: | :---: | :---: | :---: |
+| Dependent | *Category* | 3     | 0     | 1     |
 
-| *Category* value  | Category       |
-| :---------------: | :------------: |
-| 0                 | Branch         |
-| 1                 | Float branch   |
-| 2                 | Jumps or Calls |
-| 3                 | RET            |
+| *Category* value | Category       |
+| :--------------: | :------------: |
+| 0                | Branch         |
+| 1                | Illegal        |
+| 2                | Jumps or Calls |
+| 3                | RET            |
 
 Depending on the value of *Category* the decoding steps will differ.
 
-#### II.1.1.4.1) Branch
+##### II.1.1.4.1) Branch
 
-Jumps to the specified label if previous comparaison is true for the specified comparator. Otherwise it is no-op.
+Jumps to the specified label if conditional flag is true for the specified comparator. Otherwise it is no-op.
 
-| 31 - 26 | 25 - 12 | 11 - 8       | 7 - 6 | 5 - 4  | 5 - 4  | 3 - 2 | 1 - 0 |
-| :-----: | :-----: | :----------: | :---: | :----: | :----: | :---: | :---: |
-| 0       | *Label* | *Comparator* | 0     | 3      | 3      | 0     | 1     |
+| 31 - 26 | 25 - 12 | 11 - 8       | 7 - 6 | 5 - 4 | 3 - 2 | 1 - 0 |
+| :-----: | :-----: | :----------: | :---: | :---: | :---: | :---: |
+| 0       | *Label* | *Comparator* | 0     | 3     | 0     | 1     |
 
 | *Comparator* value | Comparator       | Notes         | Mnemonic |
 | :----------------: | :--------------: | :-----------: | :------: |
 | 0                  | Not equal        |               | BNE      |
 | 1                  | Equal            |               | BEQ      |
-| 2                  | Less             |               | BLU      |
-| 3                  | Less or equal    |               | BLEU     |
-| 4                  | Greater          |               | BGU      |
-| 5                  | Greater or equal |               | BGEU     |
+| 2                  | Less             |               | BL       |
+| 3                  | Less or equal    |               | BLE      |
+| 4                  | Greater          |               | BG       |
+| 5                  | Greater or equal |               | BGE      |
 | 6                  | Less             | Sign-extended | BLS      |
 | 7                  | Less or equal    | Sign-extended | BLES     |
 | 8                  | Greater          | Sign-extended | BGS      |
@@ -152,21 +177,95 @@ Jumps to the specified label if previous comparaison is true for the specified c
 * *Label*: the address of the instruction to jump to in ISRAM
 * *Comparator*: the logical operation to perform 
 
-#### II.1.1.4.2) Float branch
+###### II.1.1.4.1.1) Float branch
 
-To be determined
+`fcmp` and `dcmp` modifies the signed (`S`) and equality (`Z`) flags.
+`fbcc` and `dbcc` generates `bccs` instruction, where `cc` is the comparator (`L`, `LE`, `G`, `GE`)
 
-#### II.1.1.4.3) Jumps or Calls
+##### II.1.1.4.2) Jumps or Calls
 
+Jumps to the specified label, based on absolute or relative address.
 
+| 31 - 26 | 25 - 12 | 11 - 10 | 9 - 8     | 7 - 6 | 5 - 4 | 3 - 2 | 1 - 0 |
+| :-----: | :-----: | :-----: | :-------: | :---: | :---: | :---: | :---: |
+| 0       | *Label* | 0       | *Subtype* | 2     | 3     | 0     | 1     |
 
-#### II.1.1.4.4) RET
+| *Subtype* value | Instruction   | Mnemonic |
+| :-------------: | :-----------: | :------: |
+| 0               | Call          | CALL     |
+| 1               | Jump          | JMP      |
+| 2               | Call relative | CALLR    |
+| 3               | Jump relative | JMPR     |
+
+* *Label*: the address, absolute or relative, of the instruction to jump to in ISRAM
+* *Subtype*: the logical operation to perform 
+
+##### II.1.1.4.3) RET
+
+Jump to the next instruction following the last call.
+
+| 31 - 8 | 7 - 6 | 5 - 4 | 3 - 2 | 1 - 0 |
+| :----: | :---: | :---: | :---: | :---: |
+| 0      | 3     | 3     | 0     | 1     |
 
 ### II.1.2) CMPI
 
+Update the comparison flags based on integer comparison.
+
+| 31 - 26  | 25 - 6      | 5 - 4  | 3 - 2 | 1 - 0 |
+| :------: | :---------: | :----: | :---: | :---: |
+| *Source* | *Immediate* | *Size* | 1     | 1     |
+
+* *Size*: if 0, then the operation is done on 1 byte, if 1, then the operation is done on 2 byte, if 2 then the operation is done on 4 byte, if 3, then the operation is done on 8 byte.
+* *Immediate*: The value to compare with *Source*
+* *Source*: The register to be compared with
+
 ### II.1.3) FCMPI
 
+Update the comparison flags based on integer comparison.
+
+| 31 - 25  | 24 - 4      | 3 - 2 | 1 - 0 |
+| :------: | :---------: | :---: | :---: |
+| *Source* | *Immediate* | 2     | 1     |
+
+* *Size*: if 0, then the operation is done on 1 byte, if 1, then the operation is done on 2 byte, if 2 then the operation is done on 4 byte, if 3, then the operation is done on 8 byte.
+* *Immediate*: The value to compare with *Source* (21-bits).
+* *Source*: The register to be compared with.
+
+*Immediate* has a non-standard IEEE-754 format:
+
+| 20     | 19 - 12    | 11 - 0     |
+| :----: | :--------: | :--------: |
+| *Sign* | *Exponent* | *Mantissa* |
+
+*Mantissa*: 12-bits mantissa
+*Exponent*: 8-bits exponent 
+*Sign*: 0 is positive, 1 is negative
+
+To make a full single-precision ieee-754 floating point value the *Immediate* value simply need to be copied in the higher bits of the floating point value.
+
 ### II.1.4) DCMPI
+
+Update the comparison flags based on integer comparison.
+
+| 31 - 26  | 25 - 4      | 3 - 2 | 1 - 0 |
+| :------: | :---------: | :---: | :---: |
+| *Source* | *Immediate* | 3     | 1     |
+
+* *Immediate*: The value to compare with *Source* (22-bits).
+* *Source*: The register to be compared with.
+
+*Immediate* has a non-standard IEEE-754 format:
+
+| 21     | 20 - 10    | 9 - 0     |
+| :----: | :--------: | :--------: |
+| *Sign* | *Exponent* | *Mantissa* |
+
+*Mantissa*: 10-bits mantissa
+*Exponent*: 11-bits exponent 
+*Sign*: 0 is positive, 1 is negative
+
+To make a full double-precision ieee-754 floating point value the *Immediate* value simply need to be copied in the higher bits of the floating point value.
 
 ## II.2) LSU
 
@@ -176,12 +275,12 @@ To be determined
 
 Depending on the value of *Type* the decoding steps will differ.
 
-| *Type* value         | Instruction        |
-| :------------------: | :----------------: |
-| 0                    | LDM/STM            |
-| 1                    | *Subtypes*         |
-| 2                    | LDC/STC            |
-| 3                    | LDF/STF or LDD/STD |
+| *Type* value | Instruction        |
+| :----------: | :----------------: |
+| 0            | LDM/STM            |
+| 1            | *Subtypes*         |
+| 2            | LDC/STC            |
+| 3            | LDF/STF or LDD/STD |
 
 ### II.2.1) LDM/STM
 
