@@ -6,6 +6,7 @@ r58-r59 LS adr cache
 r42-r57 LS size
 -------------------------
 AGU
+
 1,2
 32-64 bytes
 
@@ -13,40 +14,30 @@ AGU
 ii0l srrR aaaa aaaa
 aaaa mmmm mmmm mmmm
 
-ldm.1 0xFFF(R58),2(r60) (Load RAM adress SP 32 bytes -> 0xFFF*32) 32-64 bytes
-stm.2 0xFFF(R59),2(r61) (Load RAM adress SP 32 bytes -> 0xFFF*32)
-
+lddma.1 0xFFF(R58),2(r60) (Load RAM adress SP 32 bytes -> 0xFFF*32) 32-64 bytes
+stdma.2 0xFFF(R59),2(r61) (Load RAM adress SP 32 bytes -> 0xFFF*32)
 
 ;Memory List
-ii1l 0000 0Rrr rrrr
-mmmm mmmm mmmm mmmm
-src/size (7 bytes)
-ldma  0xFFFF(r58),r0
-sdma  0xFFFF(r58),r0
-arg1 = adresse Memory list DMA
-arg3 = size
+ii1l 0000 mmmm mmmm
+mmmm rrrr rrrr rrrr
 
-ii1l 01Rm mmmm mmmm
-aaaa aaaa aaaa aaaa
-src/size (7 bytes)
-ldma  0xFFFF(r58),imm
-sdma  0xFFFF(r58),imm
-arg1 = adresse Memory list DMA
-arg3 = size
+lddmar r0,r1,imm
+stdmar r0,r1,imm
+arg1 = dst DSRAM
+arg2 = src RAM
+imm = size *32
 
-ii1l 1rrr rRrr rrrr
-mmmm mmmm mmmm mmmm
+ii10 1000 mmmm mmmm
+mmmm rrrr rrrr rrrr
 
-ldm  0xFFFF(r58),r0,r2
-stm  0xFFFF(r58),r0,r2
-arg1 = adresse Memory
-arg2 = adresse Memory RAM
-arg3 = size
+dmair r0,r1,imm
+arg1 = dst ISRAM
+arg2 = src RAM
+imm = size *32
 
-;command list
-ii10 0010 0Rrr rrrr
-mmmm mmmm mmmm mmmm
-cmd/src/size/dst (10 bytes)
-dma  r0,R58
+ii10 1111 0000 0000
+0000 0000 0000 0000
 
+wait
+-------------------------------
 
