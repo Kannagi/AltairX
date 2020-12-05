@@ -17,11 +17,9 @@ Bits fiels bounds are inclusive (3 - 0 means both bits 3, 2, 1 and 0)
 
 The following table is applicable to **ALL** opcodes
 
-| 31 - 2    | 1 - 0        |
+| 31 - 2    | 1 - 0          |
 | :-------: | :------------: |
 | Dependent | *Compute Unit* |
-
-Depending on the value of *Compute Unit* the decoding steps will differ.
 
 | *Compute Unit* value | Compute Unit |
 | :------------------: | :----------: |
@@ -30,11 +28,101 @@ Depending on the value of *Compute Unit* the decoding steps will differ.
 | 2                    | ALU          |
 | 3                    | VFPU         |
 
+Depending on the value of *Compute Unit* the decoding steps will differ.
+
 # II) Compute units opcodes
 
 ## II.1) AGU and BRU
 
-<!--to be done-->
+| 31 - 4    | 3 - 2   | 1 - 0 |
+| :-------: | :-----: | :---: |
+| Dependent | *Type*  | 1     |
+
+| *Type* value  | Instruction             |
+| :-----------: | :---------------------: |
+| 0             | Comparison or Branch    |
+| 1             | CMPI                    |
+| 2             | FCMPI                   |
+| 3             | DCMPI                   |
+
+Depending on the value of *Type* the decoding steps will differ.
+
+### II.1.1) Comparison or Branch
+
+| 31 - 6    | 5 - 4         | 3 - 2 | 1 - 0 |
+| :-------: | :-----------: | :---: | :---: |
+| Dependent | *Instruction* | 0     | 1     |
+
+| *Instruction* value  | Instruction |
+| :------------------: | :---------: |
+| 0                    | CMP         |
+| 1                    | FCMP        |
+| 2                    | DCMP        |
+| 3                    | Branching   |
+
+Depending on the value of *Instruction* the decoding steps will differ.
+
+#### II.1.1.1) CMP
+
+#### II.1.1.3) FCMP
+
+#### II.1.1.2) DCMP
+
+#### II.1.1.4) Branching
+
+| 31 - 8    | 7 - 6      | 5 - 4  | 5 - 4  | 3 - 2 | 1 - 0 |
+| :-------: | :--------: | :----: | :----: | :---: | :---: |
+| Dependent | *Category* | 3      | 3      | 0     | 1     |
+
+| *Category* value  | Category       |
+| :---------------: | :------------: |
+| 0                 | Branch         |
+| 1                 | Float branch   |
+| 2                 | Jumps or Calls |
+| 3                 | RET            |
+
+Depending on the value of *Category* the decoding steps will differ.
+
+#### II.1.1.4.1) Branch
+
+Jumps to the specified label if previous comparaison is true for the specified comparator. Otherwise it is no-op.
+
+| 31 - 26 | 25 - 12 | 11 - 8       | 7 - 6 | 5 - 4  | 5 - 4  | 3 - 2 | 1 - 0 |
+| :-----: | :-----: | :----------: | :---: | :----: | :----: | :---: | :---: |
+| 0       | *Label* | *Comparator* | 0     | 3      | 3      | 0     | 1     |
+
+| *Comparator* value | Comparator        | Notes         | Mnemonic |
+| :----------------: | :---------------: | :-----------: | :------: |
+| 0                  | Not equal         |               | |
+| 1                  | Equal             |               | |
+| 2                  | Less              |               | |
+| 3                  | Less or equal     |               | |
+| 4                  | Greater           |               | |
+| 5                  | Greater or equal  |               | |
+| 6                  | Less              | Sign-extended | |
+| 7                  | Less or equal     | Sign-extended | |
+| 8                  | Greater           | Sign-extended | |
+| 9                  | Greater or equal  | Sign-extended | |
+| 10-15              | Illegal           |               | |
+
+* *Label*: the address of the instruction to jump to in ISRAM
+* *Comparator*: the logical operation to perform 
+
+#### II.1.1.4.2) Float branch
+
+To be determined
+
+#### II.1.1.4.3) Jumps or Calls
+
+
+
+#### II.1.1.4.4) RET
+
+### II.1.2) CMPI
+
+### II.1.3) FCMPI
+
+### II.1.4) DCMPI
 
 ## II.2) LSU
 
