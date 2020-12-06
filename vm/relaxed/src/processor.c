@@ -507,7 +507,7 @@ static uint32_t opcodeSetSize(ArProcessor restrict processor)
     uint32_t size;
     if(processor->flags & 0x01)
     {
-        const uint32_t available = processor->programCounter - (ISRAM_SIZE / 4u); //we may overflow otherwise
+        const uint32_t available = processor->pc - (ISRAM_SIZE / 4u); //we may overflow otherwise
         size = MIN(available, 4u);
     }
     else
@@ -524,8 +524,8 @@ ArResult arDecodeInstruction(ArProcessor processor)
 
     const uint32_t size = opcodeSetSize(processor);
 
-    memcpy(processor->opcodes, processor->isram + processor->programCounter, size * sizeof(uint32_t));
-    processor->programCounter += size;
+    memcpy(processor->opcodes, processor->isram + processor->pc, size * sizeof(uint32_t));
+    processor->pc += size;
 
     for(uint32_t i = 0; i < size; ++i)
     {
