@@ -149,14 +149,14 @@ static int decodeLSU(uint32_t opcode, Operation* restrict output)
         const uint32_t size  = (opcode >> 6u ) & 0x0003u;
         const uint32_t value = (opcode >> 8u ) & 0x0FFFu;
         const uint32_t src   = (opcode >> 20u) & 0x003Fu;
-        const uint32_t dest  = (opcode >> 26u) & 0x003Fu;
+        const uint32_t reg   = (opcode >> 26u) & 0x003Fu;
 
         output->data = incr;
         output->op   = store ? OPCODE_STM : OPCODE_LDM;
         output->size = size;
         output->operands[0] = value;
         output->operands[1] = src;
-        output->operands[2] = dest;
+        output->operands[2] = reg;
     }
     else if(type == 1) //Subtypes
     {
@@ -170,7 +170,6 @@ static int decodeLSU(uint32_t opcode, Operation* restrict output)
             const uint32_t src   = (opcode >> 25u) & 0x0001u;
             const uint32_t dest  = (opcode >> 26u) & 0x003Fu;
 
-            output->data = 0;
             output->op   = store ? OPCODE_STMX : OPCODE_LDMX;
             output->size = size;
             output->operands[0] = value;
@@ -184,7 +183,6 @@ static int decodeLSU(uint32_t opcode, Operation* restrict output)
             const uint32_t value = (opcode >> 16u) & 0xFFu;
             const uint32_t dest  = (opcode >> 26u) & 0x3Fu;
 
-            output->data = 0;
             output->op   = store ? OPCODE_OUT : OPCODE_IN;
             output->size = size;
             output->operands[0] = value;
@@ -196,7 +194,6 @@ static int decodeLSU(uint32_t opcode, Operation* restrict output)
             const uint32_t value = (opcode >> 16u) & 0xFFFFu;
             const uint32_t dest  = (opcode >> 26u) & 0x00FFu;
 
-            output->data = 0;
             output->op   = OPCODE_OUTI;
             output->size = size;
             output->operands[0] = value;
@@ -553,6 +550,10 @@ static ArResult executeInstruction(ArProcessor restrict processor, const Operati
         0xFFFFFFFFFFFFFFFFull,
     };
 
+    static const uint32_t ZSUClearMask = ~(Z_MASK | S_MASK | U_MASK);
+    static const uint32_t retClearMask = ~R_MASK;
+    static const uint32_t cmdClearMask = ~CMPT_MASK;
+
     uint64_t* restrict const ireg = processor->ireg;
     const uint32_t* restrict const operands = op->operands;
 
@@ -576,23 +577,46 @@ static ArResult executeInstruction(ArProcessor restrict processor, const Operati
             break;
 
         //LSU
-        case OPCODE_LDM:
+        case OPCODE_LDM: //copy data from dsram to register
+            memcpy(&ireg[operands[2]], &processor->dsram[operands[0] + ireg[operands[1]]], 1u << op->size);
+            ireg[operands[1]] += op->data; //incr
             break;
-        case OPCODE_STM:
+
+        case OPCODE_STM: //copy data from register to dsram
+            memcpy(&processor->dsram[operands[0] + ireg[operands[1]]], &ireg[operands[2]], 1u << op->size);
+            ireg[operands[1]] += op->data; //incr
             break;
-        case OPCODE_LDC:
+
+        case OPCODE_LDC: //copy data from cache to register
+            memcpy(&ireg[operands[2]], &processor->cache[operands[0] + ireg[operands[1]]], 1u << op->size);
+            ireg[operands[1]] += op->data; //incr
             break;
-        case OPCODE_STC:
+
+        case OPCODE_STC: //copy data from register to cache
+            memcpy(&processor->cache[operands[0] + ireg[operands[1]]], &ireg[operands[2]], 1u << op->size);
+            ireg[operands[1]] += op->data; //incr
             break;
-        case OPCODE_LDMX:
+
+        case OPCODE_LDMX: //copy data from dsram to register
+            memcpy(&ireg[operands[2]], &processor->dsram[operands[0] + ireg[operands[1]]], 1u << op->size);
+            ireg[operands[1]] += op->data; //incr
             break;
-        case OPCODE_STMX:
+
+        case OPCODE_STMX: //copy data from register to dsram
+            memcpy(&processor->dsram[operands[0] + ireg[operands[1]]], &ireg[operands[2]], 1u << op->size);
+            ireg[operands[1]] += op->data; //incr
             break;
+
         case OPCODE_IN:
+            memcpy(&ireg[operands[2]], &processor->iosram[operands[0]], 1u << op->size);
             break;
+
         case OPCODE_OUT:
+            memcpy(&processor->iosram[operands[0]], &ireg[operands[2]], 1u << op->size);
             break;
+
         case OPCODE_OUTI:
+            memcpy(&processor->iosram[operands[0]], &ireg[operands[2]], 1u << op->size);
             break;
 
         //ALU
@@ -803,30 +827,124 @@ static ArResult executeInstruction(ArProcessor restrict processor, const Operati
             break;
 
         //BRU
-        case OPCODE_BNE:
+        case OPCODE_BNE: // !=
+            if(processor->flags & Z_MASK)
+            {
+                processor->pc = operands[0];
+            }
+
+            processor->flags &= ZSUClearMask;
             break;
-        case OPCODE_BEQ:
+
+        case OPCODE_BEQ: // ==
+            if(!(processor->flags & Z_MASK))
+            {
+                processor->pc = operands[0];
+            }
+
+            processor->flags &= ZSUClearMask;
             break;
-        case OPCODE_BL:
+
+        case OPCODE_BL: // <
+            if(processor->flags & U_MASK)
+            {
+                processor->pc = operands[0];
+            }
+
+            processor->flags &= ZSUClearMask;
             break;
-        case OPCODE_BLE:
+
+        case OPCODE_BLE: // <=
+            if((processor->flags & U_MASK) || !(processor->flags & Z_MASK))
+            {
+                processor->pc = operands[0];
+            }
+
+            processor->flags &= ZSUClearMask;
             break;
-        case OPCODE_BG:
+
+        case OPCODE_BG: // >
+            if(!(processor->flags & U_MASK))
+            {
+                processor->pc = operands[0];
+            }
+
+            processor->flags &= ZSUClearMask;
             break;
-        case OPCODE_BGE:
+
+        case OPCODE_BGE: // >=
+            if(!(processor->flags & U_MASK) || !(processor->flags & Z_MASK))
+            {
+                processor->pc = operands[0];
+            }
+
+            processor->flags &= ZSUClearMask;
             break;
-        case OPCODE_BLS:
+
+        case OPCODE_BLS: // <
+            if(processor->flags & S_MASK)
+            {
+                processor->pc = operands[0];
+            }
+
+            processor->flags &= ZSUClearMask;
             break;
-        case OPCODE_BLES:
+
+        case OPCODE_BLES: // <=
+            if((processor->flags & S_MASK) || !(processor->flags & Z_MASK))
+            {
+                processor->pc = operands[0];
+            }
+
+            processor->flags &= ZSUClearMask;
             break;
-        case OPCODE_BGS:
+
+        case OPCODE_BGS: // >
+            if(!(processor->flags & S_MASK))
+            {
+                processor->pc = operands[0];
+            }
+
+            processor->flags &= ZSUClearMask;
             break;
-        case OPCODE_BGES:
+
+        case OPCODE_BGES: // >=
+            if(!(processor->flags & S_MASK) || !(processor->flags & Z_MASK))
+            {
+                processor->pc = operands[0];
+            }
+
+            processor->flags &= ZSUClearMask;
             break;
-        case OPCODE_CMP:
+
+        case OPCODE_CMP: // REG <=> REG
+        {
+            const uint64_t right = ireg[operands[0]] & sizemask[op->size];
+            const uint64_t left  = ireg[operands[1]] & sizemask[op->size];
+
+            processor->flags &= ZSUClearMask;
+            processor->flags |= (left != right) << 1u;
+            processor->flags |= ((int64_t)left < (int64_t)right) << 2u;
+            processor->flags |= (left < right) << 3u;
+            processor->flags &= cmdClearMask;
+
             break;
-        case OPCODE_CMPI:
+        }
+
+        case OPCODE_CMPI: // REG <=> IMM
+        {
+            const uint64_t right = operands[0] & sizemask[op->size];
+            const uint64_t left  = ireg[operands[1]] & sizemask[op->size];
+
+            processor->flags &= ZSUClearMask;
+            processor->flags |= (left != right) << 1u;
+            processor->flags |= ((int64_t)left < (int64_t)right) << 2u;
+            processor->flags |= (left < right) << 3u;
+            processor->flags &= cmdClearMask;
+
             break;
+        }
+
         case OPCODE_FCMP:
             break;
         case OPCODE_FCMPI:
@@ -835,15 +953,29 @@ static ArResult executeInstruction(ArProcessor restrict processor, const Operati
             break;
         case OPCODE_DCMPI:
             break;
+
         case OPCODE_JMP:
+            processor->pc = operands[0] * 2u;
             break;
+
         case OPCODE_CALL:
+            processor->flags &= retClearMask;
+            processor->flags |= (processor->pc << 4u);
+            processor->pc = operands[0] * 2u;
             break;
+
         case OPCODE_JMPR:
+            processor->pc += operands[0] * 2u;
             break;
+
         case OPCODE_CALLR:
+            processor->flags &= retClearMask;
+            processor->flags |= (processor->pc << 4u);
+            processor->pc += operands[0] * 2u;
             break;
+
         case OPCODE_RET:
+            processor->pc = (processor->flags & R_MASK) >> 4u;
             break;
     }
 

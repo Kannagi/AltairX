@@ -125,6 +125,13 @@ typedef struct Operation
 #define FREG_COUNT  (128u)
 #define MAX_OPCODE  (4u)
 
+#define XCHG_MASK (0x01u)
+#define Z_MASK (0x02u)
+#define S_MASK (0x04u)
+#define U_MASK (0x08u)
+#define R_MASK (0x03FFF0u)
+#define CMPT_MASK (0xC0000000u)
+
 typedef struct ArProcessor_T
 {
     ArProcessor next;
@@ -147,9 +154,10 @@ typedef struct ArProcessor_T
     /// Bit 1: Z flag, 1 if not equal, 0 if equal
     /// Bit 2: S flag, 1 if lesser, 0 if greater (signed comparison)
     /// Bit 3: U flag, 1 if lesser, 0 if greater (unsigned comparison)
+    /// Bit 4-17: R value, the PC address of the last call
     ///
     /// Non-hardware
-    /// Bit 30-31: store the type of the last signed cmp type, 0 = int, 1 = float, 2 = double, 3 = nope
+    /// Bit 30-31: CMPT, store the type of the last signed cmp type, 0 = int, 1 = float, 2 = double, 3 = nope
     uint32_t flags;
 
     Operation operations[MAX_OPCODE];
