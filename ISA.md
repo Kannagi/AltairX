@@ -623,7 +623,7 @@ Transfer blocs of data from RAM and ISRAM.
 
 | 31 - 26         | 25 - 20       | 19 - 8 | 7 - 4  | 3       | 2   | 1 - 0 |
 | :-------------: | :-----------: | :----: | :----: | :-----: | :-: | :---: |
-| *ISRAM address* | *RAM address* | *Size* | 0      | *Store* | 1   | 2     |
+| *ISRAM address* | *RAM address* | *Size* | 1      | *Store* | 1   | 2     |
 
 * *Store*: must be 0 (1 is illegal), it is always a transfer from RAM to ISRAM.
 * *Size*: the amount of data to transfer, the total size in bytes is `32 * Size`.
