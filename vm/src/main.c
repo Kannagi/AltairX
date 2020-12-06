@@ -4,7 +4,7 @@
 #include <stdio.h>
 #include <assert.h>
 
-#define RAMSIZE (4 * 1024 * 1024)
+#define RAMSIZE (8 * 1024 * 1024)
 
 typedef struct VirtualMachineContext
 {

@@ -385,8 +385,59 @@ static int decodeALU(uint32_t opcode, Operation* restrict output)
 
 static int decodeAGU(uint32_t opcode, Operation* restrict output)
 {
-    (void)opcode;
-    (void)output;
+    const uint32_t category = (opcode >> 2u) & 0x01u;
+
+    if(category == 0) //LDDMA/STDMA
+    {
+        const uint32_t store = (opcode >> 3u ) & 0x0001u;
+        const uint32_t size  = (opcode >> 4u ) & 0x0001u;
+        const uint32_t sram  = (opcode >> 5u ) & 0x0003u;
+        const uint32_t ram   = (opcode >> 7u ) & 0x0001u;
+        const uint32_t sramb = (opcode >> 8u ) & 0x0FFFu;
+        const uint32_t ramb  = (opcode >> 20u) & 0x0FFFu;
+
+        output->op = store ? OPCODE_STDMA : OPCODE_LDDMA;
+        output->size = size;
+        output->operands[0] = sram + 60;
+        output->operands[1] = ram + 58;
+        output->data = (ramb << 12u) | sramb;
+    }
+    else //Load/store list
+    {
+        const uint32_t store = (opcode >> 3u ) & 0x01u;
+        const uint32_t type  = (opcode >> 4u ) & 0x0Fu;
+
+        if(type == 0) //LDDMAR/STDMAR
+        {
+            const uint32_t size = (opcode >> 8u ) & 0x0FFFu;
+            const uint32_t ram  = (opcode >> 8u ) & 0x003Fu;
+            const uint32_t sram = (opcode >> 20u) & 0x003Fu;
+
+            output->op = store ? OPCODE_STDMAR : OPCODE_LDDMAR;
+            output->size = size;
+            output->operands[0] = ram;
+            output->operands[1] = sram;
+        }
+        else if(type == 1) //DMAIR
+        {
+            const uint32_t size = (opcode >> 8u ) & 0x0FFFu;
+            const uint32_t ram  = (opcode >> 8u ) & 0x003Fu;
+            const uint32_t sram = (opcode >> 20u) & 0x003Fu;
+
+            output->op = OPCODE_DMAIR;
+            output->size = size;
+            output->operands[0] = ram;
+            output->operands[1] = sram;
+        }
+        else if(type == 15) //WAIT
+        {
+            output->op = OPCODE_WAIT;
+        }
+        else
+        {
+            return 0;
+        }
+    }
 
     return 1;
 }

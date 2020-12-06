@@ -13,6 +13,14 @@ typedef enum Opcode
 {
     OPCODE_UNKNOWN,
 
+    //AGU
+    OPCODE_LDDMA,
+    OPCODE_STDMA,
+    OPCODE_LDDMAR,
+    OPCODE_STDMAR,
+    OPCODE_DMAIR,
+    OPCODE_WAIT,
+
     //LSU
     OPCODE_LDM,
     OPCODE_STM,
