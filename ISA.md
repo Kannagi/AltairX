@@ -569,20 +569,20 @@ Write the value of a register in another one.
 
 Depending on the value of *Category* the decoding steps will differ.
 
-### II.4.1) Direct load/store
+### II.4.1) Direct load/store (LDDMA/STDMA)
 
 Direct transfer between DSRAM and RAM
 
-| 31 - 20      | 19 - 8     | 7               | 6 - 5         | 4      | 3       | 2   | 1 - 0 |
-| :----------: | :--------: | :-------------: | :-----------: | :----: | :-----: | :-: | :---: |
-| *DSRAM Base* | *RAM Base* | *DSRAM address* | *RAM address* | *Size* | *Store* | 0   | 2     |
+| 31 - 20    | 19 - 8       | 7             | 6 - 5           | 4      | 3       | 2   | 1 - 0 |
+| :--------: | :----------: | :-----------: | :-------------: | :----: | :-----: | :-: | :---: |
+| *RAM Base* | *DSRAM Base* | *RAM address* | *DSRAM address* | *Size* | *Store* | 0   | 2     |
 
 * *Store*: if 0, then it is a transfer from RAM to SDRAM, if 1, then it is a tranfers from SDRAM to RAM.
 * *Size*: if 0, then transfer 32 bytes, if 1, then transfer 64 bytes.
-* *RAM address*: a register, this value is added to *RAM Base* to compute the final address in RAM.
-* *DSRAM address*: a register, this value is added to *DSRAM Base* to compute the final address in DSRAM.
-* *RAM Base*: a value, it is added to *RAM address* to compute the final address in RAM.
+* *DSRAM address*: a register, this value is added to *DSRAM Base* to compute the final address in DSRAM. The real register is `rX` where `X = 60 + DSRAM address`.
+* *RAM address*: a register, this value is added to *RAM Base* to compute the final address in RAM. The real register is `rX` where `X = 58 + RAM address`.
 * *DSRAM Base*: a value, it is added to *DSRAM address* to compute the final address in DSRAM.
+* *RAM Base*: a value, it is added to *RAM address* to compute the final address in RAM.
 
 The address in RAM is multiplied by 32, so the final address, in bytes, is `(RAM address + RAM Base) * 32`.
 The address in DSRAM is multiplied by 32, so the final address, in bytes, is `(DSRAM address + DSRAM Base) * 32`
@@ -608,31 +608,31 @@ Depending on the value of *Type* the decoding steps will differ.
 
 Transfer blocs of data between RAM and DSRAM.
 
-| 31 - 26       | 25 - 20  | 19 - 8 | 7 - 4  | 3       | 2   | 1 - 0 |
-| :-----------: | :------: | :----: | :----: | :-----: | :-: | :---: |
-| *Destination* | *Source* | *Size* | 0      | *Store* | 1   | 2     |
+| 31 - 26         | 25 - 20       | 19 - 8 | 7 - 4  | 3       | 2   | 1 - 0 |
+| :-------------: | :-----------: | :----: | :----: | :-----: | :-: | :---: |
+| *DSRAM address* | *RAM address* | *Size* | 0      | *Store* | 1   | 2     |
 
 * *Store*: if 0, then it is a transfer from RAM to SDRAM, if 1, then it is a tranfers from SDRAM to RAM.
 * *Size*: the amount of data to transfer, the total size in bytes is `32 * Size`.
-* *Source*: a register, its value is the base address in the source memory (if *Store* is 0 source memory is RAM, otherwise it is DSRAM), the final address is `32 * Source` in bytes.
-* *Destination*: a register, its value is the base address in the destination memory (if *Store* is 0 source memory is DSRAM, otherwise it is RAM), the final address is `32 * Destination` in bytes.
+* *RAM address*: a register, its value is the base address in RAM, the final address, in bytes, is `32 * RAM address`.
+* *DSRAM address*: a register, its value is the base address in DSRAM, the final address, in bytes, is `32 * DSRAM address`.
 
 ### II.4.2.2) DMAIR
 
 Transfer blocs of data from RAM and ISRAM.
 
-| 31 - 26       | 25 - 20  | 19 - 8 | 7 - 4  | 3       | 2   | 1 - 0 |
-| :-----------: | :------: | :----: | :----: | :-----: | :-: | :---: |
-| *Destination* | *Source* | *Size* | 0      | *Store* | 1   | 2     |
+| 31 - 26         | 25 - 20       | 19 - 8 | 7 - 4  | 3       | 2   | 1 - 0 |
+| :-------------: | :-----------: | :----: | :----: | :-----: | :-: | :---: |
+| *ISRAM address* | *RAM address* | *Size* | 0      | *Store* | 1   | 2     |
 
 * *Store*: must be 0 (1 is illegal), it is always a transfer from RAM to ISRAM.
 * *Size*: the amount of data to transfer, the total size in bytes is `32 * Size`.
-* *Source*: a register, its value is the base address in the RAM, the final address is `32 * Source` in bytes.
-* *Destination*: a register, its value is the base address in the ISRAM, the final address is `32 * Destination` in bytes.
+* *RAM address*: a register, its value is the base address in the RAM, the final address, in bytes, is `32 * RAM address`.
+* *ISRAM address*: a register, its value is the base address in the ISRAM, the final address, in bytes, is `32 * ISRAM address`.
 
 ### II.4.2.3) WAIT
 
-Does nothing (it is the nop-like of the AGU)
+Blocks execution until the end of previous transfers.
 
 | 31 - 8 | 7 - 4 | 3   | 2   | 1 - 0 |
 | :----: | :---: | :-: | :-: | :---: |
