@@ -161,6 +161,8 @@ typedef struct ArProcessor_T
     uint32_t flags;
 
     Operation operations[MAX_OPCODE];
+    uint32_t delayedBits;
+    Operation delayed[MAX_OPCODE];
 
 } ArProcessor_T;
 

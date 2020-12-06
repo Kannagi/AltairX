@@ -538,8 +538,7 @@ ArResult arDecodeInstruction(ArProcessor processor)
     return AR_SUCCESS;
 }
 
-
-static ArResult executeInstruction(ArProcessor restrict processor, const Operation* restrict op)
+static ArResult executeInstruction(ArProcessor restrict processor, uint32_t index)
 {
     //Mask to trunc results base on 4-way size (8 bits, 16 bits, 32 bits or 64 bits)
     static const uint64_t sizemask[4] =
@@ -551,10 +550,11 @@ static ArResult executeInstruction(ArProcessor restrict processor, const Operati
     };
 
     static const uint32_t ZSUClearMask = ~(Z_MASK | S_MASK | U_MASK);
-    static const uint32_t retClearMask = ~R_MASK;
     static const uint32_t cmdClearMask = ~CMPT_MASK;
 
     uint64_t* restrict const ireg = processor->ireg;
+
+    const Operation* restrict op = &processor->operations[index];
     const uint32_t* restrict const operands = op->operands;
 
     switch(op->op)
@@ -624,7 +624,8 @@ static ArResult executeInstruction(ArProcessor restrict processor, const Operati
             break;
 
         case OPCODE_XCHG: //Flip XCHG bit
-            processor->flags = (processor->flags & 0xFFFFFFFEu) | ((processor->flags & 0x01u) ^ 0x01u);
+            processor->delayedBits |= (1u << index);
+            processor->delayed[index] = *op;
             break;
 
         case OPCODE_MOVEI: //Write a value to a register
@@ -827,6 +828,87 @@ static ArResult executeInstruction(ArProcessor restrict processor, const Operati
             break;
 
         //BRU
+        case OPCODE_BNE:  // fallthrough
+        case OPCODE_BEQ:  // fallthrough
+        case OPCODE_BL:   // fallthrough
+        case OPCODE_BLE:  // fallthrough
+        case OPCODE_BG:   // fallthrough
+        case OPCODE_BGE:  // fallthrough
+        case OPCODE_BLS:  // fallthrough
+        case OPCODE_BLES: // fallthrough
+        case OPCODE_BGS:  // fallthrough
+        case OPCODE_BGES: // fallthrough
+            processor->delayedBits |= (1u << index);
+            processor->delayed[index] = *op;
+            break;
+
+        case OPCODE_CMP: // REG <=> REG
+        {
+            const uint64_t right = ireg[operands[0]] & sizemask[op->size];
+            const uint64_t left  = ireg[operands[1]] & sizemask[op->size];
+
+            processor->flags &= ZSUClearMask;
+            processor->flags |= (left != right) << 1u;
+            processor->flags |= ((int64_t)left < (int64_t)right) << 2u;
+            processor->flags |= (left < right) << 3u;
+            processor->flags &= cmdClearMask;
+
+            break;
+        }
+
+        case OPCODE_CMPI: // REG <=> IMM
+        {
+            const uint64_t right = operands[0] & sizemask[op->size];
+            const uint64_t left  = ireg[operands[1]] & sizemask[op->size];
+
+            processor->flags &= ZSUClearMask;
+            processor->flags |= (left != right) << 1u;
+            processor->flags |= ((int64_t)left < (int64_t)right) << 2u;
+            processor->flags |= (left < right) << 3u;
+            processor->flags &= cmdClearMask;
+
+            break;
+        }
+
+        case OPCODE_FCMP:
+            break;
+        case OPCODE_FCMPI:
+            break;
+        case OPCODE_DCMP:
+            break;
+        case OPCODE_DCMPI:
+            break;
+
+        case OPCODE_JMP:   //fallthrough
+        case OPCODE_CALL:  //fallthrough
+        case OPCODE_JMPR:  //fallthrough
+        case OPCODE_CALLR: //fallthrough
+        case OPCODE_RET:   //fallthrough
+            processor->delayedBits |= (1u << index);
+            processor->delayed[index] = *op;
+            break;
+    }
+
+    return AR_SUCCESS;
+}
+
+static ArResult executeDelayedInstruction(ArProcessor restrict processor, uint32_t index)
+{
+    static const uint32_t ZSUClearMask = ~(Z_MASK | S_MASK | U_MASK);
+    static const uint32_t retClearMask = ~R_MASK;
+
+    const Operation* restrict op = &processor->delayed[index];
+    const uint32_t* restrict const operands = op->operands;
+
+    switch(op->op)
+    {
+        default:
+            return AR_ERROR_ILLEGAL_INSTRUCTION;
+
+        case OPCODE_XCHG: //Flip XCHG bit
+            processor->flags = (processor->flags & 0xFFFFFFFEu) | ((processor->flags & 0x01u) ^ 0x01u);
+            break;
+
         case OPCODE_BNE: // !=
             if(processor->flags & Z_MASK)
             {
@@ -917,43 +999,6 @@ static ArResult executeInstruction(ArProcessor restrict processor, const Operati
             processor->flags &= ZSUClearMask;
             break;
 
-        case OPCODE_CMP: // REG <=> REG
-        {
-            const uint64_t right = ireg[operands[0]] & sizemask[op->size];
-            const uint64_t left  = ireg[operands[1]] & sizemask[op->size];
-
-            processor->flags &= ZSUClearMask;
-            processor->flags |= (left != right) << 1u;
-            processor->flags |= ((int64_t)left < (int64_t)right) << 2u;
-            processor->flags |= (left < right) << 3u;
-            processor->flags &= cmdClearMask;
-
-            break;
-        }
-
-        case OPCODE_CMPI: // REG <=> IMM
-        {
-            const uint64_t right = operands[0] & sizemask[op->size];
-            const uint64_t left  = ireg[operands[1]] & sizemask[op->size];
-
-            processor->flags &= ZSUClearMask;
-            processor->flags |= (left != right) << 1u;
-            processor->flags |= ((int64_t)left < (int64_t)right) << 2u;
-            processor->flags |= (left < right) << 3u;
-            processor->flags &= cmdClearMask;
-
-            break;
-        }
-
-        case OPCODE_FCMP:
-            break;
-        case OPCODE_FCMPI:
-            break;
-        case OPCODE_DCMP:
-            break;
-        case OPCODE_DCMPI:
-            break;
-
         case OPCODE_JMP:
             processor->pc = operands[0] * 2u;
             break;
@@ -989,7 +1034,18 @@ ArResult arExecuteInstruction(ArProcessor processor)
     const uint32_t size = opcodeSetSize(processor);
     for(uint32_t i = 0; i < size; ++i)
     {
-        ArResult result = executeInstruction(processor, &processor->operations[i]);
+        if(processor->delayedBits & (1u << i))
+        {
+            ArResult result = executeDelayedInstruction(processor, i);
+            if(result != AR_SUCCESS)
+            {
+                return result;
+            }
+
+            processor->delayedBits &= ~(1u << i);
+        }
+
+        ArResult result = executeInstruction(processor, i);
         if(result != AR_SUCCESS)
         {
             return result;

@@ -136,7 +136,7 @@ static int runVirtualMachine(uint32_t* code, uint32_t code_size)
     }
 
     //Main loop
-    /*for(;;)
+    for(;;)
     {
         result = arDecodeInstruction(context.processor);
         if(result != AR_SUCCESS)
@@ -149,18 +149,18 @@ static int runVirtualMachine(uint32_t* code, uint32_t code_size)
         {
             break;
         }
-
+/*
         result = arExecuteDirectMemoryAccess(context.processor);
         if(result != AR_SUCCESS){
             break;
-        }
-    }*/
+        }*/
+    }
 
     destroyVirtualMachine(&context);
 
     if(result != AR_END_OF_CODE)
     {
-        return 1;
+        return result;
     }
 
     return 0;
