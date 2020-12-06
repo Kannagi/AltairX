@@ -505,10 +505,8 @@ static int decode(uint32_t index, uint32_t opcode, Operation* restrict output)
     }
 }
 
-ArResult arDecodeInstruction(ArProcessor processor)
+static uint32_t opcodeSetSize(ArProcessor restrict processor)
 {
-    assert(processor);
-
     uint32_t size;
     if(processor->flags & 0x01)
     {
@@ -519,6 +517,15 @@ ArResult arDecodeInstruction(ArProcessor processor)
     {
         size = 2;
     }
+
+    return size;
+}
+
+ArResult arDecodeInstruction(ArProcessor processor)
+{
+    assert(processor);
+
+    const uint32_t size = opcodeSetSize(processor);
 
     memcpy(processor->opcodes, processor->isram + processor->programCounter, size * sizeof(uint32_t));
     processor->programCounter += size;
@@ -534,9 +541,328 @@ ArResult arDecodeInstruction(ArProcessor processor)
     return AR_SUCCESS;
 }
 
+
+static ArResult executeInstruction(ArProcessor restrict processor, const Operation* restrict op)
+{
+    //Mask to trunc results base on 4-way size (8 bits, 16 bits, 32 bits or 64 bits)
+    static const uint64_t sizemask[4] =
+    {
+        0x00000000000000FFull,
+        0x000000000000FFFFull,
+        0x00000000FFFFFFFFull,
+        0xFFFFFFFFFFFFFFFFull,
+    };
+
+    uint64_t* restrict const ireg = processor->ireg;
+    const uint32_t* restrict const operands = op->operands;
+
+    switch(op->op)
+    {
+        case OPCODE_UNKNOWN:
+            return AR_ERROR_ILLEGAL_INSTRUCTION;
+
+        //AGU
+        case OPCODE_LDDMA:
+            break;
+        case OPCODE_STDMA:
+            break;
+        case OPCODE_LDDMAR:
+            break;
+        case OPCODE_STDMAR:
+            break;
+        case OPCODE_DMAIR:
+            break;
+        case OPCODE_WAIT:
+            break;
+
+        //LSU
+        case OPCODE_LDM:
+            break;
+        case OPCODE_STM:
+            break;
+        case OPCODE_LDC:
+            break;
+        case OPCODE_STC:
+            break;
+        case OPCODE_LDMX:
+            break;
+        case OPCODE_STMX:
+            break;
+        case OPCODE_IN:
+            break;
+        case OPCODE_OUT:
+            break;
+        case OPCODE_OUTI:
+            break;
+
+        //ALU
+        case OPCODE_NOP: //Well, that's a no-op
+            break;
+
+        case OPCODE_XCHG: //Flip XCHG bit
+            processor->flags = (processor->flags & 0xFFFFFFFEu) | ((processor->flags & 0x01u) ^ 0x01u);
+            break;
+
+        case OPCODE_MOVEI: //Write a value to a register
+            ireg[operands[2]] = operands[0];
+            break;
+
+        case OPCODE_ADD: //REG = REG + REG
+            ireg[operands[2]] = ireg[operands[1]] + ireg[operands[0]];
+            ireg[operands[2]] &= sizemask[op->size];
+            break;
+
+        case OPCODE_ADDI: //REG = REG + IMM
+            ireg[operands[2]] = ireg[operands[1]] + operands[0];
+            ireg[operands[2]] &= sizemask[op->size];
+            break;
+
+        case OPCODE_ADDQ: //REG += IMM
+            ireg[operands[2]] += operands[0];
+            ireg[operands[2]] &= sizemask[op->size];
+            break;
+
+        case OPCODE_SUB: //REG = REG - REG
+            ireg[operands[2]] = ireg[operands[1]] - ireg[operands[0]];
+            ireg[operands[2]] &= sizemask[op->size];
+            break;
+
+        case OPCODE_SUBI: //REG = REG - IMM
+            ireg[operands[2]] = ireg[operands[1]] - operands[0];
+            ireg[operands[2]] &= sizemask[op->size];
+            break;
+
+        case OPCODE_SUBQ: //REG -= IMM
+            ireg[operands[2]] -= operands[0];
+            ireg[operands[2]] &= sizemask[op->size];
+            break;
+
+        case OPCODE_MULS: //REG = REG * REG (signed)
+            (*(int64_t*)ireg[operands[2]]) = (int64_t)ireg[operands[1]] * (int64_t)ireg[operands[0]];
+            ireg[operands[2]] &= sizemask[op->size];
+            break;
+
+        case OPCODE_MULSI: //REG = REG * IMM (signed)
+            (*(int64_t*)ireg[operands[2]]) = (int64_t)ireg[operands[1]] * (int64_t)operands[0];
+            ireg[operands[2]] &= sizemask[op->size];
+            break;
+
+        case OPCODE_MULSQ: //REG *= IMM (signed)
+            (*(int64_t*)ireg[operands[2]]) *= (int64_t)operands[0];
+            ireg[operands[2]] &= sizemask[op->size];
+            break;
+
+        case OPCODE_MULU: //REG = REG * REG
+            ireg[operands[2]] = ireg[operands[1]] * ireg[operands[0]];
+            ireg[operands[2]] &= sizemask[op->size];
+            break;
+
+        case OPCODE_MULUI: //REG = REG * IMM
+            ireg[operands[2]] = ireg[operands[1]] * operands[0];
+            ireg[operands[2]] &= sizemask[op->size];
+            break;
+
+        case OPCODE_MULUQ: //REG *= IMM
+            ireg[operands[2]] *= operands[0];
+            ireg[operands[2]] &= sizemask[op->size];
+            break;
+
+        case OPCODE_DIVS: //REG = REG / REG (signed)
+            (*(int64_t*)ireg[operands[2]]) = (int64_t)ireg[operands[1]] / (int64_t)ireg[operands[0]];
+            ireg[operands[2]] &= sizemask[op->size];
+            break;
+
+        case OPCODE_DIVSI: //REG = REG / IMM (signed)
+            (*(int64_t*)ireg[operands[2]]) = (int64_t)ireg[operands[1]] / (int64_t)operands[0];
+            ireg[operands[2]] &= sizemask[op->size];
+            break;
+
+        case OPCODE_DIVSQ: //REG /= IMM (signed)
+            (*(int64_t*)ireg[operands[2]]) /= (int64_t)operands[0];
+            ireg[operands[2]] &= sizemask[op->size];
+            break;
+
+        case OPCODE_DIVU: //REG = REG / REG
+            ireg[operands[2]] = ireg[operands[1]] / ireg[operands[0]];
+            ireg[operands[2]] &= sizemask[op->size];
+            break;
+
+        case OPCODE_DIVUI: //REG = REG / IMM
+            ireg[operands[2]] = ireg[operands[1]] / operands[0];
+            ireg[operands[2]] &= sizemask[op->size];
+            break;
+
+        case OPCODE_DIVUQ: //REG /= IMM
+            ireg[operands[2]] /= operands[0];
+            ireg[operands[2]] &= sizemask[op->size];
+            break;
+
+        case OPCODE_AND: //REG = REG & REG
+            ireg[operands[2]] = ireg[operands[1]] & ireg[operands[0]];
+            ireg[operands[2]] &= sizemask[op->size];
+            break;
+
+        case OPCODE_ANDI: //REG = REG & IMM
+            ireg[operands[2]] = ireg[operands[1]] & operands[0];
+            ireg[operands[2]] &= sizemask[op->size];
+            break;
+
+        case OPCODE_ANDQ: //REG &= IMM
+            ireg[operands[2]] &= operands[0];
+            ireg[operands[2]] &= sizemask[op->size];
+            break;
+
+        case OPCODE_OR: //REG = REG | REG
+            ireg[operands[2]] = ireg[operands[1]] | ireg[operands[0]];
+            ireg[operands[2]] &= sizemask[op->size];
+            break;
+
+        case OPCODE_ORI: //REG = REG | IMM
+            ireg[operands[2]] = ireg[operands[1]] | operands[0];
+            ireg[operands[2]] &= sizemask[op->size];
+            break;
+
+        case OPCODE_ORQ: //REG |= IMM
+            ireg[operands[2]] |= operands[0];
+            ireg[operands[2]] &= sizemask[op->size];
+            break;
+
+        case OPCODE_XOR: //REG = REG ^ REG
+            ireg[operands[2]] = ireg[operands[1]] ^ ireg[operands[0]];
+            ireg[operands[2]] &= sizemask[op->size];
+            break;
+
+        case OPCODE_XORI: //REG = REG ^ IMM
+            ireg[operands[2]] = ireg[operands[1]] ^ operands[0];
+            ireg[operands[2]] &= sizemask[op->size];
+            break;
+
+        case OPCODE_XORQ: //REG ^= IMM
+            ireg[operands[2]] ^= operands[0];
+            ireg[operands[2]] &= sizemask[op->size];
+            break;
+
+        case OPCODE_ASL: //REG = REG << REG (signed)
+            (*(int64_t*)ireg[operands[2]]) = (int64_t)ireg[operands[1]] << (int64_t)ireg[operands[0]];
+            ireg[operands[2]] &= sizemask[op->size];
+            break;
+
+        case OPCODE_ASLI: //REG = REG << IMM (signed)
+            (*(int64_t*)ireg[operands[2]]) = (int64_t)ireg[operands[1]] << (int64_t)operands[0];
+            ireg[operands[2]] &= sizemask[op->size];
+            break;
+
+        case OPCODE_ASLQ: //REG <<= IMM (signed)
+            (*(int64_t*)ireg[operands[2]]) <<= (int64_t)operands[0];
+            ireg[operands[2]] &= sizemask[op->size];
+            break;
+
+        case OPCODE_LSL: //REG = REG << REG
+            ireg[operands[2]] = ireg[operands[1]] << ireg[operands[0]];
+            ireg[operands[2]] &= sizemask[op->size];
+            break;
+
+        case OPCODE_LSLI: //REG = REG << IMM
+            ireg[operands[2]] = ireg[operands[1]] << operands[0];
+            ireg[operands[2]] &= sizemask[op->size];
+            break;
+
+        case OPCODE_LSLQ: //REG <<= IMM
+            ireg[operands[2]] <<= operands[0];
+            ireg[operands[2]] &= sizemask[op->size];
+            break;
+
+        case OPCODE_ASR: //REG = REG >> REG (signed)
+            (*(int64_t*)ireg[operands[2]]) = (int64_t)ireg[operands[1]] >> (int64_t)ireg[operands[0]];
+            ireg[operands[2]] &= sizemask[op->size];
+            break;
+
+        case OPCODE_ASRI: //REG = REG >> IMM (signed)
+            (*(int64_t*)ireg[operands[2]]) = (int64_t)ireg[operands[1]] >> (int64_t)operands[0];
+            ireg[operands[2]] &= sizemask[op->size];
+            break;
+
+        case OPCODE_ASRQ: //REG >>= IMM (signed)
+            (*(int64_t*)ireg[operands[2]]) >>= (int64_t)operands[0];
+            ireg[operands[2]] &= sizemask[op->size];
+            break;
+
+        case OPCODE_LSR: //REG = REG >> REG
+            ireg[operands[2]] = ireg[operands[1]] >> ireg[operands[0]];
+            ireg[operands[2]] &= sizemask[op->size];
+            break;
+
+        case OPCODE_LSRI: //REG = REG >> IMM
+            ireg[operands[2]] = ireg[operands[1]] >> operands[0];
+            ireg[operands[2]] &= sizemask[op->size];
+            break;
+
+        case OPCODE_LSRQ: //REG >>= IMM
+            ireg[operands[2]] >>= operands[0];
+            ireg[operands[2]] &= sizemask[op->size];
+            break;
+
+        //BRU
+        case OPCODE_BNE:
+            break;
+        case OPCODE_BEQ:
+            break;
+        case OPCODE_BL:
+            break;
+        case OPCODE_BLE:
+            break;
+        case OPCODE_BG:
+            break;
+        case OPCODE_BGE:
+            break;
+        case OPCODE_BLS:
+            break;
+        case OPCODE_BLES:
+            break;
+        case OPCODE_BGS:
+            break;
+        case OPCODE_BGES:
+            break;
+        case OPCODE_CMP:
+            break;
+        case OPCODE_CMPI:
+            break;
+        case OPCODE_FCMP:
+            break;
+        case OPCODE_FCMPI:
+            break;
+        case OPCODE_DCMP:
+            break;
+        case OPCODE_DCMPI:
+            break;
+        case OPCODE_JMP:
+            break;
+        case OPCODE_CALL:
+            break;
+        case OPCODE_JMPR:
+            break;
+        case OPCODE_CALLR:
+            break;
+        case OPCODE_RET:
+            break;
+    }
+
+    return AR_SUCCESS;
+}
+
 ArResult arExecuteInstruction(ArProcessor processor)
 {
     assert(processor);
+
+    const uint32_t size = opcodeSetSize(processor);
+    for(uint32_t i = 0; i < size; ++i)
+    {
+        ArResult result = executeInstruction(processor, &processor->operations[i]);
+        if(result != AR_SUCCESS)
+        {
+            return result;
+        }
+    }
 
     return AR_SUCCESS;
 }

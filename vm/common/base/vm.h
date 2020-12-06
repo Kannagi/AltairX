@@ -143,7 +143,6 @@ void arDestroyPhysicalMemory(ArVirtualMachine virtualMachine, ArPhysicalMemory m
 
 #undef ALTAIR_DEFINE_TYPE
 
-
 #ifdef __cplusplus
 }
 #endif

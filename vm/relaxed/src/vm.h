@@ -117,13 +117,13 @@ typedef struct Operation
     uint32_t data; //< additionnal data, op dependent
 } Operation;
 
-#define DSRAM_SIZE     (128u * 1024u)
-#define ISRAM_SIZE     (128u * 1024u)
-#define CACHE_SIZE     (32u * 1024u)
-#define IOSRAM_SIZE    (256u)
-#define INTREG_COUNT   (64u)
-#define FLOATREG_COUNT (128u)
-#define MAX_OPCODE     (4u)
+#define DSRAM_SIZE  (128u * 1024u)
+#define ISRAM_SIZE  (128u * 1024u)
+#define CACHE_SIZE  (32u * 1024u)
+#define IOSRAM_SIZE (256u)
+#define IREG_COUNT  (64u)
+#define FREG_COUNT  (128u)
+#define MAX_OPCODE  (4u)
 
 typedef struct ArProcessor_T
 {
@@ -135,10 +135,10 @@ typedef struct ArProcessor_T
     uint8_t cache [CACHE_SIZE];
     uint8_t iosram[IOSRAM_SIZE];
 
-    uint64_t intRegisters  [INTREG_COUNT];
-    uint32_t floatRegisters[FLOATREG_COUNT]; //It must be aligned on 64bits, previous field should force it, but it should be checked on every untested implementation
+    uint64_t ireg [IREG_COUNT];
+    uint32_t freg [FREG_COUNT]; //It must be aligned on 64bits, previous field should force it, but it should be checked on every untested implementation
 
-    uint32_t programCounter;
+    uint32_t pc; //program-counter
     uint32_t opcodes[MAX_OPCODE];
 
     /// \brief CPU Flags register
