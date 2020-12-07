@@ -1,11 +1,15 @@
 # Table of Contents
 
-* [I) General opcode structure](#I-General-opcode-structure)
-  * [I.1) Basic opcode structure](#I-1-Basic-opcode-structure)
-* [II) Compute units opcodes](#II-Compute-units-opcodes)
-  * [II.1) AGU and BRU](#II-1-AGU-and-BRU)
-  * [II.2) LSU](#II-2-LSU)
-    * [II.2.1) LDM/STM](#II-2-1-LDM-STM)
+* [I) General opcode structure](#i-general-opcode-structure)
+  * [I.1) Compute units](#i1-compute-units)
+  * [I.2) Basic opcode structure](#i1-basic-opcode-structure)
+* [II) Compute units opcodes](#ii-compute-units-opcodes)
+  * [II.1) BRU](#ii1-bru)
+  * [II.2) LSU](#ii2-lsu)
+  * [II.3) ALU](#ii3-alu)
+  * [II.4) AGU](#ii4-agu)
+  * [II.5) VFPU](#ii5-vfpu)
+  * [II.6) VDIV](#ii6-vdiv)
 
 # I) General opcode structure
 
@@ -309,12 +313,12 @@ stm.w r4, 2(r30)  -> 0001'0001 1110'0000 0000'0010 0110'0001
 | :-------: | :-------: | :-----: | :---: |
 | Dependent | *Subtype* | 2       | 1     |
 
-| *Subtype* value      | Instruction      |
-| :------------------: | :--------------: |
-| 0                    | LDMX/STMX        |
-| 1                    | IN/OUT           |
-| 2                    | INI/OUTI         |
-| 3                    | LDV/STV          |
+| *Subtype* value | Instruction |
+| :-------------: | :---------: |
+| 0               | LDMX/STMX   |
+| 1               | IN/OUT      |
+| 2               | OUTI        |
+| 3               | LDV/STV     |
 
 Depending on the value of *Subtype* the decoding steps will differ.
 

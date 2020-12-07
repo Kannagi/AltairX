@@ -1032,6 +1032,7 @@ ArResult arExecuteInstruction(ArProcessor processor)
     assert(processor);
 
     const uint32_t size = opcodeSetSize(processor);
+
     for(uint32_t i = 0; i < size; ++i)
     {
         if(processor->delayedBits & (1u << i))
@@ -1044,7 +1045,10 @@ ArResult arExecuteInstruction(ArProcessor processor)
 
             processor->delayedBits &= ~(1u << i);
         }
+    }
 
+    for(uint32_t i = 0; i < size; ++i)
+    {
         ArResult result = executeInstruction(processor, i);
         if(result != AR_SUCCESS)
         {
