@@ -2,7 +2,7 @@
 
 * [I) General opcode structure](#i-general-opcode-structure)
   * [I.1) Compute units](#i1-compute-units)
-  * [I.2) Basic opcode structure](#i1-basic-opcode-structure)
+  * [I.2) Basic opcode structure](#i2-basic-opcode-structure)
 * [II) Compute units opcodes](#ii-compute-units-opcodes)
   * [II.1) BRU](#ii1-bru)
   * [II.2) LSU](#ii2-lsu)
@@ -608,7 +608,7 @@ Depending on the value of *Type* the decoding steps will differ.
 
 * *Store*: meaning and possible values of this variable differ depending on the value of *Type*.
 
-### II.4.2.1) LDDMAR/STDMAR
+#### II.4.2.1) LDDMAR/STDMAR
 
 Transfer blocs of data between RAM and DSRAM.
 
@@ -621,7 +621,7 @@ Transfer blocs of data between RAM and DSRAM.
 * *RAM address*: a register, its value is the base address in RAM, the final address, in bytes, is `32 * RAM address`.
 * *DSRAM address*: a register, its value is the base address in DSRAM, the final address, in bytes, is `32 * DSRAM address`.
 
-### II.4.2.2) DMAIR
+#### II.4.2.2) DMAIR
 
 Transfer blocs of data from RAM and ISRAM.
 
@@ -634,7 +634,7 @@ Transfer blocs of data from RAM and ISRAM.
 * *RAM address*: a register, its value is the base address in the RAM, the final address, in bytes, is `32 * RAM address`.
 * *ISRAM address*: a register, its value is the base address in the ISRAM, the final address, in bytes, is `32 * ISRAM address`.
 
-### II.4.2.3) WAIT
+#### II.4.2.3) WAIT
 
 Blocks execution until the end of previous transfers.
 
