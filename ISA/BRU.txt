@@ -41,20 +41,6 @@ unsigned >,<,>=,<=
 
 
 
-
-ii00 1110 lll0 mmmm
-mmmm mmmm mm00 0000
-fbcc label
-==
-!= >,<,>=,<=
-
-ii00 1110 lll1 mmmm
-mmmm mmmm mm00 0000
-dbcc label
-==
-!= >,<,>=,<=
-
-
 ;jmp call
 ii00 1101 ll00 mmmm
 mmmm mmmm mm00 0000

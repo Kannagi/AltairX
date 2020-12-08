@@ -16,7 +16,7 @@
   "in",     {OP_IMM,OP_REG,      },{K1,(0x1)+(0x005<<2)},
   "out",    {OP_IMM,OP_REG,      },{K1,(0x1)+(0x015<<2)},
 
-  ;"ini",    {OP_IMM,OP_IMM,      },{K1,(0x1)+(0x009<<2)},
+  //"ini",    {OP_IMM,OP_IMM,      },{K1,(0x1)+(0x009<<2)},
   "outi",   {OP_IMM,OP_IMM,      },{K1,(0x1)+(0x009<<2)},
 
 
@@ -80,23 +80,14 @@
   "lsrq",   {OP_REG,OP_IMM,      },{K1,(0x2)+((0x02)<<2)+((0x0C)<<4)},
 
   //BRU
-  "fbne",   {OP_IMM,             },{K1,(0x0)+((0+0x1C)<<2)+((0x00)<<8)},
-  "fbeq",   {OP_IMM,             },{K1,(0x0)+((0+0x1C)<<2)+((0x01)<<8)},
-
-  "fbl",    {OP_IMM,             },{K1,(0x0)+((0+0x1C)<<2)+((0x02)<<8)},
-  "fble",   {OP_IMM,             },{K1,(0x0)+((0+0x1C)<<2)+((0x03)<<8)},
-
-  "fbg",    {OP_IMM,             },{K1,(0x0)+((0+0x1C)<<2)+((0x04)<<8)},
-  "fbge",   {OP_IMM,             },{K1,(0x0)+((0+0x1C)<<2)+((0x05)<<8)},
-
   "bne",    {OP_IMM,             },{K1,(0x0)+((0+0x0C)<<2)+((0x00)<<8)},
   "beq",    {OP_IMM,             },{K1,(0x0)+((0+0x0C)<<2)+((0x01)<<8)},
 
-  "blu",    {OP_IMM,             },{K1,(0x0)+((0+0x0C)<<2)+((0x02)<<8)},
-  "bleu",   {OP_IMM,             },{K1,(0x0)+((0+0x0C)<<2)+((0x03)<<8)},
+  "bl",    {OP_IMM,             },{K1,(0x0)+((0+0x0C)<<2)+((0x02)<<8)},
+  "ble",   {OP_IMM,             },{K1,(0x0)+((0+0x0C)<<2)+((0x03)<<8)},
 
-  "bgu",    {OP_IMM,             },{K1,(0x0)+((0+0x0C)<<2)+((0x04)<<8)},
-  "bgeu",   {OP_IMM,             },{K1,(0x0)+((0+0x0C)<<2)+((0x05)<<8)},
+  "bg",    {OP_IMM,             },{K1,(0x0)+((0+0x0C)<<2)+((0x04)<<8)},
+  "bge",   {OP_IMM,             },{K1,(0x0)+((0+0x0C)<<2)+((0x05)<<8)},
 
   "bls",    {OP_IMM,             },{K1,(0x0)+((0+0x0C)<<2)+((0x06)<<8)},
   "bles",   {OP_IMM,             },{K1,(0x0)+((0+0x0C)<<2)+((0x07)<<8)},
@@ -107,8 +98,8 @@
   "cmp",    {OP_REG,OP_REG,      },{K1,(0x0)+((0+0x00)<<2)},
   "cmpi",   {OP_REG,OP_IMM,      },{K1,(0x0)+((0+0x01)<<2)},
 
-  "fcmp",   {OP_VF ,OP_VF ,      },{K1,(0x0)+((0+0x04)<<2)},
-  "fcmpi",  {OP_VF ,OP_IMM,      },{K1,(0x0)+((0+0x02)<<2)},
+  "fcmp",   {OP_VT ,OP_VT ,      },{K1,(0x0)+((0+0x04)<<2)},
+  "fcmpi",  {OP_VT ,OP_IMM,      },{K1,(0x0)+((0+0x02)<<2)},
 
   "dcmp",   {OP_VD ,OP_VD ,      },{K1,(0x0)+((0+0x08)<<2)},
   "dcmpi",  {OP_VD ,OP_IMM,      },{K1,(0x0)+((0+0x03)<<2)},
@@ -119,51 +110,51 @@
   "callr",  {OP_IMM,             },{K1,(0x0)+((0+0x2C)<<2)+((0x03)<<8)},
 
   "ret",    {                    },{K1,(0x0)+((0+0x3C)<<2)},
+
+  //VFPU
+  "fadd",   {OP_VT ,OP_VT ,OP_VT },{K1,(0x3)+((0x00)<<10)},
+  "fsub",   {OP_VT ,OP_VT ,OP_VT },{K1,(0x3)+((0x01)<<10)},
+  "fmul",   {OP_VT ,OP_VT ,OP_VT },{K1,(0x3)+((0x02)<<10)},
+  "fmuladd",{OP_VT ,OP_VT ,OP_VT },{K1,(0x3)+((0x03)<<10)},
+
+  "dadd",   {OP_VD ,OP_VD ,OP_VD },{K1,(0x3)+((0x00)<<6)+(0x30)},
+  "dsub",   {OP_VD ,OP_VD ,OP_VD },{K1,(0x3)+((0x01)<<6)+(0x30)},
+  "dmul",   {OP_VD ,OP_VD ,OP_VD },{K1,(0x3)+((0x02)<<6)+(0x30)},
+  "dmuladd",{OP_VD ,OP_VD ,OP_VD },{K1,(0x3)+((0x03)<<6)+(0x30)},
+
+  "faddv",   {OP_VT ,OP_VT ,OP_VF },{K1,(0x3)+((0x00)<<10)+(0x20)},
+  "fsubv",   {OP_VT ,OP_VT ,OP_VF },{K1,(0x3)+((0x01)<<10)+(0x20)},
+  "fmulv",   {OP_VT ,OP_VT ,OP_VF },{K1,(0x3)+((0x02)<<10)+(0x20)},
+  "fmuladdv",{OP_VT ,OP_VT ,OP_VF },{K1,(0x3)+((0x03)<<10)+(0x20)},
+
+  "fmulva",    {OP_VT ,OP_VF ,      },{K1,(0x0)+((0x00)<<10)+(0x10)},
+  "fmuladdva", {OP_VT ,OP_VF ,      },{K1,(0x0)+((0x01)<<10)+(0x10)},
+  "fmuladdvao",{OP_VT ,OP_VT ,OP_VF },{K1,(0x0)+((0x02)<<10)+(0x10)},
+  "fipr",      {OP_VF ,OP_VT ,OP_VT },{K1,(0x0)+((0x03)<<10)+(0x10)},
 /*
-  //VFPU 1 
-  "fadd",   {OP_VF ,OP_VF ,OP_VF },{K1,(0x0)+((0x00+0x00)<<2)},
-  "fsub",   {OP_VF ,OP_VF ,OP_VF },{K1,(0x0)+((0x00+0x01)<<2)},
-  "fmul",   {OP_VF ,OP_VF ,OP_VF },{K1,(0x0)+((0x00+0x02)<<2)},
-  "fmuladd",{OP_VF ,OP_VF ,OP_VF },{K1,(0x0)+((0x00+0x03)<<2)},
-
-  "dadd",   {OP_VF ,OP_VF ,OP_VF },{K1,(0x0)+((0x04+0x00)<<2)},
-  "dsub",   {OP_VF ,OP_VF ,OP_VF },{K1,(0x0)+((0x04+0x01)<<2)},
-  "dmul",   {OP_VF ,OP_VF ,OP_VF },{K1,(0x0)+((0x04+0x02)<<2)},
-  "dmuladd",{OP_VF ,OP_VF ,OP_VF },{K1,(0x0)+((0x04+0x03)<<2)},
-
-  "faddv",   {OP_VF ,OP_VF ,OP_VF },{K1,(0x0)+((0x00+0x00)<<2)},
-  "fsubv",   {OP_VF ,OP_VF ,OP_VF },{K1,(0x0)+((0x00+0x01)<<2)},
-  "fmulv",   {OP_VF ,OP_VF ,OP_VF },{K1,(0x0)+((0x00+0x02)<<2)},
-  "fmuladdv",{OP_VF ,OP_VF ,OP_VF },{K1,(0x0)+((0x00+0x03)<<2)},
-
-  "fipr",    {OP_VF ,OP_VF ,OP_VF },{K1,(0x0)+((0x00+0x04)<<2)},
-  "fmula",   {OP_VF ,OP_VF ,      },{K1,(0x0)+((0x00+0x05)<<2)},
-  "fmuladda",{OP_VF ,OP_VF ,      },{K1,(0x0)+((0x00+0x06)<<2)},
-  "fmuladda",{OP_VF ,OP_VF ,OP_VF },{K1,(0x0)+((0x00+0x07)<<2)},
-
-  "movev",   {OP_VF ,OP_VF ,      },{K1,(0x0)+((0x00+0x01)<<2)},
-  "movev",   {OP_REG,OP_VF ,      },{K1,(0x0)+((0x02+0x01)<<2)},
-  "movev",   {OP_VF ,OP_REG,      },{K1,(0x0)+((0x04+0x01)<<2)},
+  "movev",   {OP_VT ,OP_VT ,      },{K1,(0x0)+((0x00+0x01)<<2)},
+  "movev",   {OP_REG,OP_VT ,      },{K1,(0x0)+((0x02+0x01)<<2)},
+  "movev",   {OP_VT ,OP_REG,      },{K1,(0x0)+((0x04+0x01)<<2)},
 
 
   //VFPU 2
-  "itof0",  {OP_VF ,             },{K1,(0x01)+((0x00+0x00)<<2)},
-  "itof4",  {OP_VF ,             },{K1,(0x01)+((0x00+0x01)<<2)},
-  "itof8",  {OP_VF ,             },{K1,(0x01)+((0x00+0x02)<<2)},
-  "itof15", {OP_VF ,             },{K1,(0x01)+((0x00+0x03)<<2)},
+  "itof0",  {OP_VT ,             },{K1,(0x01)+((0x00+0x00)<<2)},
+  "itof4",  {OP_VT ,             },{K1,(0x01)+((0x00+0x01)<<2)},
+  "itof8",  {OP_VT ,             },{K1,(0x01)+((0x00+0x02)<<2)},
+  "itof15", {OP_VT ,             },{K1,(0x01)+((0x00+0x03)<<2)},
 
-  "ftoi0",  {OP_VF ,             },{K1,(0x01)+((0x04+0x00)<<2)},
-  "ftoi4",  {OP_VF ,             },{K1,(0x01)+((0x04+0x01)<<2)},
-  "ftoi8",  {OP_VF ,             },{K1,(0x01)+((0x04+0x02)<<2)},
-  "ftoi15", {OP_VF ,             },{K1,(0x01)+((0x04+0x03)<<2)},
+  "ftoi0",  {OP_VT ,             },{K1,(0x01)+((0x04+0x00)<<2)},
+  "ftoi4",  {OP_VT ,             },{K1,(0x01)+((0x04+0x01)<<2)},
+  "ftoi8",  {OP_VT ,             },{K1,(0x01)+((0x04+0x02)<<2)},
+  "ftoi15", {OP_VT ,             },{K1,(0x01)+((0x04+0x03)<<2)},
 
-  "movevi", {OP_VF ,OP_IMM,      },{K1,(0x01<2)+((0x00+0x01)<<2)},
+  "movevi", {OP_VT ,OP_IMM,      },{K1,(0x01<2)+((0x00+0x01)<<2)},
 
   //FDIV
-  "fdiv",   {OP_VF ,OP_VF ,OP_VF },{K1,(0x03<2)+((0x00+0x00)<<2)},
-  "ddiv",   {OP_VF ,OP_VF ,OP_VF },{K1,(0x03<2)+((0x00+0x00)<<2)},
+  "fdiv",   {OP_VT ,OP_VT ,OP_VT },{K1,(0x03<2)+((0x00+0x00)<<2)},
+  "ddiv",   {OP_VT ,OP_VT ,OP_VT },{K1,(0x03<2)+((0x00+0x00)<<2)},
 
 
-  "fsqrt",  {OP_VF ,OP_VF ,OP_VF },{K1,(0x03<2)+((0x00+0x01)<<2)},
-  "dsqrt",  {OP_VF ,OP_VF ,OP_VF },{K1,(0x03<2)+((0x00+0x01)<<2)},
+  "fsqrt",  {OP_VT ,OP_VT ,OP_VT },{K1,(0x03<2)+((0x00+0x01)<<2)},
+  "dsqrt",  {OP_VT ,OP_VT ,OP_VT },{K1,(0x03<2)+((0x00+0x01)<<2)},
 */

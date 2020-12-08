@@ -35,9 +35,41 @@ arg1 = dst ISRAM
 arg2 = src RAM
 imm = size *32
 
+
+ii10 0100 0000 mmmm
+mmmm mmmm mmrr rrrr
+
+lddmacdl r0,imm
+arg1 = src DSRAM
+imm = size *16
+
+adr 8byte 
+size 4byte
+dst  4byte
+
+ii10 1100 0000 mmmm
+mmmm mmmm mmrr rrrr
+
+stdmacdl r0,imm
+arg1 = src DSRAM
+imm = size *16
+
+adr 4byte 
+size 4byte
+dst  8byte
+
+
+ii10 0010 0000 00mm
+mmmm mmmm mmrr rrrr
+prefetch $FFF(r0)
+m = adr*32
+
 ii10 1111 0000 0000
 0000 0000 0000 0000
 
 wait
+
+
+
 -------------------------------
 

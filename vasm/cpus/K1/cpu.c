@@ -275,7 +275,7 @@ dblock *eval_instruction(instruction *p,section *sec,taddr pc)
             operand2.reg &= 3;
         }
 
-        opcode |= (operand1.val<<18) + (operand2.val<<6) + (operand1.reg<<5) + (operand2.reg<<30) + (k1ext&3);
+        opcode |= (operand1.val<<20) + (operand2.val<<8) + (operand1.reg<<5) + (operand2.reg<<30) + (k1ext&3);
     }
 
     //REG,IMR (LSU)
