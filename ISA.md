@@ -201,8 +201,8 @@ Jumps to the specified label, based on absolute or relative address.
 | 2               | Call relative | CALLR    |
 | 3               | Jump relative | JMPR     |
 
-* *Label*: the address, absolute or relative, of the instruction to jump to in ISRAM
-* *Subtype*: the logical operation to perform 
+* *Label*: the address, absolute or relative, of the instruction to jump to in ISRAM. The final address, in bytes, is `Label * 8`.
+* *Subtype*: the logical operation to perform.
 
 ##### II.1.1.4.3) RET
 

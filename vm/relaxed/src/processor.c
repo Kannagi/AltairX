@@ -449,6 +449,10 @@ static int decodeVFPU(uint32_t opcode, Operation* restrict output)
 
 static int decode(uint32_t index, uint32_t opcode, Operation* restrict output)
 {
+#ifndef NDEBUG
+    memset(output, 0, sizeof(Operation)); //simplify debug
+#endif
+
     const uint32_t compute_unit = opcode & 0x03;
 
     if(index == 0)
@@ -620,7 +624,12 @@ static ArResult executeInstruction(ArProcessor restrict processor, uint32_t inde
             break;
 
         //ALU
-        case OPCODE_NOP: //Well, that's a no-op
+        case OPCODE_NOP: //In case of nop.e, we need to delay it
+            if(op->data)
+            {
+                processor->delayedBits |= (1u << index);
+                processor->delayed[index] = *op;
+            }
             break;
 
         case OPCODE_XCHG: //Flip XCHG bit
@@ -905,6 +914,9 @@ static ArResult executeDelayedInstruction(ArProcessor restrict processor, uint32
         default:
             return AR_ERROR_ILLEGAL_INSTRUCTION;
 
+        case OPCODE_NOP: //nop.e only
+            return AR_END_OF_CODE;
+
         case OPCODE_XCHG: //Flip XCHG bit
             processor->flags = (processor->flags & 0xFFFFFFFEu) | ((processor->flags & 0x01u) ^ 0x01u);
             break;
@@ -912,7 +924,7 @@ static ArResult executeDelayedInstruction(ArProcessor restrict processor, uint32
         case OPCODE_BNE: // !=
             if(processor->flags & Z_MASK)
             {
-                processor->pc = operands[0];
+                processor->pc = operands[0] * 2u;
             }
 
             processor->flags &= ZSUClearMask;
@@ -921,7 +933,7 @@ static ArResult executeDelayedInstruction(ArProcessor restrict processor, uint32
         case OPCODE_BEQ: // ==
             if(!(processor->flags & Z_MASK))
             {
-                processor->pc = operands[0];
+                processor->pc = operands[0] * 2u;
             }
 
             processor->flags &= ZSUClearMask;
@@ -930,7 +942,7 @@ static ArResult executeDelayedInstruction(ArProcessor restrict processor, uint32
         case OPCODE_BL: // <
             if(processor->flags & U_MASK)
             {
-                processor->pc = operands[0];
+                processor->pc = operands[0] * 2u;
             }
 
             processor->flags &= ZSUClearMask;
@@ -939,7 +951,7 @@ static ArResult executeDelayedInstruction(ArProcessor restrict processor, uint32
         case OPCODE_BLE: // <=
             if((processor->flags & U_MASK) || !(processor->flags & Z_MASK))
             {
-                processor->pc = operands[0];
+                processor->pc = operands[0] * 2u;
             }
 
             processor->flags &= ZSUClearMask;
@@ -948,7 +960,7 @@ static ArResult executeDelayedInstruction(ArProcessor restrict processor, uint32
         case OPCODE_BG: // >
             if(!(processor->flags & U_MASK))
             {
-                processor->pc = operands[0];
+                processor->pc = operands[0] * 2u;
             }
 
             processor->flags &= ZSUClearMask;
@@ -957,7 +969,7 @@ static ArResult executeDelayedInstruction(ArProcessor restrict processor, uint32
         case OPCODE_BGE: // >=
             if(!(processor->flags & U_MASK) || !(processor->flags & Z_MASK))
             {
-                processor->pc = operands[0];
+                processor->pc = operands[0] * 2u;
             }
 
             processor->flags &= ZSUClearMask;
@@ -966,7 +978,7 @@ static ArResult executeDelayedInstruction(ArProcessor restrict processor, uint32
         case OPCODE_BLS: // <
             if(processor->flags & S_MASK)
             {
-                processor->pc = operands[0];
+                processor->pc = operands[0] * 2u;
             }
 
             processor->flags &= ZSUClearMask;
@@ -984,7 +996,7 @@ static ArResult executeDelayedInstruction(ArProcessor restrict processor, uint32
         case OPCODE_BGS: // >
             if(!(processor->flags & S_MASK))
             {
-                processor->pc = operands[0];
+                processor->pc = operands[0] * 2u;
             }
 
             processor->flags &= ZSUClearMask;
@@ -993,7 +1005,7 @@ static ArResult executeDelayedInstruction(ArProcessor restrict processor, uint32
         case OPCODE_BGES: // >=
             if(!(processor->flags & S_MASK) || !(processor->flags & Z_MASK))
             {
-                processor->pc = operands[0];
+                processor->pc = operands[0] * 2u;
             }
 
             processor->flags &= ZSUClearMask;
