@@ -837,7 +837,7 @@ static ArResult executeInstruction(ArProcessor restrict processor, uint32_t inde
         case OPCODE_BLS:  // fallthrough
         case OPCODE_BLES: // fallthrough
         case OPCODE_BGS:  // fallthrough
-        case OPCODE_BGES: // fallthrough
+        case OPCODE_BGES:
             processor->delayedBits |= (1u << index);
             processor->delayed[index] = *op;
             break;
@@ -883,7 +883,7 @@ static ArResult executeInstruction(ArProcessor restrict processor, uint32_t inde
         case OPCODE_CALL:  //fallthrough
         case OPCODE_JMPR:  //fallthrough
         case OPCODE_CALLR: //fallthrough
-        case OPCODE_RET:   //fallthrough
+        case OPCODE_RET:
             processor->delayedBits |= (1u << index);
             processor->delayed[index] = *op;
             break;
