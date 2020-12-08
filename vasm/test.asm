@@ -1,5 +1,5 @@
 
-	
+	org 0
 	movei r0,4
 	movei r1,1500
 
@@ -11,12 +11,14 @@
 	add r4,r0,r1
 	add r5,r2,r3
 
-
 	cmpi r4,0
 	nop
 
 
 	bne label
+	nop
+
+	nop
 	nop
 
 	add r4,r0,r1

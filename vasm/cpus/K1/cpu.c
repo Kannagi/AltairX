@@ -206,6 +206,8 @@ dblock *eval_instruction(instruction *p,section *sec,taddr pc)
     int val,val2,ret,byte = 0,plus = 0,type;
     operand operand1,operand2,operand3;
 
+    //printf("%d\n",pc);
+
 
     int k1ext = 0x02;
     int inst = opcode&0x3;
@@ -479,8 +481,11 @@ dblock *eval_instruction(instruction *p,section *sec,taddr pc)
     if(operand1.type == OP_IMM && operand2.type == OP_VOID && operand3.type == OP_VOID)
     {
         eval_expr(operand1.value,&val,sec,pc);
+        val = (val-pc-1-4)>>3;
 
         operand1.val = val&0x3FFF;
+
+        printf("label %d\n",operand1.val);
         opcode |= (operand1.val<<12);
     }
 /*
