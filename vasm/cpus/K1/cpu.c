@@ -481,11 +481,13 @@ dblock *eval_instruction(instruction *p,section *sec,taddr pc)
     if(operand1.type == OP_IMM && operand2.type == OP_VOID && operand3.type == OP_VOID)
     {
         eval_expr(operand1.value,&val,sec,pc);
-        val = (val-pc-1-4)>>3;
+        printf("%d\n",val-pc-8-1 );
+        val = (val-pc-8-1)>>3;
+        printf("%d\n",val );
 
         operand1.val = val&0x3FFF;
 
-        printf("label %d\n",operand1.val);
+        printf("label %x\n",operand1.val);
         opcode |= (operand1.val<<12);
     }
 /*

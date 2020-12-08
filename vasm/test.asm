@@ -14,7 +14,7 @@
 	cmpi r4,0
 	nop
 
-
+	
 	bne label
 	nop
 
@@ -24,8 +24,8 @@
 	add r4,r0,r1
 	add r5,r2,r3
 
-	label:
-
+	
+label:
 
 	;----------------------------
 	addi r4,r0,4
