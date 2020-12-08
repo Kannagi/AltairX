@@ -524,7 +524,7 @@ ArResult arDecodeInstruction(ArProcessor processor)
 
     const uint32_t size = opcodeSetSize(processor);
 
-    memcpy(processor->opcodes, processor->isram + processor->pc, size * sizeof(uint32_t));
+    memcpy(processor->opcodes, processor->isram + (processor->pc * 4), size * sizeof(uint32_t));
     processor->pc += size;
 
     for(uint32_t i = 0; i < size; ++i)
