@@ -51,6 +51,8 @@ typedef struct ArPhysicalMemoryCreateInfo
     uint64_t size;         //< The number of bytes of the memory
 } ArPhysicalMemoryCreateInfo;
 
+#ifndef AR_NO_PROTOTYPES
+
 /** \brief Creates a new virtual machine
 
     \param pVirtualMachine A pointer to a ArVirtualMachine handle
@@ -89,7 +91,6 @@ ArResult arCreatePhysicalMemory(ArVirtualMachine virtualMachine, const ArPhysica
     \param processor A ArProcessor handle
 
     \return AR_SUCCESS in case of success
-            AR_END_OF_CODE if the processor reached the end of its code
             AR_ERROR_ILLEGAL_INSTRUCTION if the op-code is illegal
             AR_ERROR_HOST_OUT_OF_MEMORY if a host memory allocation failed
 */
@@ -100,6 +101,7 @@ ArResult arDecodeInstruction(ArProcessor processor);
     \param processor A ArProcessor handle
 
     \return AR_SUCCESS in case of success
+            AR_END_OF_CODE if the processor reached the end of its code
             AR_ERROR_ILLEGAL_INSTRUCTION if the op-code is illegal
             AR_ERROR_HOST_OUT_OF_MEMORY if a host memory allocation failed
 */
@@ -140,6 +142,20 @@ void arDestroyProcessor(ArVirtualMachine virtualMachine, ArProcessor processor);
     \param processor A ArPhysicalMemory handle
 */
 void arDestroyPhysicalMemory(ArVirtualMachine virtualMachine, ArPhysicalMemory memory);
+
+#endif
+
+typedef ArResult (*PFN_arCreateVirtualMachine)(ArVirtualMachine* pVirtualMachine, const ArVirtualMachineCreateInfo* pInfo);
+typedef ArResult (*PFN_arCreateProcessor)(ArVirtualMachine virtualMachine, const ArProcessorCreateInfo* pInfo, ArProcessor* pProcessor);
+typedef ArResult (*PFN_arCreatePhysicalMemory)(ArVirtualMachine virtualMachine, const ArPhysicalMemoryCreateInfo* pInfo, ArPhysicalMemory* pMemory);
+
+typedef ArResult (*PFN_arDecodeInstruction)(ArProcessor processor);
+typedef ArResult (*PFN_arExecuteInstruction)(ArProcessor processor);
+typedef ArResult (*PFN_arExecuteDirectMemoryAccess)(ArProcessor processor);
+
+typedef void (*PFN_arDestroyVirtualMachine)(ArVirtualMachine virtualMachine);
+typedef void (*PFN_arDestroyProcessor)(ArVirtualMachine virtualMachine, ArProcessor processor);
+typedef void (*PFN_arDestroyPhysicalMemory)(ArVirtualMachine virtualMachine, ArPhysicalMemory memory);
 
 #undef ALTAIR_DEFINE_TYPE
 

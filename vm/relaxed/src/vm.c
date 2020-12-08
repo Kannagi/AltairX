@@ -48,7 +48,7 @@ ArResult arCreateProcessor(ArVirtualMachine virtualMachine, const ArProcessorCre
     assert(pInfo);
     assert(pInfo->sType == AR_STRUCTURE_TYPE_PROCESSOR_CREATE_INFO);
     assert(pInfo->pBootCode);
-    assert(pInfo->bootCodeSize % 4 == 0);
+    assert(pInfo->bootCodeSize % 2 == 0); //if not true then input is obviously truncated
     assert(pProcessor);
 
     const ArProcessor output = malloc(sizeof(ArProcessor_T));

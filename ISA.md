@@ -178,7 +178,7 @@ Jumps to the specified label if conditional flag is true for the specified compa
 | 9                  | Greater or equal | Sign-extended | BGES     |
 | 10-15              | Illegal          |               |          |
 
-* *Label*: the address of the instruction to jump to in ISRAM
+* *Label*: the address, relative to current program counter, of the instruction to jump to in ISRAM. The total incrementation of the program counter, in bytes, is `Label * 8`.
 * *Comparator*: the logical operation to perform 
 
 ###### II.1.1.4.1.1) Float branch
