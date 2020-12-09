@@ -5,6 +5,18 @@
 
 #define MIN(x, y) (x < y ? x : y)
 
+static int32_t extend_sign(uint32_t value, uint32_t bits)
+{
+    if(value > (1u << (bits - 1)))
+    {
+        return (int32_t)((0xFFFFFFFFu << bits) | value);
+    }
+    else
+    {
+        return (int32_t)value;
+    }
+}
+
 static const Opcode BRUComparators[16] =
 {
     OPCODE_BNE,
@@ -33,7 +45,7 @@ static const Opcode BRUJumpsCalls[4] =
     OPCODE_JMPR
 };
 
-static int decodeBRU(uint32_t opcode, Operation* restrict output)
+static int decodeBRU(uint32_t pc, uint32_t opcode, Operation* restrict output)
 {
     const uint32_t type = (opcode >> 2u) & 0x03u;
 
@@ -80,7 +92,7 @@ static int decodeBRU(uint32_t opcode, Operation* restrict output)
                 const uint32_t label = (opcode >> 12u) & 0x3FFFu;
 
                 output->op = BRUComparators[comp];
-                output->operands[0] = label;
+                output->operands[0] = pc + extend_sign(label, 14) * 2;
 
                 if(output->op == OPCODE_UNKNOWN)
                 {
@@ -97,7 +109,8 @@ static int decodeBRU(uint32_t opcode, Operation* restrict output)
                 const uint32_t label   = (opcode >> 12u) & 0x3FFFu;
 
                 output->op = BRUJumpsCalls[subtype];
-                output->operands[0] = label;
+                output->operands[0] = subtype > 1 ? pc + extend_sign(label, 14) * 2 //relative
+                                                  : label * 2u; //absolute
             }
             else //Ret
             {
@@ -447,7 +460,7 @@ static int decodeVFPU(uint32_t opcode, Operation* restrict output)
     return 1;
 }
 
-static int decode(uint32_t index, uint32_t opcode, Operation* restrict output)
+static int decode(uint32_t index, uint32_t pc, uint32_t opcode, Operation* restrict output)
 {
 #ifndef NDEBUG
     memset(output, 0, sizeof(Operation)); //simplify debug
@@ -459,7 +472,7 @@ static int decode(uint32_t index, uint32_t opcode, Operation* restrict output)
     {
         if(compute_unit == 0) //BRU
         {
-            return decodeBRU(opcode, output);
+            return decodeBRU(pc, opcode, output);
         }
         else if(compute_unit == 1) //LSU
         {
@@ -527,17 +540,17 @@ ArResult arDecodeInstruction(ArProcessor processor)
     assert(processor);
 
     const uint32_t size = opcodeSetSize(processor);
-
     memcpy(processor->opcodes, processor->isram + (processor->pc * 4), size * sizeof(uint32_t));
-    processor->pc += size;
 
     for(uint32_t i = 0; i < size; ++i)
     {
-        if(!decode(i, processor->opcodes[i], &processor->operations[i]))
+        if(!decode(i, processor->pc, processor->opcodes[i], &processor->operations[i]))
         {
             return AR_ERROR_ILLEGAL_INSTRUCTION;
         }
     }
+
+    processor->pc += size;
 
     return AR_SUCCESS;
 }
@@ -910,6 +923,7 @@ static ArResult executeDelayedInstruction(ArProcessor restrict processor, uint32
     const uint32_t* restrict const operands = op->operands;
 
     //Relative jump are - 1 cause one more decode has been done since they was registered
+    //TODO: jump -2 if xchg
 
     switch(op->op)
     {
@@ -926,7 +940,7 @@ static ArResult executeDelayedInstruction(ArProcessor restrict processor, uint32
         case OPCODE_BNE: // !=
             if(processor->flags & Z_MASK)
             {
-                processor->pc += (operands[0] - 1) * 2u;
+                processor->pc += (int32_t)operands[0];
             }
 
             processor->flags &= ZSUClearMask;
@@ -935,7 +949,7 @@ static ArResult executeDelayedInstruction(ArProcessor restrict processor, uint32
         case OPCODE_BEQ: // ==
             if(!(processor->flags & Z_MASK))
             {
-                processor->pc += (operands[0] - 1) * 2u;
+                processor->pc += (int32_t)operands[0];
             }
 
             processor->flags &= ZSUClearMask;
@@ -944,7 +958,7 @@ static ArResult executeDelayedInstruction(ArProcessor restrict processor, uint32
         case OPCODE_BL: // <
             if(processor->flags & U_MASK)
             {
-                processor->pc += (operands[0] - 1) * 2u;
+                processor->pc += (int32_t)operands[0];
             }
 
             processor->flags &= ZSUClearMask;
@@ -953,7 +967,7 @@ static ArResult executeDelayedInstruction(ArProcessor restrict processor, uint32
         case OPCODE_BLE: // <=
             if((processor->flags & U_MASK) || !(processor->flags & Z_MASK))
             {
-                processor->pc += (operands[0] - 1) * 2u;
+                processor->pc += (int32_t)operands[0];
             }
 
             processor->flags &= ZSUClearMask;
@@ -962,7 +976,7 @@ static ArResult executeDelayedInstruction(ArProcessor restrict processor, uint32
         case OPCODE_BG: // >
             if(!(processor->flags & U_MASK))
             {
-                processor->pc += (operands[0] - 1) * 2u;
+                processor->pc += (int32_t)operands[0];
             }
 
             processor->flags &= ZSUClearMask;
@@ -971,7 +985,7 @@ static ArResult executeDelayedInstruction(ArProcessor restrict processor, uint32
         case OPCODE_BGE: // >=
             if(!(processor->flags & U_MASK) || !(processor->flags & Z_MASK))
             {
-                processor->pc += (operands[0] - 1) * 2u;
+                processor->pc += (int32_t)operands[0];
             }
 
             processor->flags &= ZSUClearMask;
@@ -980,7 +994,7 @@ static ArResult executeDelayedInstruction(ArProcessor restrict processor, uint32
         case OPCODE_BLS: // <
             if(processor->flags & S_MASK)
             {
-                processor->pc += (operands[0] - 1) * 2u;
+                processor->pc += (int32_t)operands[0];
             }
 
             processor->flags &= ZSUClearMask;
@@ -989,7 +1003,7 @@ static ArResult executeDelayedInstruction(ArProcessor restrict processor, uint32
         case OPCODE_BLES: // <=
             if((processor->flags & S_MASK) || !(processor->flags & Z_MASK))
             {
-                processor->pc += (operands[0] - 1);
+                processor->pc += (int32_t)operands[0];
             }
 
             processor->flags &= ZSUClearMask;
@@ -998,7 +1012,7 @@ static ArResult executeDelayedInstruction(ArProcessor restrict processor, uint32
         case OPCODE_BGS: // >
             if(!(processor->flags & S_MASK))
             {
-                processor->pc += (operands[0] - 1) * 2u;
+                processor->pc += (int32_t)operands[0];
             }
 
             processor->flags &= ZSUClearMask;
@@ -1007,7 +1021,7 @@ static ArResult executeDelayedInstruction(ArProcessor restrict processor, uint32
         case OPCODE_BGES: // >=
             if(!(processor->flags & S_MASK) || !(processor->flags & Z_MASK))
             {
-                processor->pc += (operands[0] - 1) * 2u;
+                processor->pc += (int32_t)operands[0];
             }
 
             processor->flags &= ZSUClearMask;
@@ -1024,13 +1038,13 @@ static ArResult executeDelayedInstruction(ArProcessor restrict processor, uint32
             break;
 
         case OPCODE_JMPR:
-            processor->pc += (operands[0] - 1) * 2u;
+            processor->pc += (int32_t)operands[0];
             break;
 
         case OPCODE_CALLR:
             processor->flags &= retClearMask;
             processor->flags |= (processor->pc << 4u);
-            processor->pc += (operands[0] - 1) * 2u;
+            processor->pc += (int32_t)operands[0];
             break;
 
         case OPCODE_RET:

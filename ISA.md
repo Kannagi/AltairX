@@ -178,7 +178,7 @@ Jumps to the specified label if conditional flag is true for the specified compa
 | 9                  | Greater or equal | Sign-extended | BGES     |
 | 10-15              | Illegal          |               |          |
 
-* *Label*: the address, relative to current program counter, of the instruction to jump to in ISRAM. The total incrementation of the program counter, in bytes, is `Label * 8`.
+* *Label*: the address, relative to current program counter, of the instruction to jump to in ISRAM. The total incrementation of the program counter, in bytes, is `Label * 8`. This value is sign-extended.
 * *Comparator*: the logical operation to perform 
 
 ###### II.1.1.4.1.1) Float branch
@@ -201,7 +201,7 @@ Jumps to the specified label, based on absolute or relative address.
 | 2               | Call relative | CALLR    |
 | 3               | Jump relative | JMPR     |
 
-* *Label*: the address, absolute or relative, of the instruction to jump to in ISRAM. The final address, in bytes, is `Label * 8`.
+* *Label*: the address, absolute or relative, of the instruction to jump to in ISRAM. The final address, in bytes, is `Label * 8`. If the jump is relative, the value is sign-extended.
 * *Subtype*: the logical operation to perform.
 
 ##### II.1.1.4.3) RET
