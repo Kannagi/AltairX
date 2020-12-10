@@ -2,19 +2,19 @@
 VFPU
 
 ii00 00ss 00ll 0000
-0000 vvvv vvvv vvvv
+0vvv vvvv vvvv vvvv
 
 fadd,fsub,fmul,fmuladd  //xyzw = xyzw + xyzw
 fadd.xyzw v0,v0,v1
 
-ii00 00ss 01ll 0000
-0fff ffff vvvv vvvv
+ii00 00ss 01ll 000f
+ffff ffvv vvvv vvvv
 
 faddv,fmulv,fsubv,fmuladdv //xyzw = xyzw + x
 faddv.xyz v0,v0,f5
 
-ii00 00ss 10ll 0000
-0fff ffff vvvv vvvv
+ii00 00ss 10ll 000f
+ffff ffvv vvvv vvvv
 fmulva //ACC = xyzw * x
 fmuladdva //ACC += xyzw * y
 fmuladdvao //xyzw = ACC + xyzw * w
@@ -22,8 +22,8 @@ fmuladdvao //xyzw = ACC + xyzw * w
 fmulvax v0,f4
 fmuladdvao v1,v0,f4
 
-ii00 00ss 1011 0000
-0fff ffff vvvv vvvv
+ii00 00ss 1011 000f
+ffff ffvv vvvv vvvv
 fipr, //x = x1*x2 + y1*y2 + z1*z2 + w1*w2
 
 fipr.xyz f0,v0,v1
@@ -38,23 +38,23 @@ dadd d0,d0,d1
 
 
 ;copie
-ii10 00ss 0000 0000
-0000 0000 vvvv vvvv
+ii00 10ss 0000 0000
+0000 00vv vvvv vvvv
 
 movev.x v0,v1
 
 
 
 ;convert Float/Double
-ii11 0000 0000 0000
-00lv vvvv vvvv vvvv
+ii00 01l0 0000 0000
+000f ffff ffdd dddd
 
 movefd f0,d1
 movedf d0,f1
 
 ;convert int16bits/float
-ii00 10ss llll 0000
-0000 00vv vvrr rrrr
+ii00 11ss 0000 lll0
+0000 0vvv vvrr rrrr
 
 itof0.x v0,r0
 
@@ -62,43 +62,44 @@ itof0,itof4,itof8,itof15,
 ftoi0,ftoi4,ftoi8,ftoi15,
 
 ;convert int/float
-ii10 10ss 0000 0000
+ii00 11ss 10l0 0000
 000f ffff ffrr rrrr
 
 itof.b f0,r0
 
-ii11 10ss 0000 0000
+ii00 11ss 01l0 0000
 000f 0ddd ddrr rrrr
 itod.l d0,r1
 
 ;imm
-;1 bit signe/8 bits exposant/10 mantisse
-ii00 01mm mmmm mmmm
+;1 bit signe/8 bits exposant/12 mantisse
+ii10 mmmm mmmm mmmm
 mmmm mmmm mfff fff
 
 movefi f0,imm
 
-;1 bit signe/11 bits exposant/8 mantisse
-ii10 01mm mmmm mmmm
+;1 bit signe/11 bits exposant/10 mantisse
+ii01 mmmm mmmm mmmm
 mmmm mmmm mmdd dddd
 
 movedi d0,imm
 
-;1 bit signe/8 bits exposant/13 mantisse
-ii11 01mm mmmm mmmm
-mmmm mmmm mmmm vvvv
+;1 bit signe/8 bits exposant/15 mantisse
+ii11 mmmm mmmm mmmm
+mmmm mmmm mmmv vvvv
 
 movevi v0,imm
 -------------------------
 VDIV
-ii00 1100 l00f ffff
+ii00 11l0 110f ffff
 ffff ffff ffff ffff
 
 fdiv f0,f0,f1
 fsqrt f0,f0,f1
 
-ii10 1111 l000 00dd
+ii00 11l1 1100 00dd
 dddd dddd dddd dddd
+
 ddiv d0,d0,d1
 dsqrt d0,d0,d1
 

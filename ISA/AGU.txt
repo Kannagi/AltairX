@@ -59,9 +59,10 @@ size 4byte
 dst  8byte
 
 
-ii10 0010 0000 00mm
+ii10 l010 0000 00mm
 mmmm mmmm mmrr rrrr
 prefetch $FFF(r0)
+clearc
 m = adr*32
 
 ii10 1111 0000 0000

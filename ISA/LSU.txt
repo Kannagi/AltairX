@@ -34,7 +34,6 @@ outi.w 2,$40
 
 ii10 11lc aaaa aaaa
 aaaa aaaa rrrv vvvv
-????
 
 ldmv v0,2(r58+)
 stmv v0,2(r58+)
