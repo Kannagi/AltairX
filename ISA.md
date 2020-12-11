@@ -277,18 +277,18 @@ To make a full double-precision ieee-754 floating point value the *Immediate* va
 | :-------: | :-----: | :---: |
 | Dependent | *Type*  | 1     |
 
-Depending on the value of *Type* the decoding steps will differ.
+| *Type* value | Instruction                                      |
+| :----------: | :----------------------------------------------: |
+| 0            | DSRAM load/store                                 |
+| 1            | *Subtype*                                        |
+| 2            | Cache load/store                                 |
+| 3            | DSRAM or cache load/store (for floating points)  |
 
-| *Type* value | Instruction        |
-| :----------: | :----------------: |
-| 0            | LDM/STM            |
-| 1            | *Subtypes*         |
-| 2            | LDC/STC            |
-| 3            | LDF/STF or LDD/STD |
+Depending on the value of *Type* and *Subtype* the decoding steps will differ.
 
-### II.2.1) LDM/STM
+### II.2.1) DSRAM load/store
 
-Load or store memory in DSRAM
+Load or store memory from/in DSRAM
 
 | 31 - 26       | 25 - 20   | 19 - 8      | 7 - 6   | 5       | 4                | 3 - 2   | 1 - 0 |
 | :-----------: | :-------: | :---------: | :-----: | :-----: | :--------------: | :-----: | :---: |
@@ -307,24 +307,24 @@ ldm r3, 128(r60+) -> 0000'1111 1100'0000 1000'0000 1101'0001
 stm.w r4, 2(r30)  -> 0001'0001 1110'0000 0000'0010 0110'0001
 ```
 
-### II.2.2) *Subtypes*
+### II.2.2) *Subtype*
 
 | 31 - 6    | 5 - 4     | 3 - 2   | 1 - 0 |
 | :-------: | :-------: | :-----: | :---: |
 | Dependent | *Subtype* | 2       | 1     |
 
-| *Subtype* value | Instruction |
-| :-------------: | :---------: |
-| 0               | LDMX/STMX   |
-| 1               | IN/OUT      |
-| 2               | OUTI        |
-| 3               | LDV/STV     |
+| *Subtype* value | Instruction                              |
+| :-------------: | :--------------------------------------: |
+| 0               | DSRAM load/store extended                |
+| 1               | IN/OUT                                   |
+| 2               | OUTI                                     |
+| 3               | DSRAM or cache load/store (for vectors)  |
 
 Depending on the value of *Subtype* the decoding steps will differ.
 
-#### II.2.2.1) LDMX/STMX
+#### II.2.2.1) DSRAM load/store extended
 
-Load or store memory in DSRAM (extended)
+Load or store memory from/in DSRAM (extended version)
 
 | 31 - 26    | 25       | 24 - 9      | 8 - 7  | 6       | 5 - 4 | 3 - 2 | 1 - 0 |
 | :--------: | :------: | :---------: | :----: | :-----: | :---: | :---: | :---: |
@@ -344,7 +344,7 @@ stmx.w r3,$0FFF[r62] -> 0000'1110 0001'1111 1111'1110 1100'0101
 
 #### II.2.2.2) IN/OUT
 
-Load or store memory in IOSRAM
+Load or store memory from/in IOSRAM
 
 | 31 - 26    | 25 - 24 | 23 - 16   | 15 - 9 | 8 - 7  | 6       | 5 - 4 | 3 - 2 | 1 - 0 |
 | :--------: | :-----: | :-------: | :----: | :----: | :-----: | :---: | :---: | :---: |
@@ -378,15 +378,24 @@ Examples:
 outi.w 4, $03FF -> 0000'0100 0000'0011 1111'1111 1001'0101
 ```
 
-#### II.2.2.4) LDV/STV
+#### II.2.2.4) DSRAM or cache load/store (for vectors)
 
-Load or store memory in SDRAM (vec4f (4 * ieee-single-precision) version)
+Load or store memory from/in SDRAM or cache (vectors (4x IEEE 32-bits float) version)
 
-To be determined
+| 31 - 27    | 26 - 24   | 23 - 9         | 8                | 7       | 6       | 5 - 4 | 3 - 2 | 1 - 0 |
+| :--------: | :-------: | :------------: | :--------------: | :-----: | :-----: | :---: | :---: | :---: |
+| *Register* | *Source*  | *Base address* | *Incrementation* | *Cache* | *Store* | 3     | 1     | 1     |
 
-### II.2.3) LDC/STC
+* *Store*: if 1 then the operation is STMV or STCV (store-memory), otherwise it's LDMV or LDCV (load-memory).
+* *Cache*: if 1 then the transfer occurs between cache and register, if 0, the transfer occurs between SDRAM and register.
+* *Incrementation*: if 1, then *Address* will be incremented after this operation
+* *Base address*: base address (15-bits) of the memory to be loaded or the base address of the memory destination in DSRAM or in cache.
+* *Source*: a register, in range r56-63, containing the address of the memory to be loaded or the address of the memory destination. The value in this register will be added to *Immediate* to compute the final address.
+* *Register*: a register, in case of load it is where the memory load will be stored, in case of store it represents the value to be written.
 
-Load or store memory in cache
+### II.2.3) Cache load/store
+
+Load or store memory from/in cache
 
 | 31 - 26    | 25 - 20  | 19 - 8      | 7 - 6  | 5       | 4                | 3 - 2 | 1 - 0 |
 | :--------: | :------: | :---------: | :----: | :-----: | :--------------: | :---: | :---: |
@@ -405,11 +414,50 @@ ldc r3, $80[r60+]  -> 0000'1111 1100'0000 1000'0000 1101'1001
 stc.w r4, $02[r30] -> 0001'0001 1110'0000 0000'0010 0110'1001
 ```
 
-### II.2.4) LDF/STF and LDD/STD
+### II.2.4) DSRAM or cache load/store (for floating points)
 
-Load or store memory in SDRAM (float (ieee-single-precision) and double (ieee-double-precision) version)
+Load or store memory from/in SDRAM or cache.
 
-To be determined
+| 31 - 5    | 4      | 3 - 2 | 1 - 0 |
+| :-------: | :----: | :---: | :---: |
+| Dependent | *Size* | 2     | 1     |
+
+| *Size* value | Instruction                     |
+| :----------: | :-----------------------------: |
+| 0            | LDMF/STMF or LDCF/STCF (float)  |
+| 1            | LDMD/STMD or LDCD/STCD (double) |
+
+Depending on the value of *Size* the decoding steps will differ.
+
+#### II.2.4.1) LDMF/STMF or LDCF/STCF
+
+Load or store memory from/in SDRAM or cache (float (IEEE 32-bits) version).
+
+| 31 - 25    | 24 - 23  | 22 - 8         | 7                | 6       | 5       | 4   | 3 - 2 | 1 - 0 |
+| :--------: | :------: | :------------: | :--------------: | :-----: | :-----: | :-: | :---: | :---: |
+| *Register* | *Source* | *Base address* | *Incrementation* | *Store* | *Cache* | 0   | 2     | 1     |
+
+* *Cache*: if 1 then the transfer occurs between cache and register, if 0, the transfer occurs between SDRAM and register.
+* *Store*: if 1 then the operation is STMF or STCF (store-memory), otherwise it's LDMF or LDCF (load-memory).
+* *Incrementation*: if 1, then *Address* will be incremented after this operation
+* *Base address*: base address (15-bits) of the memory to be loaded or the base address of the memory destination in DSRAM or in cache.
+* *Source*: a register, in range r60-63, containing the address of the memory to be loaded or the address of the memory destination. The value in this register will be added to *Immediate* to compute the final address.
+* *Register*: a register, in case of load it is where the memory load will be stored, in case of store it represents the value to be written.
+
+#### II.2.4.2) LDMD/STMD or LDCD/STCD
+
+Load or store memory from/in SDRAM or cache (double (IEEE 64-bits) version).
+
+| 31 - 26    | 25 - 24  | 23 - 8         | 7                | 6       | 5       | 4   | 3 - 2 | 1 - 0 |
+| :--------: | :------: | :------------: | :--------------: | :-----: | :-----: | :-: | :---: | :---: |
+| *Register* | *Source* | *Base address* | *Incrementation* | *Store* | *Cache* | 1   | 2     | 1     |
+
+* *Cache*: if 1 then the transfer occurs between cache and register, if 0, the transfer occurs between SDRAM and register.
+* *Store*: if 1 then the operation is STMD or STCD (store-memory), otherwise it's LDMD or LDCD (load-memory).
+* *Incrementation*: if 1, then *Address* will be incremented after this operation
+* *Base address*: base address (16-bits) of the memory to be loaded or the base address of the memory destination in DSRAM or in cache.
+* *Source*: a register, in range r60-63, containing the address of the memory to be loaded or the address of the memory destination. The value in this register will be added to *Immediate* to compute the final address.
+* *Register*: a register, in case of load it is where the memory load will be stored, in case of store it represents the value to be written.
 
 ## II.3) ALU
 
