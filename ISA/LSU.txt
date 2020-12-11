@@ -32,7 +32,7 @@ mmmm mmmm aaaa aaaa
 outi.w 2,$40
 
 
-ii10 11lc aaaa aaaa
+ii10 11lc +aaa aaaa
 aaaa aaaa rrrv vvvv
 
 ldmv v0,2(r58+)
@@ -41,14 +41,14 @@ stmv v0,2(r58+)
 
 
 ;-----adr/registre float
-ii11 0cls +aaa aaaa
-aaaa aaaa rvvv vvvv
+ii11 0cl+ aaaa aaaa
+aaaa aaar rfff ffff
 
 ldmf v0,2(r58+)
 stmf v0,2(r58+)
 
-ii11 1cls +aaa aaaa
-aaaa aaaa arvv vvvv
+ii11 1cl+ aaaa aaaa
+aaaa aaaa rrdd dddd
 ldmd v0,2(r62+)
 stmd v0,2(r62+)
 
