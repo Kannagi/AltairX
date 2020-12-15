@@ -9,7 +9,6 @@
   * [II.3) ALU](#ii3-alu)
   * [II.4) AGU](#ii4-agu)
   * [II.5) VFPU](#ii5-vfpu)
-  * [II.6) VDIV](#ii6-vdiv)
 
 # I) General opcode structure
 
@@ -29,7 +28,7 @@ Altair K1 has the following compute units:
 * 1 LSU 
 * 1 AGU
 
-Each cycle 2 or 4 opcodes are decoded and executed. Each opcode as an index in the range [0; 3], which is its index in the 2 (or 4) uint32 opcodes buffer. Compute units are bound to some index, you can only use some compute units on some indices.
+Each cycle 2 or 4 opcodes are decoded. Each opcode as an index in the range [0; 3], which is its index in the 2 (or 4) uint32 opcodes buffer. Compute units are bound to some index, you can only use some compute units on some indices.
 
 | Opcode index | Available compute units for index                           |
 | :----------: | :---------------------------------------------------------: |
@@ -692,4 +691,270 @@ Blocks execution until the end of previous transfers.
 
 ## II.5) VFPU
 
-## II.6) VDIV
+| 31 - 4    | 3 - 2   | 1 - 0 |
+| :-------: | :-----: | :---: |
+| Dependent | *Type*  | 3     |
+
+| *Type* value | Instruction |
+| :----------: | :---------: |
+| 0            | *Subtype*   |
+| 1            | MOVEFI      |
+| 2            | MOVEDI      |
+| 3            | MOVEVI      |
+
+Depending on the value of *Type* and *Subtype* the decoding steps will differ.
+
+### II.5.1) *Subtype*
+
+| 31 - 6    | 5 - 4     | 3 - 2 | 1 - 0 |
+| :-------: | :-------: | :---: | :---: |
+| Dependent | *Subtype* | 0     | 3     |
+
+| *Subtype* value | Instruction                  |
+| :-------------: | :--------------------------: |
+| 0               | Arithmetic                   |
+| 1               | Moves                        |
+| 2               | Float conversion             |
+| 3               | Float/int conversion or VDIV |
+
+Depending on the value of *Subtype* the decoding steps will differ.
+
+#### II.5.1.1) Arithmetic
+
+| 31 - 10   | 9 - 8      | 7 - 6     | 5 - 4 | 3 - 2 | 1 - 0 |
+| :-------: | :--------: | :-------: | :---: | :---: | :---: |
+| Dependent | *Category* | Dependent | 0     | 0     | 3     |
+
+| *Category* value | Instruction                           |
+| :--------------: | :-----------------------------------: |
+| 0                | vector/vector ADD/SUB/MUL/MULADD      |
+| 1                | vector/float ADD/SUB/MUL/MULADD       |
+| 2                | vector accumulator MUL/MULADD or FIPR |
+| 3                | double/double ADD/SUB/MUL/MULADD      |
+
+Depending on the value of *Category* the decoding steps will differ.
+
+##### Float operations
+
+Each operation set, except vector accumulator MUL/MULADD, support addition, substraction, multiplication, and multiply-add 
+
+| *Operation* value | Instruction | Notes         |
+| :---------------: | :---------: | :-----------: |
+| 0                 | FADD        | v0 =  v1 + v2 |
+| 1                 | FSUB        | v0 =  v1 - v2 |
+| 2                 | FMUL        | v0 =  v1 * v2 |
+| 3                 | FMULADD     | v0 += v1 * v2 |
+
+##### II.5.1.1.1) vector/vector ADD/SUB/MUL/MULADD
+
+These operations are applied using the following pattern: 
+* `x0 = x1 OP x2`
+* `y0 = y1 OP y2`
+* `z0 = z1 OP z2`
+* `w0 = w1 OP w2`
+
+| 31 - 27       | 26 - 22    | 21 - 17    | 16 - 12 | 11 - 10     | 9 - 8 | 7 - 6  | 5 - 4 | 3 - 2 | 1 - 0 |
+| :-----------: | :--------: | :--------: | :-----: | :---------: | :---: | :----: | :---: | :---: | :---: |
+| *Destination* | *Source 1* | *Source 2* | 0       | *Operation* | 0     | *Size* | 0     | 0     | 3     |
+
+* *Size*: this operations affects the *Size* first components of both vectors. `0 = x | 1 = xy | 2 = xyz | 3 = xyzw`.
+* *Operation*: the arithmetic *Operation* to be done (see [Float operations](#float-operations)).
+* *Source 2*: the second operand, a vector register.
+* *Source 1*: the first operand, a vector register.
+* *Destination*: the destination, a vector register.
+
+##### II.5.1.1.2) vector/float ADD/SUB/MUL/MULADD
+
+These operations are applied using the following pattern: 
+* `x0 = x1 OP f2`
+* `y0 = y1 OP f2`
+* `z0 = z1 OP f2`
+* `w0 = w1 OP f2`
+
+| 31 - 27       | 26 - 22    | 21 - 15    | 14 - 12 | 11 - 10     | 9 - 8 | 7 - 6  | 5 - 4 | 3 - 2 | 1 - 0 |
+| :-----------: | :--------: | :--------: | :-----: | :---------: | :---: | :----: | :---: | :---: | :---: |
+| *Destination* | *Source 1* | *Source 2* | 0       | *Operation* | 1     | *Size* | 0     | 0     | 3     |
+
+* *Size*: this operations affects the *Size* first components of *Source 1* vector. `0 = x | 1 = xy | 2 = xyz | 3 = xyzw`.
+* *Operation*: the arithmetic *Operation* to be done (see [Float operations](#float-operations)).
+* *Source 2*: the second operand, a float register.
+* *Source 1*: the first operand, a vector register.
+* *Destination*: the destination, a vector register.
+
+##### II.5.1.1.3) vector accumulator MUL/MULADD and FIPR
+
+The 4 following operations does **not** follow the [Float operations](#float-operations).
+
+| 31 - 27    | 26 - 22    | 21 - 15 | 14 - 12 | 11 - 10      | 9 - 8 | 7 - 6  | 5 - 4 | 3 - 2 | 1 - 0 |
+| :--------: | :--------: | :-----: | :-----: | :----------: | :---: | :----: | :---: | :---: | :---: |
+| *Vector 2* | *Vector 1* | *Float* | 0       | *Operation2* | 2     | *Size* | 0     | 0     | 3     |
+
+* *Size*: this operations affects the *Size* first components of vectors. `0 = x | 1 = xy | 2 = xyz | 3 = xyzw`.
+* *Float*: a float register.
+* *Vector 1*: a vector register.
+* *Vector 2*: a vector register.
+
+| *Operation2* value | Instruction  | Expression                                         | *Destination* |
+| :----------------: | :----------: | :------------------------------------------------: | :-----------: |
+| 0                  | FMULVA       | *Accumulator* = *Vector 1* \* *Float*              | *Accumulator* |
+| 1                  | FMULADDVA    | *Accumulator* += *Vector 1* \* *Float*             | *Accumulator* |
+| 2                  | FMULADDVAO   | *Vector 2* = *Accumulator* + *Vector 1* \* *Float* | *Vector 2*    |
+| 3                  | FIPR         | *Float* =  *Vector 1* · *Vector 2*                 | *Float*       |
+
+##### II.5.1.1.4) double/double ADD/SUB/MUL/MULADD
+
+These operations are applied using the following pattern: 
+* `d0 = d1 OP d2`
+
+| 31 - 26       | 25 - 20    | 19 - 14    | 16 - 10 | 9 - 8 | 7 - 6       | 5 - 4 | 3 - 2 | 1 - 0 |
+| :-----------: | :--------: | :--------: | :-----: | :---: | :---------: | :---: | :---: | :---: |
+| *Destination* | *Source 1* | *Source 2* | 0       | 3     | *Operation* | 0     | 0     | 3     |
+
+* *Operation*: the arithmetic *Operation* to be done (see [Float operations](#float-operations)).
+* *Source 2*: the second operand, a double register.
+* *Source 1*: the first operand, a double register.
+* *Destination*: the destination, a double register.
+
+#### II.5.1.2) Moves
+
+To be determined.
+
+#### II.5.1.3) Float conversion
+
+| 31 - 26  | 25 - 19 | 18 - 7 | 6           | 5 - 4 | 3 - 2 | 1 - 0 |
+| :------: | :-----: | :----: | :---------: | :---: | :---: | :---: |
+| *Double* | *Float* | 0      | *Direction* | 2     | 0     | 3     |
+
+* *Direction*: if 0, convert *Float* to *Double*, if 1, convert *Double* to *Float*.
+* *Float*: the float register.
+* *Double*: the double register.
+
+#### II.5.1.4) Float/Int conversion or VDIV
+
+| 31 - 10   | 9 - 8       | 7 - 6     | 5 - 4 | 3 - 2 | 1 - 0 |
+| :-------: | :---------: | :-------: | :---: | :---: | :---: |
+| Dependent | *Operation* | Dependent | 3     | 0     | 3     |
+
+| *Operation* value | Instruction                           |
+| :---------------: | :-----------------------------------: |
+| 0                 | Fixed-point conversion                |
+| 1                 | Float/int conversion                  |
+| 2                 | Double/int conversion                 |
+| 3                 | Float/Double division and square-root |
+
+Depending on the value of *Operation* the decoding steps will differ.
+
+##### II.5.1.4.1) Fixed-point conversion
+
+Fixed-point values from/to floating-point values.
+
+| 31 - 26    | 25 - 21  | 20 - 15 | 14 - 12       | 11 - 10 | 9 - 8  | 7 - 6  | 5 - 4 | 3 - 2 | 1 - 0 |
+| :--------: | :------: | :-----: | :-----------: | :-----: | :----: | :----: | :---: | :---: | :---: |
+| *Register* | *Vector* | 0       | *Instruction* | 0       | 0      | *Size* | 3     | 0     | 3     |
+
+| *Instruction* value | Instruction | Notes                                              |
+| :-----------------: | :---------: | :------------------------------------------------: |
+| 0                   | ITOF0       | Convert 16.0 fixed-point to 32-bits floating-point |
+| 1                   | ITOF4       | Convert 12.4 fixed-point to 32-bits floating-point |
+| 2                   | ITOF8       | Convert 8.8 fixed-point to 32-bits floating-point  |
+| 3                   | ITOF15      | Convert 1.15 fixed-point to 32-bits floating-point |
+| 4                   | FTOI0       | Convert 32-bits floating-point to 16.0 fixed-point |
+| 5                   | FTOI4       | Convert 32-bits floating-point to 12.4 fixed-point |
+| 6                   | FTOI8       | Convert 32-bits floating-point to 8.8 fixed-point  |
+| 7                   | FTOI15      | Convert 32-bits floating-point to 1.15 fixed-point |
+
+* *Size*: this operations affects the *Size* first components of *Vector*. `0 = x | 1 = xy | 2 = xyz | 3 = xyzw`.
+* *Vector*: the floating-point values, as a vector register.
+* *Register*: the fixed-point values, as a register.
+
+##### II.5.1.4.2) Float/int conversion
+
+Convert floating-point to integer, or integer to floating-point.
+
+| 31 - 26    | 25 - 19 | 18 - 11 | 10          | 9 - 8 | 7 - 6  | 5 - 4 | 3 - 2 | 1 - 0 |
+| :--------: | :-----: | :-----: | :---------: | :---: | :----: | :---: | :---: | :---: |
+| *Register* | *Float* | 0       | *Direction* | 1     | *Size* | 3     | 0     | 3     |
+
+* *Size*: if 0, then the operation is done on 1 byte, if 1, then the operation is done on 2 byte, if 2 then the operation is done on 4 byte, if 3, then the operation is done on 8 byte.
+* *Direction*: if 0, then convert *Register* to *Float*, if 1, then convert *Float* to *Register*.
+* *Float*: a float register.
+* *Register*: a register.
+
+##### II.5.1.4.3) Double/int conversion
+
+Convert floating-point to integer, or integer to floating-point.
+
+| 31 - 26    | 25 - 20  | 19 - 11 | 10          | 9 - 8 | 7 - 6  | 5 - 4 | 3 - 2 | 1 - 0 |
+| :--------: | :------: | :-----: | :---------: | :---: | :----: | :---: | :---: | :---: |
+| *Register* | *Double* | 0       | *Direction* | 2     | *Size* | 3     | 0     | 3     |
+
+* *Size*: if 0, then the operation is done on 1 byte, if 1, then the operation is done on 2 byte, if 2 then the operation is done on 4 byte, if 3, then the operation is done on 8 byte.
+* *Direction*: if 0, then convert *Register* to *Double*, if 1, then convert *Double* to *Register*.
+* *Double*: a double register.
+* *Register*: a register.
+
+##### II.5.1.4.4) Float division and square-root
+
+| 31 - 10   | 9 - 8 | 7      | 6             | 5 - 4 | 3 - 2 | 1 - 0 |
+| :-------: | :---: | :----: | :-----------: | :---: | :---: | :---: |
+| Dependent | 3     | *Size* | *Instruction* | 3     | 0     | 3     |
+
+* *Instruction*: if 0, then it is FDIV or DDIV, if 1, it is FSQRT or DSQRT.
+* *Size*: if 0 does either FDIV or FSQRT, if 1, does either DDIV or DSQRT.
+
+Depending on the value of *Operation* the decoding steps will differ.
+
+###### FDIV or FSQRT
+
+| 31 - 25       | 24 - 18    | 17 - 11    | 9 - 8 | 7      | 6             | 5 - 4 | 3 - 2 | 1 - 0 |
+| :-----------: | :--------: | :--------: | :---: | :----: | :-----------: | :---: | :---: | :---: |
+| *Destination* | *Source 2* | *Source 1* | 3     | 0      | *Instruction* | 3     | 0     | 3     |
+
+* *Instruction*: if 0, then it is FDIV, if 1, it is FSQRT.
+* *Source 1*: a float register, the left operand.
+* *Source 2*: a float register, the right operand.
+* *Destination*: a float register, where the result of the operation is gonne be written.
+
+###### DDIV or DSQRT
+
+| 31 - 26       | 25 - 20    | 19 - 14    | 9 - 8 | 7      | 6             | 5 - 4 | 3 - 2 | 1 - 0 |
+| :-----------: | :--------: | :--------: | :---: | :----: | :-----------: | :---: | :---: | :---: |
+| *Destination* | *Source 2* | *Source 1* | 3     | 1      | *Instruction* | 3     | 0     | 3     |
+
+* *Instruction*: if 0, then it is DDIV, if 1, it is DSQRT.
+* *Source 1*: a double register, the left operand.
+* *Source 2*: a double register, the right operand.
+* *Destination*: a double register, where the result of the operation is gonne be written.
+
+### II.5.2) MOVEFI
+
+Write an immediate value to a float register, useful for common values such as 0, 1...
+
+| 31 - 25       | 24 - 4      | 3 - 2 | 1 - 0 |
+| :-----------: | :---------: | :---: | :---: |
+| *Destination* | *Immediate* | 1     | 3     |
+
+* *Immediate*: the value to be written in *Destination*, 1 bit of sign, 8 bits of exponent, 12 bits of mantissa.
+* *Destination*: a float register.
+
+### II.5.3) MOVEDI
+
+Write an immediate value to a double register, useful for common values such as 0, 1...
+
+| 31 - 26       | 25 - 4      | 3 - 2 | 1 - 0 |
+| :-----------: | :---------: | :---: | :---: |
+| *Destination* | *Immediate* | 2     | 3     |
+
+* *Immediate*: the value to be written in *Destination*, 1 bit of sign, 11 bits of exponent, 10 bits of mantissa.
+* *Destination*: a double register.
+
+### II.5.4) MOVEVI
+
+Write an immediate value to a vector register, useful for common values such as 0, 1...
+
+| 31 - 27       | 26 - 4      | 3 - 2 | 1 - 0 |
+| :-----------: | :---------: | :---: | :---: |
+| *Destination* | *Immediate* | 3     | 3     |
+
+* *Immediate*: the value to be written in each component of *Destination*, 1 bit of sign, 8 bits of exponent, 14 bits of mantissa.
+* *Destination*: a vector register.
