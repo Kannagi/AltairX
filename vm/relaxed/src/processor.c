@@ -2,6 +2,7 @@
 
 #include <assert.h>
 #include <string.h>
+#include <math.h>
 
 #define MIN(x, y) (x < y ? x : y)
 
@@ -629,7 +630,7 @@ ArResult arDecodeInstruction(ArProcessor processor)
 
 static ArResult executeInstruction(ArProcessor restrict processor, uint32_t index)
 {
-    //Mask to trunc results base on 4-way size (8 bits, 16 bits, 32 bits or 64 bits)
+    //Mask to trunc results base on size (8 bits, 16 bits, 32 bits or 64 bits)
     static const uint64_t sizemask[4] =
     {
         0x00000000000000FFull,
@@ -638,8 +639,8 @@ static ArResult executeInstruction(ArProcessor restrict processor, uint32_t inde
         0xFFFFFFFFFFFFFFFFull,
     };
 
-    static const uint32_t ZSUClearMask = ~(Z_MASK | S_MASK | U_MASK);
-    static const uint32_t cmdClearMask = ~CMPT_MASK;
+    static const uint32_t ZSUClearMask  = ~(Z_MASK | S_MASK | U_MASK);
+    static const uint32_t cmptClearMask = ~CMPT_MASK;
 
     uint64_t* restrict const ireg = processor->ireg;
     float*    restrict const freg = (float*)processor->freg; //Restrict is still ok since only one of those pointers will be used within a single call
@@ -1005,7 +1006,7 @@ static ArResult executeInstruction(ArProcessor restrict processor, uint32_t inde
             processor->flags |= (left != right) << 1u;
             processor->flags |= ((int64_t)left < (int64_t)right) << 2u;
             processor->flags |= (left < right) << 3u;
-            processor->flags &= cmdClearMask;
+            processor->flags &= cmptClearMask;
 
             break;
         }
@@ -1019,19 +1020,74 @@ static ArResult executeInstruction(ArProcessor restrict processor, uint32_t inde
             processor->flags |= (left != right) << 1u;
             processor->flags |= ((int64_t)left < (int64_t)right) << 2u;
             processor->flags |= (left < right) << 3u;
-            processor->flags &= cmdClearMask;
+            processor->flags &= cmptClearMask;
 
             break;
         }
 
-        case OPCODE_FCMP:
+        case OPCODE_FCMP: // REG <=> REG
+        {
+            const float    fright = freg[operands[0]];
+            const uint32_t iright = *(const uint32_t*)(&fright);
+            const float    fleft  = freg[operands[1]];
+            const uint32_t ileft  = *(const uint32_t*)(&fleft);
+
+            processor->flags &= ZSUClearMask;
+            processor->flags |= (ileft != iright) << 1u;
+            processor->flags |= (fleft < fright) << 2u;
+            processor->flags &= cmptClearMask;
+            processor->flags |= (0x01u << 30u);
+
             break;
+        }
+
         case OPCODE_FCMPI:
+        {
+            const uint32_t iright = operands[0] << 11u;
+            const float    fright = *(const float*)(&iright);
+            const float    fleft  = freg[operands[1]];
+            const uint32_t ileft  = *(const uint32_t*)(&fleft);
+
+            processor->flags &= ZSUClearMask;
+            processor->flags |= (ileft != iright) << 1u;
+            processor->flags |= (fleft < fright) << 2u;
+            processor->flags &= cmptClearMask;
+            processor->flags |= (0x01u << 30u);
+
             break;
-        case OPCODE_DCMP:
+        }
+
+        case OPCODE_DCMP: // REG <=> REG
+        {
+            const double   dright = dreg[operands[0]];
+            const uint64_t iright = *(const uint64_t*)(&dright);
+            const double   dleft  = dreg[operands[1]];
+            const uint64_t ileft  = *(const uint64_t*)(&dleft);
+
+            processor->flags &= ZSUClearMask;
+            processor->flags |= (ileft != iright) << 1u;
+            processor->flags |= (dleft < dright) << 2u;
+            processor->flags &= cmptClearMask;
+            processor->flags |= (0x02u << 30u);
+
             break;
+        }
+
         case OPCODE_DCMPI:
+        {
+            const uint64_t iright = (uint64_t)operands[0] << 42u;
+            const double   dright = *(const double*)(&iright);
+            const double   dleft  = dreg[operands[1]];
+            const uint64_t ileft  = *(const uint32_t*)(&dleft);
+
+            processor->flags &= ZSUClearMask;
+            processor->flags |= (ileft != iright) << 1u;
+            processor->flags |= (dleft < dright) << 2u;
+            processor->flags &= cmptClearMask;
+            processor->flags |= (0x01u << 30u);
+
             break;
+        }
 
         case OPCODE_JMP:   //fallthrough
         case OPCODE_CALL:  //fallthrough

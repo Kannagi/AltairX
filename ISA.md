@@ -225,7 +225,7 @@ Update the comparison flags based on integer comparison.
 
 ### II.1.3) FCMPI
 
-Update the comparison flags based on integer comparison.
+Update the comparison flags based on float comparison.
 
 | 31 - 25  | 24 - 4      | 3 - 2 | 1 - 0 |
 | :------: | :---------: | :---: | :---: |
@@ -249,7 +249,7 @@ To make a full single-precision ieee-754 floating point value the *Immediate* va
 
 ### II.1.4) DCMPI
 
-Update the comparison flags based on integer comparison.
+Update the comparison flags based on double comparison.
 
 | 31 - 26  | 25 - 4      | 3 - 2 | 1 - 0 |
 | :------: | :---------: | :---: | :---: |
@@ -937,6 +937,18 @@ Write an immediate value to a float register, useful for common values such as 0
 * *Immediate*: the value to be written in *Destination*, 1 bit of sign, 8 bits of exponent, 12 bits of mantissa.
 * *Destination*: a float register.
 
+*Immediate* has a non-standard IEEE-754 format:
+
+| 20     | 19 - 12    | 11 - 0     |
+| :----: | :--------: | :--------: |
+| *Sign* | *Exponent* | *Mantissa* |
+
+*Mantissa*: 12-bits mantissa
+*Exponent*: 8-bits exponent 
+*Sign*: 0 is positive, 1 is negative
+
+To make a full single-precision ieee-754 floating point value the *Immediate* value simply need to be copied in the higher bits of the floating point value.
+
 ### II.5.3) MOVEDI
 
 Write an immediate value to a double register, useful for common values such as 0, 1...
@@ -948,6 +960,18 @@ Write an immediate value to a double register, useful for common values such as 
 * *Immediate*: the value to be written in *Destination*, 1 bit of sign, 11 bits of exponent, 10 bits of mantissa.
 * *Destination*: a double register.
 
+*Immediate* has a non-standard IEEE-754 format:
+
+| 21     | 20 - 10    | 9 - 0      |
+| :----: | :--------: | :--------: |
+| *Sign* | *Exponent* | *Mantissa* |
+
+*Mantissa*: 10-bits mantissa
+*Exponent*: 11-bits exponent 
+*Sign*: 0 is positive, 1 is negative
+
+To make a full double-precision ieee-754 floating point value the *Immediate* value simply need to be copied in the higher bits of the floating point value.
+
 ### II.5.4) MOVEVI
 
 Write an immediate value to a vector register, useful for common values such as 0, 1...
@@ -958,3 +982,15 @@ Write an immediate value to a vector register, useful for common values such as 
 
 * *Immediate*: the value to be written in each component of *Destination*, 1 bit of sign, 8 bits of exponent, 14 bits of mantissa.
 * *Destination*: a vector register.
+
+*Immediate* has a non-standard IEEE-754 format:
+
+| 22     | 21 - 14    | 13 - 0     |
+| :----: | :--------: | :--------: |
+| *Sign* | *Exponent* | *Mantissa* |
+
+*Mantissa*: 14-bits mantissa
+*Exponent*: 8-bits exponent 
+*Sign*: 0 is positive, 1 is negative
+
+To make a full single-precision ieee-754 floating point value the *Immediate* value simply need to be copied in the higher bits of the floating point value.
