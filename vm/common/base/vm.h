@@ -19,6 +19,9 @@ typedef enum ArResult
     AR_SUCCESS = 0,
     AR_ERROR_ILLEGAL_INSTRUCTION = -1,
     AR_ERROR_INVALID_CODE = -2,
+    AR_ERROR_TOO_MANY_OBJECTS = -3,
+    AR_ERROR_MEMORY_OUT_OF_RANGE = -4,
+    AR_ERROR_PHYSICAL_MEMORY_OUT_OF_RANGE = -5,
     AR_ERROR_HOST_OUT_OF_MEMORY = -256,
 } ArResult;
 
@@ -83,6 +86,7 @@ ArResult arCreateProcessor(ArVirtualMachine virtualMachine, const ArProcessorCre
 
     \return AR_SUCCESS in case of success
             AR_ERROR_HOST_OUT_OF_MEMORY if a host memory allocation failed
+            AR_ERROR_TOO_MANY_OBJECTS if there is already a physical memory instance inside the virtual machine
 */
 ArResult arCreatePhysicalMemory(ArVirtualMachine virtualMachine, const ArPhysicalMemoryCreateInfo* pInfo, ArPhysicalMemory* pMemory);
 
@@ -112,7 +116,9 @@ ArResult arExecuteInstruction(ArProcessor processor);
     \param processor A ArProcessor handle
 
     \return AR_SUCCESS in case of success
-            AR_ERROR_ILLEGAL_INSTRUCTION if the op-code is illegal
+            AR_ERROR_ILLEGAL_INSTRUCTION if the op-code is illegal, or if the instruction tries to access non-existing physical memory
+            AR_ERROR_MEMORY_OUT_OF_RANGE if the final address + size of processor's SRAM is out of range
+            AR_ERROR_PHYSICAL_MEMORY_OUT_OF_RANGE if the final address + size of machine's physical memory is out of range
             AR_ERROR_HOST_OUT_OF_MEMORY if a host memory allocation failed
 */
 ArResult arExecuteDirectMemoryAccess(ArProcessor processor);

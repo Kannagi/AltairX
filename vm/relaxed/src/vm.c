@@ -68,24 +68,6 @@ ArResult arCreateProcessor(ArVirtualMachine virtualMachine, const ArProcessorCre
     return AR_SUCCESS;
 }
 
-static void insertPhysicalMemory(ArVirtualMachine virtualMachine, ArPhysicalMemory memory)
-{
-    ArPhysicalMemory previous = virtualMachine->memory;
-    if(previous)
-    {
-        while(previous->next) //Find last memory in virtual machine
-        {
-            previous = previous->next;
-        }
-
-        previous->next = memory;
-    }
-    else
-    {
-        virtualMachine->memory = memory; //Its the first memory
-    }
-}
-
 ArResult arCreatePhysicalMemory(ArVirtualMachine virtualMachine, const ArPhysicalMemoryCreateInfo* pInfo, ArPhysicalMemory* pMemory)
 {
     assert(virtualMachine);
@@ -95,18 +77,21 @@ ArResult arCreatePhysicalMemory(ArVirtualMachine virtualMachine, const ArPhysica
     assert(pInfo->pMemory);
     assert(pMemory);
 
+    if(virtualMachine->memory)
+    {
+        return AR_ERROR_TOO_MANY_OBJECTS;
+    }
+
     const ArPhysicalMemory output = malloc(sizeof(ArPhysicalMemory_T));
     if(!output)
     {
         return AR_ERROR_HOST_OUT_OF_MEMORY;
     }
 
-    output->next = NULL;
     output->parent = virtualMachine;
     output->memory = pInfo->pMemory;
     output->size = pInfo->size;
 
-    insertPhysicalMemory(virtualMachine, output);
     *pMemory = output;
 
     return AR_SUCCESS;

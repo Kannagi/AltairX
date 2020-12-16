@@ -112,7 +112,7 @@ public:
     {
         if(m_processor)
         {
-
+            arDestroyProcessor(m_virtual_machine, m_processor);
         }
     }
 

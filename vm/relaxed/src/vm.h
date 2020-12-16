@@ -31,6 +31,18 @@ typedef enum Opcode
     OPCODE_IN,
     OPCODE_OUT,
     OPCODE_OUTI,
+    OPCODE_LDMV,
+    OPCODE_STMV,
+    OPCODE_LDCV,
+    OPCODE_STCV,
+    OPCODE_LDMF,
+    OPCODE_STMF,
+    OPCODE_LDCF,
+    OPCODE_STCF,
+    OPCODE_LDMD,
+    OPCODE_STMD,
+    OPCODE_LDCD,
+    OPCODE_STCD,
 
     //ALU
     OPCODE_NOP,
@@ -142,8 +154,8 @@ typedef struct ArProcessor_T
     uint8_t cache [CACHE_SIZE];
     uint8_t iosram[IOSRAM_SIZE];
 
-    uint64_t ireg [IREG_COUNT];
-    uint32_t freg [FREG_COUNT]; //It must be aligned on 64bits, previous field should force it, but it should be checked on every untested implementation
+    uint64_t ireg[IREG_COUNT];
+    uint64_t freg[FREG_COUNT / 2u];
 
     uint32_t pc; //program-counter
     uint32_t opcodes[MAX_OPCODE];
@@ -163,6 +175,8 @@ typedef struct ArProcessor_T
     Operation operations[MAX_OPCODE];
     uint32_t delayedBits;
     Operation delayed[MAX_OPCODE];
+    uint32_t dma; //1 if dmaOperation is to be treated
+    Operation dmaOperation;
 
 } ArProcessor_T;
 
@@ -176,7 +190,6 @@ typedef struct Vector4f
 
 typedef struct ArPhysicalMemory_T
 {
-    ArPhysicalMemory next;
     ArVirtualMachine parent;
 
     uint8_t* memory;

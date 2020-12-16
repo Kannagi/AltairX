@@ -434,7 +434,7 @@ Load or store memory from/in SDRAM or cache (float (IEEE 32-bits) version).
 
 | 31 - 25    | 24 - 23  | 22 - 8         | 7                | 6       | 5       | 4   | 3 - 2 | 1 - 0 |
 | :--------: | :------: | :------------: | :--------------: | :-----: | :-----: | :-: | :---: | :---: |
-| *Register* | *Source* | *Base address* | *Incrementation* | *Store* | *Cache* | 0   | 2     | 1     |
+| *Register* | *Source* | *Base address* | *Incrementation* | *Store* | *Cache* | 0   | 3     | 1     |
 
 * *Cache*: if 1 then the transfer occurs between cache and register, if 0, the transfer occurs between SDRAM and register.
 * *Store*: if 1 then the operation is STMF or STCF (store-memory), otherwise it's LDMF or LDCF (load-memory).
@@ -449,7 +449,7 @@ Load or store memory from/in SDRAM or cache (double (IEEE 64-bits) version).
 
 | 31 - 26    | 25 - 24  | 23 - 8         | 7                | 6       | 5       | 4   | 3 - 2 | 1 - 0 |
 | :--------: | :------: | :------------: | :--------------: | :-----: | :-----: | :-: | :---: | :---: |
-| *Register* | *Source* | *Base address* | *Incrementation* | *Store* | *Cache* | 1   | 2     | 1     |
+| *Register* | *Source* | *Base address* | *Incrementation* | *Store* | *Cache* | 1   | 3     | 1     |
 
 * *Cache*: if 1 then the transfer occurs between cache and register, if 0, the transfer occurs between SDRAM and register.
 * *Store*: if 1 then the operation is STMD or STCD (store-memory), otherwise it's LDMD or LDCD (load-memory).

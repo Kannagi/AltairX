@@ -212,9 +212,31 @@ static int decodeLSU(uint32_t opcode, Operation* restrict output)
             output->operands[0] = value;
             output->operands[2] = dest;
         }
-        else //LDV/STV
+        else //LDMV/STMV or LDCV/STCV
         {
-            return 0;
+            const uint32_t store = (opcode >> 6u ) & 0x0001u;
+            const uint32_t cache = (opcode >> 7u ) & 0x0001u;
+            const uint32_t incr  = (opcode >> 8u ) & 0x0001u;
+            const uint32_t value = (opcode >> 9u ) & 0x7FFFu;
+            const uint32_t src   = (opcode >> 25u) & 0x0007u;
+            const uint32_t dest  = (opcode >> 26u) & 0x003Fu;
+
+            if(cache)
+            {
+                output->data = incr;
+                output->op = store ? OPCODE_STCV : OPCODE_LDCV;
+                output->operands[0] = value;
+                output->operands[1] = src + 56;
+                output->operands[2] = dest;
+            }
+            else
+            {
+                output->data = incr;
+                output->op = store ? OPCODE_STMV : OPCODE_LDMV;
+                output->operands[0] = value;
+                output->operands[1] = src + 56;
+                output->operands[2] = dest;
+            }
         }
     }
     else if(type == 2) //LDC/STC
@@ -233,9 +255,59 @@ static int decodeLSU(uint32_t opcode, Operation* restrict output)
         output->operands[1] = src;
         output->operands[2] = dest;
     }
-    else //LDF/STF-LDD/STD
+    else //LDMF/STMF or LDCF/STCF and LDMD/STMD or LDCD/STCD
     {
-        return 0;
+        const uint64_t size  = (opcode >> 4u) & 0x01u;
+        const uint32_t cache = (opcode >> 5u) & 0x01u;
+        const uint32_t store = (opcode >> 6u) & 0x01u;
+        const uint32_t incr  = (opcode >> 7u) & 0x01u;
+
+        if(size == 0) //LDMF/STMF or LDCF/STCF
+        {
+            const uint32_t value = (opcode >> 8u ) & 0x7FFFu;
+            const uint32_t src   = (opcode >> 23u) & 0x0003u;
+            const uint32_t dest  = (opcode >> 25u) & 0x007Fu;
+
+            if(cache)
+            {
+                output->data = incr;
+                output->op = store ? OPCODE_STCF : OPCODE_LDCF;
+                output->operands[0] = value;
+                output->operands[1] = src + 60;
+                output->operands[2] = dest;
+            }
+            else
+            {
+                output->data = incr;
+                output->op = store ? OPCODE_STMF : OPCODE_LDMF;
+                output->operands[0] = value;
+                output->operands[1] = src + 60;
+                output->operands[2] = dest;
+            }
+        }
+        else
+        {
+            const uint32_t value = (opcode >> 8u ) & 0xFFFFu;
+            const uint32_t src   = (opcode >> 24u) & 0x0003u;
+            const uint32_t dest  = (opcode >> 26u) & 0x003Fu;
+
+            if(cache)
+            {
+                output->data = incr;
+                output->op = store ? OPCODE_STCD : OPCODE_LDCD;
+                output->operands[0] = value;
+                output->operands[1] = src + 60;
+                output->operands[2] = dest;
+            }
+            else
+            {
+                output->data = incr;
+                output->op = store ? OPCODE_STMD : OPCODE_LDMD;
+                output->operands[0] = value;
+                output->operands[1] = src + 60;
+                output->operands[2] = dest;
+            }
+        }
     }
 
     return 1;
@@ -570,8 +642,11 @@ static ArResult executeInstruction(ArProcessor restrict processor, uint32_t inde
     static const uint32_t cmdClearMask = ~CMPT_MASK;
 
     uint64_t* restrict const ireg = processor->ireg;
+    float*    restrict const freg = (float*)processor->freg; //Restrict is still ok since only one of those pointers will be used within a single call
+    double*   restrict const dreg = (double*)processor->freg;
+    Vector4f* restrict const vreg = (Vector4f*)processor->freg;
 
-    const Operation* restrict op = &processor->operations[index];
+    const Operation* restrict const op = &processor->operations[index];
     const uint32_t* restrict const operands = op->operands;
 
     switch(op->op)
@@ -580,17 +655,14 @@ static ArResult executeInstruction(ArProcessor restrict processor, uint32_t inde
             return AR_ERROR_ILLEGAL_INSTRUCTION;
 
         //AGU
-        case OPCODE_LDDMA:
-            break;
-        case OPCODE_STDMA:
-            break;
-        case OPCODE_LDDMAR:
-            break;
-        case OPCODE_STDMAR:
-            break;
-        case OPCODE_DMAIR:
-            break;
+        case OPCODE_LDDMA:  //fallthrough
+        case OPCODE_STDMA:  //fallthrough
+        case OPCODE_LDDMAR: //fallthrough
+        case OPCODE_STDMAR: //fallthrough
+        case OPCODE_DMAIR:  //fallthrough
         case OPCODE_WAIT:
+            processor->dma = 1;
+            processor->dmaOperation = *op;
             break;
 
         //LSU
@@ -624,16 +696,76 @@ static ArResult executeInstruction(ArProcessor restrict processor, uint32_t inde
             ireg[operands[1]] += op->data; //incr
             break;
 
-        case OPCODE_IN:
+        case OPCODE_IN: //copy data from iosram to register
             memcpy(&ireg[operands[2]], &processor->iosram[operands[0]], 1u << op->size);
             break;
 
-        case OPCODE_OUT:
+        case OPCODE_OUT: //copy data from register to iosram
             memcpy(&processor->iosram[operands[0]], &ireg[operands[2]], 1u << op->size);
             break;
 
-        case OPCODE_OUTI:
+        case OPCODE_OUTI: //write data to iosram
             memcpy(&processor->iosram[operands[0]], &ireg[operands[2]], 1u << op->size);
+            break;
+
+        case OPCODE_LDMV: //copy data from dsram to vector register
+            memcpy(&vreg[operands[2]], &processor->dsram[operands[0] + ireg[operands[1]]], 16);
+            ireg[operands[1]] += op->data; //incr
+            break;
+
+        case OPCODE_STMV: //copy data from vector register to dsram
+            memcpy(&processor->dsram[operands[0] + ireg[operands[1]]], &vreg[operands[2]], 16);
+            ireg[operands[1]] += op->data; //incr
+            break;
+
+        case OPCODE_LDCV: //copy data from cache to vector register
+            memcpy(&vreg[operands[2]], &processor->cache[operands[0] + ireg[operands[1]]], 16);
+            ireg[operands[1]] += op->data; //incr
+            break;
+
+        case OPCODE_STCV: //copy data from vector register to cache
+            memcpy(&processor->cache[operands[0] + ireg[operands[1]]], &vreg[operands[2]], 16);
+            ireg[operands[1]] += op->data; //incr
+            break;
+
+        case OPCODE_LDMF: //copy data from dsram to float register
+            memcpy(&freg[operands[2]], &processor->dsram[operands[0] + ireg[operands[1]]], 4);
+            ireg[operands[1]] += op->data; //incr
+            break;
+
+        case OPCODE_STMF: //copy data from float register to dsram
+            memcpy(&processor->dsram[operands[0] + ireg[operands[1]]], &freg[operands[2]], 4);
+            ireg[operands[1]] += op->data; //incr
+            break;
+
+        case OPCODE_LDCF: //copy data from cache to float register
+            memcpy(&freg[operands[2]], &processor->cache[operands[0] + ireg[operands[1]]], 4);
+            ireg[operands[1]] += op->data; //incr
+            break;
+
+        case OPCODE_STCF: //copy data from float register to cache
+            memcpy(&processor->cache[operands[0] + ireg[operands[1]]], &freg[operands[2]], 4);
+            ireg[operands[1]] += op->data; //incr
+            break;
+
+        case OPCODE_LDMD: //copy data from dsram to double register
+            memcpy(&dreg[operands[2]], &processor->dsram[operands[0] + ireg[operands[1]]], 8);
+            ireg[operands[1]] += op->data; //incr
+            break;
+
+        case OPCODE_STMD: //copy data from double register to dsram
+            memcpy(&processor->dsram[operands[0] + ireg[operands[1]]], &dreg[operands[2]], 8);
+            ireg[operands[1]] += op->data; //incr
+            break;
+
+        case OPCODE_LDCD: //copy data from cache to double register
+            memcpy(&dreg[operands[2]], &processor->cache[operands[0] + ireg[operands[1]]], 8);
+            ireg[operands[1]] += op->data; //incr
+            break;
+
+        case OPCODE_STCD: //copy data from double register to cache
+            memcpy(&processor->cache[operands[0] + ireg[operands[1]]], &dreg[operands[2]], 8);
+            ireg[operands[1]] += op->data; //incr
             break;
 
         //ALU
@@ -922,9 +1054,6 @@ static ArResult executeDelayedInstruction(ArProcessor restrict processor, uint32
     const Operation* restrict op = &processor->delayed[index];
     const uint32_t* restrict const operands = op->operands;
 
-    //Relative jump are - 1 cause one more decode has been done since they was registered
-    //TODO: jump -2 if xchg
-
     switch(op->op)
     {
         default:
@@ -940,7 +1069,7 @@ static ArResult executeDelayedInstruction(ArProcessor restrict processor, uint32
         case OPCODE_BNE: // !=
             if(processor->flags & Z_MASK)
             {
-                processor->pc += (int32_t)operands[0];
+                processor->pc = (int32_t)operands[0];
             }
 
             processor->flags &= ZSUClearMask;
@@ -949,7 +1078,7 @@ static ArResult executeDelayedInstruction(ArProcessor restrict processor, uint32
         case OPCODE_BEQ: // ==
             if(!(processor->flags & Z_MASK))
             {
-                processor->pc += (int32_t)operands[0];
+                processor->pc = (int32_t)operands[0];
             }
 
             processor->flags &= ZSUClearMask;
@@ -958,7 +1087,7 @@ static ArResult executeDelayedInstruction(ArProcessor restrict processor, uint32
         case OPCODE_BL: // <
             if(processor->flags & U_MASK)
             {
-                processor->pc += (int32_t)operands[0];
+                processor->pc = (int32_t)operands[0];
             }
 
             processor->flags &= ZSUClearMask;
@@ -967,7 +1096,7 @@ static ArResult executeDelayedInstruction(ArProcessor restrict processor, uint32
         case OPCODE_BLE: // <=
             if((processor->flags & U_MASK) || !(processor->flags & Z_MASK))
             {
-                processor->pc += (int32_t)operands[0];
+                processor->pc = (int32_t)operands[0];
             }
 
             processor->flags &= ZSUClearMask;
@@ -976,7 +1105,7 @@ static ArResult executeDelayedInstruction(ArProcessor restrict processor, uint32
         case OPCODE_BG: // >
             if(!(processor->flags & U_MASK))
             {
-                processor->pc += (int32_t)operands[0];
+                processor->pc = (int32_t)operands[0];
             }
 
             processor->flags &= ZSUClearMask;
@@ -985,7 +1114,7 @@ static ArResult executeDelayedInstruction(ArProcessor restrict processor, uint32
         case OPCODE_BGE: // >=
             if(!(processor->flags & U_MASK) || !(processor->flags & Z_MASK))
             {
-                processor->pc += (int32_t)operands[0];
+                processor->pc = (int32_t)operands[0];
             }
 
             processor->flags &= ZSUClearMask;
@@ -994,7 +1123,7 @@ static ArResult executeDelayedInstruction(ArProcessor restrict processor, uint32
         case OPCODE_BLS: // <
             if(processor->flags & S_MASK)
             {
-                processor->pc += (int32_t)operands[0];
+                processor->pc = (int32_t)operands[0];
             }
 
             processor->flags &= ZSUClearMask;
@@ -1003,7 +1132,7 @@ static ArResult executeDelayedInstruction(ArProcessor restrict processor, uint32
         case OPCODE_BLES: // <=
             if((processor->flags & S_MASK) || !(processor->flags & Z_MASK))
             {
-                processor->pc += (int32_t)operands[0];
+                processor->pc = (int32_t)operands[0];
             }
 
             processor->flags &= ZSUClearMask;
@@ -1012,7 +1141,7 @@ static ArResult executeDelayedInstruction(ArProcessor restrict processor, uint32
         case OPCODE_BGS: // >
             if(!(processor->flags & S_MASK))
             {
-                processor->pc += (int32_t)operands[0];
+                processor->pc = (int32_t)operands[0];
             }
 
             processor->flags &= ZSUClearMask;
@@ -1021,30 +1150,30 @@ static ArResult executeDelayedInstruction(ArProcessor restrict processor, uint32
         case OPCODE_BGES: // >=
             if(!(processor->flags & S_MASK) || !(processor->flags & Z_MASK))
             {
-                processor->pc += (int32_t)operands[0];
+                processor->pc = (int32_t)operands[0];
             }
 
             processor->flags &= ZSUClearMask;
             break;
 
         case OPCODE_JMP:
-            processor->pc = operands[0] * 2u;
+            processor->pc = operands[0];
             break;
 
         case OPCODE_CALL:
             processor->flags &= retClearMask;
             processor->flags |= (processor->pc << 4u);
-            processor->pc = operands[0] * 2u;
+            processor->pc = operands[0];
             break;
 
         case OPCODE_JMPR:
-            processor->pc += (int32_t)operands[0];
+            processor->pc = (int32_t)operands[0];
             break;
 
         case OPCODE_CALLR:
             processor->flags &= retClearMask;
             processor->flags |= (processor->pc << 4u);
-            processor->pc += (int32_t)operands[0];
+            processor->pc = (int32_t)operands[0];
             break;
 
         case OPCODE_RET:
@@ -1087,9 +1216,103 @@ ArResult arExecuteInstruction(ArProcessor processor)
     return AR_SUCCESS;
 }
 
+static ArResult copyFromRAM(ArProcessor restrict processor, uint64_t ramAddress, uint8_t* restrict output, size_t size)
+{
+    ArPhysicalMemory memory = processor->parent->memory; //First memory
+    if(!memory)
+    {
+        return AR_ERROR_ILLEGAL_INSTRUCTION;
+    }
+
+    if(ramAddress + size > memory->size)
+    {
+        return AR_ERROR_PHYSICAL_MEMORY_OUT_OF_RANGE;
+    }
+
+    memcpy(output, memory->memory + ramAddress, size);
+
+    return AR_SUCCESS;
+}
+
+static ArResult copyToRAM(ArProcessor restrict processor, uint64_t ramAddress, const uint8_t* restrict input, size_t size)
+{
+    ArPhysicalMemory memory = processor->parent->memory; //First memory
+    if(!memory)
+    {
+        return AR_ERROR_ILLEGAL_INSTRUCTION;
+    }
+
+    if(ramAddress + size > memory->size)
+    {
+        return AR_ERROR_PHYSICAL_MEMORY_OUT_OF_RANGE;
+    }
+
+    memcpy(memory->memory + ramAddress, input, size);
+
+    return AR_SUCCESS;
+}
+
+static ArResult executeDMA(ArProcessor restrict processor, int store)
+{
+    //RAM -> SDRAM
+    uint64_t* restrict const ireg = processor->ireg;
+
+    const Operation* restrict      op       = &processor->dmaOperation;
+    const uint32_t* restrict const operands = op->operands;
+
+    const uint64_t sramb = (op->data)        & 0x0FFFu;
+    const uint64_t ramb  = (op->data >> 12u) & 0x0FFFu;
+    const uint64_t sram  = (ireg[operands[0]] + sramb) * 32ull;
+    const uint64_t ram   = (ireg[operands[1]] + ramb)  * 32ull;
+    const size_t   size  = (op->size + 1u) * 32u;
+
+    if(sram + size > DSRAM_SIZE)
+    {
+        return AR_ERROR_MEMORY_OUT_OF_RANGE;
+    }
+
+    if(store)
+    {
+        return copyToRAM(processor, ram, processor->dsram + sram, size);
+    }
+    else
+    {
+        return copyFromRAM(processor, ram, processor->dsram + sram, size);
+    }
+}
+
 ArResult arExecuteDirectMemoryAccess(ArProcessor processor)
 {
     assert(processor);
+
+    if(processor->dma)
+    {
+        processor->dma = 0;
+
+        switch(processor->dmaOperation.op)
+        {
+            default:
+                return AR_ERROR_ILLEGAL_INSTRUCTION;
+
+            case OPCODE_LDDMA:
+                return executeDMA(processor, 0);
+
+            case OPCODE_STDMA:
+                return executeDMA(processor, 1);
+
+            case OPCODE_LDDMAR:
+                break;
+
+            case OPCODE_STDMAR:
+                break;
+
+            case OPCODE_DMAIR:
+                break;
+
+            case OPCODE_WAIT:
+                break;
+        }
+    }
 
     return AR_SUCCESS;
 }
