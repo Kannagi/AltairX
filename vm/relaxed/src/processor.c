@@ -643,9 +643,10 @@ static ArResult executeInstruction(ArProcessor restrict processor, uint32_t inde
     static const uint32_t cmptClearMask = ~CMPT_MASK;
 
     uint64_t* restrict const ireg = processor->ireg;
-    float*    restrict const freg = (float*)processor->freg; //Restrict is still ok since only one of those pointers will be used within a single call
-    double*   restrict const dreg = (double*)processor->freg;
-    Vector4f* restrict const vreg = (Vector4f*)processor->freg;
+    
+    float*    const freg = (float*)processor->freg;
+    double*   const dreg = (double*)processor->freg;
+    Vector4f* const vreg = (Vector4f*)processor->freg;
 
     const Operation* restrict const op = &processor->operations[index];
     const uint32_t* restrict const operands = op->operands;
@@ -1027,14 +1028,12 @@ static ArResult executeInstruction(ArProcessor restrict processor, uint32_t inde
 
         case OPCODE_FCMP: // REG <=> REG
         {
-            const float    fright = freg[operands[0]];
-            const uint32_t iright = *(const uint32_t*)(&fright);
-            const float    fleft  = freg[operands[1]];
-            const uint32_t ileft  = *(const uint32_t*)(&fleft);
+            const float right = freg[operands[0]];
+            const float left  = freg[operands[1]];
 
             processor->flags &= ZSUClearMask;
-            processor->flags |= (ileft != iright) << 1u;
-            processor->flags |= (fleft < fright) << 2u;
+            processor->flags |= (right != left) << 1u;
+            processor->flags |= (left < right) << 2u;
             processor->flags &= cmptClearMask;
             processor->flags |= (0x01u << 30u);
 
@@ -1046,10 +1045,9 @@ static ArResult executeInstruction(ArProcessor restrict processor, uint32_t inde
             const uint32_t iright = operands[0] << 11u;
             const float    fright = *(const float*)(&iright);
             const float    fleft  = freg[operands[1]];
-            const uint32_t ileft  = *(const uint32_t*)(&fleft);
 
             processor->flags &= ZSUClearMask;
-            processor->flags |= (ileft != iright) << 1u;
+            processor->flags |= (fleft != fright) << 1u;
             processor->flags |= (fleft < fright) << 2u;
             processor->flags &= cmptClearMask;
             processor->flags |= (0x01u << 30u);
@@ -1059,14 +1057,12 @@ static ArResult executeInstruction(ArProcessor restrict processor, uint32_t inde
 
         case OPCODE_DCMP: // REG <=> REG
         {
-            const double   dright = dreg[operands[0]];
-            const uint64_t iright = *(const uint64_t*)(&dright);
-            const double   dleft  = dreg[operands[1]];
-            const uint64_t ileft  = *(const uint64_t*)(&dleft);
+            const double right = dreg[operands[0]];
+            const double left  = dreg[operands[1]];
 
             processor->flags &= ZSUClearMask;
-            processor->flags |= (ileft != iright) << 1u;
-            processor->flags |= (dleft < dright) << 2u;
+            processor->flags |= (left != right) << 1u;
+            processor->flags |= (left < right) << 2u;
             processor->flags &= cmptClearMask;
             processor->flags |= (0x02u << 30u);
 
@@ -1078,10 +1074,9 @@ static ArResult executeInstruction(ArProcessor restrict processor, uint32_t inde
             const uint64_t iright = (uint64_t)operands[0] << 42u;
             const double   dright = *(const double*)(&iright);
             const double   dleft  = dreg[operands[1]];
-            const uint64_t ileft  = *(const uint32_t*)(&dleft);
 
             processor->flags &= ZSUClearMask;
-            processor->flags |= (ileft != iright) << 1u;
+            processor->flags |= (dleft != dright) << 1u;
             processor->flags |= (dleft < dright) << 2u;
             processor->flags &= cmptClearMask;
             processor->flags |= (0x01u << 30u);
@@ -1337,6 +1332,53 @@ static ArResult executeDMA(ArProcessor restrict processor, int store)
     }
 }
 
+static ArResult executeDMAR(ArProcessor restrict processor, int store)
+{
+    //RAM -> SDRAM
+    uint64_t* restrict const ireg = processor->ireg;
+
+    const Operation* restrict      op       = &processor->dmaOperation;
+    const uint32_t* restrict const operands = op->operands;
+
+    const uint64_t sram = ireg[operands[0]] * 32ull;
+    const uint64_t ram  = ireg[operands[1]] * 32ull;
+    const size_t   size = op->size * 32u;
+
+    if(sram + size > DSRAM_SIZE)
+    {
+        return AR_ERROR_MEMORY_OUT_OF_RANGE;
+    }
+
+    if(store)
+    {
+        return copyToRAM(processor, ram, processor->dsram + sram, size);
+    }
+    else
+    {
+        return copyFromRAM(processor, ram, processor->dsram + sram, size);
+    }
+}
+
+static ArResult executeDMAIR(ArProcessor restrict processor)
+{
+    //RAM -> SDRAM
+    uint64_t* restrict const ireg = processor->ireg;
+
+    const Operation* restrict      op       = &processor->dmaOperation;
+    const uint32_t* restrict const operands = op->operands;
+
+    const uint64_t sram = ireg[operands[0]] * 32ull;
+    const uint64_t ram  = ireg[operands[1]] * 32ull;
+    const size_t   size = op->size * 32u;
+
+    if(sram + size > ISRAM_SIZE)
+    {
+        return AR_ERROR_MEMORY_OUT_OF_RANGE;
+    }
+
+    return copyFromRAM(processor, ram, processor->isram + sram, size);
+}
+
 ArResult arExecuteDirectMemoryAccess(ArProcessor processor)
 {
     assert(processor);
@@ -1357,15 +1399,16 @@ ArResult arExecuteDirectMemoryAccess(ArProcessor processor)
                 return executeDMA(processor, 1);
 
             case OPCODE_LDDMAR:
-                break;
+                return executeDMAR(processor, 0);
 
             case OPCODE_STDMAR:
-                break;
+                return executeDMAR(processor, 1);
 
             case OPCODE_DMAIR:
-                break;
+                return executeDMAIR(processor);
 
             case OPCODE_WAIT:
+                //We don't have anything to wait since we emulate it based on C memory model
                 break;
         }
     }

@@ -13,6 +13,10 @@ add_library(altair_vm_relaxed SHARED
 set_target_properties(altair_vm_relaxed PROPERTIES PREFIX "")
 target_link_libraries(altair_vm_relaxed PRIVATE altair_vm_base)
 
+if(CMAKE_CXX_COMPILER_ID STREQUAL "Clang" OR CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+    target_compile_options(altair_vm_relaxed PRIVATE -Wno-float-equal)
+endif()
+
 install(TARGETS altair_vm_relaxed
         CONFIGURATIONS Debug
         RUNTIME DESTINATION ${PROJECT_SOURCE_DIR}/../test/debug
