@@ -12,10 +12,10 @@
   "lddmal",  {OP_REG,OP_IMM,      },{K1,(0x4)+(0x02<<4)},
   "stdmal",  {OP_REG,OP_IMM,      },{K1,(0x4)+(0x03<<4)},
 
-  "prefetch",{OP_IMR,      ,      },{K1,(0x4)+(0x04<<4)},
-  "clearc",  {OP_IMR,      ,      },{K1,(0x4)+(0x05<<4)},
+  "prefetch",{OP_IMR,             },{K1,(0x4)+(0x04<<4)},
+  "clearc",  {                    },{K1,(0x4)+(0x05<<4)},
 
-  "wait",    {      ,      ,      },{K1,(0x4)+(0x0F<<4)},
+  "wait",    {                    },{K1,(0x4)+(0x0F<<4)},
 
 
   //LSU

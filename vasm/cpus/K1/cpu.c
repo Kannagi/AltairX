@@ -122,12 +122,12 @@ int parse_operand(char *p,int len,operand *op,int requires)
         return 1;
     }
     
-    //Register V0-V127
+    //Register F0-F127
     if(requires == OP_VF )
     {
         
         if( (len < 2) || (len > 4) ) return 0;
-        if( !(p[0] == 'v' || p[0] == 'V') )
+        if( !(p[0] == 'f' || p[0] == 'F') )
             return 0;
 
         
@@ -154,6 +154,70 @@ int parse_operand(char *p,int len,operand *op,int requires)
         return 1;
     }
 
+    //Register D0-D63
+    if(requires == OP_VD )
+    {
+        
+        if( (len < 2) || (len > 4) ) return 0;
+        if( !(p[0] == 'd' || p[0] == 'D') )
+            return 0;
+
+        
+        arg[0] = p[1];
+        if(len == 2)
+        {
+            arg[1] = 0;
+        }
+        {
+            if(len == 3)
+            {
+                arg[1] = p[2];
+                arg[2] = 0;
+            }else
+            {
+                arg[1] = p[2];
+                arg[2] = p[3];
+                arg[3] = 0;
+            }
+        }
+        op->val = atoi(arg);
+        if(op->val > 63) return 0;
+
+        return 1;
+    }
+
+    //Register V0-V31
+    if(requires == OP_VT )
+    {
+        
+        if( (len < 2) || (len > 4) ) return 0;
+        if( !(p[0] == 'v' || p[0] == 'V') )
+            return 0;
+
+        
+        arg[0] = p[1];
+        if(len == 2)
+        {
+            arg[1] = 0;
+        }
+        {
+            if(len == 3)
+            {
+                arg[1] = p[2];
+                arg[2] = 0;
+            }else
+            {
+                arg[1] = p[2];
+                arg[2] = p[3];
+                arg[3] = 0;
+            }
+        }
+        op->val = atoi(arg);
+        if(op->val > 31) return 0;
+
+        return 1;
+    }
+
     //Register R0-R63
     if(requires == OP_REG )
     {
@@ -175,6 +239,8 @@ int parse_operand(char *p,int len,operand *op,int requires)
         if(op->reg > 63) return 0;
         return 1;
     }
+
+
    
     //Immediate
     if( (requires >= OP_IMM) && (requires <= OP_IM4) )
@@ -277,7 +343,7 @@ dblock *eval_instruction(instruction *p,section *sec,taddr pc)
             operand2.reg &= 3;
         }
 
-        opcode |= (operand1.val<<20) + (operand2.val<<8) + (operand1.reg<<5) + (operand2.reg<<30) + (k1ext&3);
+        opcode |= (operand1.val<<20) + (operand2.val<<8) + (operand1.reg<<5) + (operand2.reg<<7) + ( (k1ext&1) << 4);
     }
 
     //REG,IMR (LSU)
@@ -351,7 +417,7 @@ dblock *eval_instruction(instruction *p,section *sec,taddr pc)
         }
     }
 
-    //REG,REG
+    //REG,REG (CMP)
     if(operand1.type == OP_REG && operand2.type == OP_REG && operand3.type == OP_VOID)
     {
     	opcode |= (operand1.reg<<26) + (operand2.reg<<20) + ( (k1ext&3)<<8);
@@ -369,11 +435,25 @@ dblock *eval_instruction(instruction *p,section *sec,taddr pc)
     	eval_expr(operand3.value,&val,sec,pc);
         operand3.val = val&0xFFFF;
 
-        type = (opcode>>2)&0xF;
-        if(type > 9)
-        	operand3.val = val&0x3F;
+        if(inst == 2)
+        {
+        	type = (opcode>>2)&0xF;
+	        if(type > 9)
+	        	operand3.val = val&0x3F;
 
-        opcode |= (operand1.reg<<26) + (operand2.reg<<20) + (operand3.val<<10) + ( (k1ext&3)<<8);
+	        opcode |= (operand1.reg<<26) + (operand2.reg<<20) + (operand3.val<<10) + ( (k1ext&3)<<8);
+        }else
+        {
+        	if(inst == 0)
+        	{
+        		type = (opcode>>4)&0xF;
+
+        		 operand3.val = val&0xFFF;
+        	    opcode |= (operand1.reg<<26) + (operand2.reg<<20) + (operand3.val<<8);
+
+        	}
+        }
+        
     }
 
     //IMM,REG (IN/OUT)
@@ -466,6 +546,13 @@ dblock *eval_instruction(instruction *p,section *sec,taddr pc)
         }
     }
 
+
+    //VT,VT,VT
+    if(operand1.type == OP_VT && operand2.type == OP_VT && operand3.type == OP_VT)
+    {
+        opcode |= (operand1.val<<25) + (operand2.val<<19) + (k1ext&3);
+    }
+
     //VF,VF
     if(operand1.type == OP_VF && operand2.type == OP_VF && operand3.type == OP_VOID)
     {
@@ -511,10 +598,26 @@ dblock *eval_instruction(instruction *p,section *sec,taddr pc)
 
 //printf("%d\n",k1ext&3);
 
+char *outbin(unsigned int n)
+{
+    static char buffer [1+sizeof (unsigned int)*8] = { 0 };
+    unsigned int bit = 0 ;
+    int i;
+    for (i = 0 ; i < sizeof (unsigned int)*8; i++)
+    {
+        bit = n&1;
+        buffer[i] = bit+'0';
+        n = n>>1;
+    }
+    buffer[i] = '\0';
+
+    return buffer;
+}
+
 void printbin(unsigned int n)
 {
     unsigned int bit = 0 ;
-    for (int i = 0 ; i < 32 ; i++)
+    for (int i = 0 ; i < sizeof(unsigned int)*8 ; i++)
     {
         bit = n&1;
         printf("%d", bit) ;
@@ -524,6 +627,8 @@ void printbin(unsigned int n)
     printf("\n");
 }
     printbin(opcode);
+
+    //printf("%s\n",outbin(opcode));
     
 
     val = opcode;

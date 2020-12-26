@@ -36,31 +36,31 @@ arg2 = src RAM
 imm = size *32
 
 
-ii10 0100 0000 mmmm
-mmmm mmmm mmrr rrrr
+ii10 0100 mmmm mmmm
+mmmm 0000 00rr rrrr
 
 lddmacdl r0,imm
 arg1 = src DSRAM
-imm = size *16
+imm = size *32
 
 adr 8byte 
 size 4byte
 dst  4byte
 
-ii10 1100 0000 mmmm
-mmmm mmmm mmrr rrrr
+ii10 1100 mmmm mmmm
+mmmm 0000 00rr rrrr
 
 stdmacdl r0,imm
 arg1 = src DSRAM
-imm = size *16
+imm = size *32
 
 adr 4byte 
 size 4byte
 dst  8byte
 
 
-ii10 l010 0000 00mm
-mmmm mmmm mmrr rrrr
+ii10 l010 mmmm mmmm
+mmmm 0000 00rr rrrr
 prefetch $FFF(r0)
 clearc
 m = adr*32
