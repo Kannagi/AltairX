@@ -3,6 +3,9 @@
 
 #include <base/vm.h>
 
+#define MIN(x, y) (x < y ? x : y)
+#define MAX(x, y) (x > y ? x : y)
+
 typedef struct ArVirtualMachine_T
 {
     ArProcessor processor;

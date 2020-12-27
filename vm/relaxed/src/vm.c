@@ -136,20 +136,5 @@ void arDestroyPhysicalMemory(ArVirtualMachine virtualMachine, ArPhysicalMemory m
     assert(virtualMachine->memory);
     assert(memory);
 
-    if(virtualMachine->memory == memory)
-    {
-        virtualMachine->memory = memory->next;
-    }
-    else
-    {
-        ArPhysicalMemory previous = virtualMachine->memory;
-        while(previous->next && previous->next != memory)
-        {
-            previous = previous->next;
-        }
-
-        previous->next = memory->next;
-    }
-
     free(memory);
 }
