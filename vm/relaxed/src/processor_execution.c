@@ -25,7 +25,7 @@ static ArResult executeInstruction(ArProcessor restrict processor, uint32_t inde
     Vector4f* const vreg = (Vector4f*)processor->freg;
 
     const Operation* restrict const op = &processor->operations[index];
-    const uint32_t* restrict const operands = op->operands;
+    const uint32_t*  restrict const operands = op->operands;
 
     switch(op->op)
     {
@@ -700,8 +700,8 @@ static ArResult executeDMA(ArProcessor restrict processor, int store)
     //RAM -> SDRAM
     uint64_t* restrict const ireg = processor->ireg;
 
-    const Operation* restrict      op       = &processor->dmaOperation;
-    const uint32_t* restrict const operands = op->operands;
+    const Operation* restrict const op       = &processor->dmaOperation;
+    const uint32_t*  restrict const operands = op->operands;
 
     const uint64_t sramb = (op->data)        & 0x0FFFu;
     const uint64_t ramb  = (op->data >> 12u) & 0x0FFFu;
@@ -729,8 +729,8 @@ static ArResult executeDMAR(ArProcessor restrict processor, int store)
     //RAM -> SDRAM
     uint64_t* restrict const ireg = processor->ireg;
 
-    const Operation* restrict      op       = &processor->dmaOperation;
-    const uint32_t* restrict const operands = op->operands;
+    const Operation* restrict const op       = &processor->dmaOperation;
+    const uint32_t*  restrict const operands = op->operands;
 
     const uint64_t sram = ireg[operands[0]] * 32ull;
     const uint64_t ram  = ireg[operands[1]] * 32ull;
@@ -756,8 +756,8 @@ static ArResult executeDMAIR(ArProcessor restrict processor)
     //RAM -> SDRAM
     uint64_t* restrict const ireg = processor->ireg;
 
-    const Operation* restrict      op       = &processor->dmaOperation;
-    const uint32_t* restrict const operands = op->operands;
+    const Operation* restrict const op       = &processor->dmaOperation;
+    const uint32_t*  restrict const operands = op->operands;
 
     const uint64_t sram = ireg[operands[0]] * 32ull;
     const uint64_t ram  = ireg[operands[1]] * 32ull;
