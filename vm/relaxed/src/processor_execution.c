@@ -16,7 +16,6 @@ static ArResult executeInstruction(ArProcessor restrict processor, uint32_t inde
     };
 
     static const uint32_t ZSUClearMask  = ~(Z_MASK | S_MASK | U_MASK);
-    static const uint32_t cmptClearMask = ~CMPT_MASK;
 
     uint64_t* restrict const ireg = processor->ireg;
 
@@ -383,7 +382,6 @@ static ArResult executeInstruction(ArProcessor restrict processor, uint32_t inde
             processor->flags |= (left != right) << 1u;
             processor->flags |= ((int64_t)left < (int64_t)right) << 2u;
             processor->flags |= (left < right) << 3u;
-            processor->flags &= cmptClearMask;
 
             break;
         }
@@ -397,7 +395,6 @@ static ArResult executeInstruction(ArProcessor restrict processor, uint32_t inde
             processor->flags |= (left != right) << 1u;
             processor->flags |= ((int64_t)left < (int64_t)right) << 2u;
             processor->flags |= (left < right) << 3u;
-            processor->flags &= cmptClearMask;
 
             break;
         }
@@ -410,8 +407,6 @@ static ArResult executeInstruction(ArProcessor restrict processor, uint32_t inde
             processor->flags &= ZSUClearMask;
             processor->flags |= (right != left) << 1u;
             processor->flags |= (left < right) << 2u;
-            processor->flags &= cmptClearMask;
-            processor->flags |= (0x01u << 30u);
 
             break;
         }
@@ -425,8 +420,6 @@ static ArResult executeInstruction(ArProcessor restrict processor, uint32_t inde
             processor->flags &= ZSUClearMask;
             processor->flags |= (fleft != fright) << 1u;
             processor->flags |= (fleft < fright) << 2u;
-            processor->flags &= cmptClearMask;
-            processor->flags |= (0x01u << 30u);
 
             break;
         }
@@ -439,8 +432,6 @@ static ArResult executeInstruction(ArProcessor restrict processor, uint32_t inde
             processor->flags &= ZSUClearMask;
             processor->flags |= (left != right) << 1u;
             processor->flags |= (left < right) << 2u;
-            processor->flags &= cmptClearMask;
-            processor->flags |= (0x02u << 30u);
 
             break;
         }
@@ -454,8 +445,6 @@ static ArResult executeInstruction(ArProcessor restrict processor, uint32_t inde
             processor->flags &= ZSUClearMask;
             processor->flags |= (dleft != dright) << 1u;
             processor->flags |= (dleft < dright) << 2u;
-            processor->flags &= cmptClearMask;
-            processor->flags |= (0x01u << 30u);
 
             break;
         }

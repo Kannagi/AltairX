@@ -4,7 +4,7 @@
 #include <string.h>
 #include <math.h>
 
-static int32_t extend_sign(uint32_t value, uint32_t bits)
+static int32_t extendSign(uint32_t value, uint32_t bits)
 {
     if(value > (1u << (bits - 1)))
     {
@@ -91,7 +91,7 @@ static int decodeBRU(uint32_t pc, uint32_t opcode, Operation* restrict output)
                 const uint32_t label = (opcode >> 12u) & 0x3FFFu;
 
                 output->op = BRUComparators[comp];
-                output->operands[0] = pc + extend_sign(label, 14) * 2;
+                output->operands[0] = pc + extendSign(label, 14) * 2;
 
                 if(output->op == OPCODE_UNKNOWN)
                 {
@@ -108,7 +108,7 @@ static int decodeBRU(uint32_t pc, uint32_t opcode, Operation* restrict output)
                 const uint32_t label   = (opcode >> 12u) & 0x3FFFu;
 
                 output->op = BRUJumpsCalls[subtype];
-                output->operands[0] = subtype > 1 ? pc + extend_sign(label, 14) * 2 //relative
+                output->operands[0] = subtype > 1 ? pc + extendSign(label, 14) * 2 //relative
                                                   : label * 2u; //absolute
             }
             else //Ret
