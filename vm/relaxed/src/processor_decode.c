@@ -586,21 +586,6 @@ static int decode(uint32_t index, uint32_t pc, uint32_t opcode, ArOperation* res
     }
 }
 
-static uint32_t opcodeSetSize(ArProcessor restrict processor)
-{
-    uint32_t size;
-    if(processor->flags & 0x01)
-    {
-        const uint32_t available = processor->pc - (AR_PROCESSOR_ISRAM_SIZE / 4u); //we may overflow otherwise
-        size = MIN(available, 4u);
-    }
-    else
-    {
-        size = 2;
-    }
-
-    return size;
-}
 
 ArResult arDecodeInstruction(ArProcessor processor)
 {

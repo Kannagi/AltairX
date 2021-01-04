@@ -70,4 +70,6 @@ typedef struct ArPhysicalMemory_T
 
 } ArPhysicalMemory_T;
 
+uint32_t opcodeSetSize(ArProcessor restrict processor);
+
 #endif

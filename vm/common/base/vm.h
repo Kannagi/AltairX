@@ -308,6 +308,9 @@ typedef ArResult (*PFN_arDecodeInstruction)(ArProcessor processor);
 typedef ArResult (*PFN_arExecuteInstruction)(ArProcessor processor);
 typedef ArResult (*PFN_arExecuteDirectMemoryAccess)(ArProcessor processor);
 
+typedef void (*PFN_arGetProcessorOperations)(ArProcessor processor, ArOperation* pOutput, size_t* pCount);
+typedef void (*PFN_arGetProcessorMemoryInfo)(ArProcessor processor, ArProcessorMemoryInfo* pOutput);
+
 typedef void (*PFN_arDestroyVirtualMachine)(ArVirtualMachine virtualMachine);
 typedef void (*PFN_arDestroyProcessor)(ArVirtualMachine virtualMachine, ArProcessor processor);
 typedef void (*PFN_arDestroyPhysicalMemory)(ArVirtualMachine virtualMachine, ArPhysicalMemory memory);
