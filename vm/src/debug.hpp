@@ -30,7 +30,7 @@ inline user_operation get_next_user_input()
     {
         std::getline(std::cin, input);
 
-        if(input == "step")
+        if(input == "step" || std::empty(input))
         {
             return user_operation{user_operation::step};
         }
@@ -54,29 +54,25 @@ inline void output_op(const ar::processor::operation_set_t& operation_set)
         switch(op.op)
         {
             default:
-                std::cout << "???" << std::endl;
+                fmt::print("???");
                 break;
         /*
             //AGU
-            case AR_OPCODE_LDDMA:  //fallthrough
-            case AR_OPCODE_STDMA:  //fallthrough
-            case AR_OPCODE_LDDMAR: //fallthrough
-            case AR_OPCODE_STDMAR: //fallthrough
-            case AR_OPCODE_DMAIR:  //fallthrough
+            case AR_OPCODE_LDDMA:
+            case AR_OPCODE_STDMA:
+            case AR_OPCODE_LDDMAR:
+            case AR_OPCODE_STDMAR:
+            case AR_OPCODE_DMAIR:
             case AR_OPCODE_WAIT:
                 break;
         */
             //LSU
-            case AR_OPCODE_LDM: //copy data from dsram to register
-                /*memcpy(&ireg[operands[2]], &processor->dsram[operands[0] + ireg[operands[1]]], 1u << op->size);
-                ireg[operands[1]] += op->data; //incr*/
-                fmt::print("ldm.{} r{}, ${:X}[r{}{}]\n", byte_size_names[op.size], op.operands[2], op.operands[0], op.operands[1], op.data ? "+" : "");
+            case AR_OPCODE_LDM:
+                fmt::print("ldm.{} r{}, ${:X}[r{}{}]", byte_size_names[op.size], op.operands[2], op.operands[0], op.operands[1], op.data ? "+" : "");
                 break;
 
-            case AR_OPCODE_STM: //copy data from register to dsram
-                /*memcpy(&processor->dsram[operands[0] + ireg[operands[1]]], &ireg[operands[2]], 1u << op->size);
-                ireg[operands[1]] += op->data; //incr*/
-                fmt::print("stm.{} r{}, ${:X}[r{}{}]\n", byte_size_names[op.size], op.operands[2], op.operands[0], op.operands[1], op.data ? "+" : "");
+            case AR_OPCODE_STM:
+                fmt::print("stm.{} r{}, ${:X}[r{}{}]", byte_size_names[op.size], op.operands[2], op.operands[0], op.operands[1], op.data ? "+" : "");
                 break;
         /*
             case AR_OPCODE_LDC: //copy data from cache to register
@@ -185,8 +181,8 @@ inline void output_op(const ar::processor::operation_set_t& operation_set)
                 processor->delayed[index] = *op;
                 break;
 */
-            case AR_OPCODE_MOVEI: //Write a value to a register
-                fmt::print("movei r{}, ${:X}\n", op.operands[2], op.operands[0]);
+            case AR_OPCODE_MOVEI:
+                fmt::print("movei r{}, ${:08X}", op.operands[2], op.operands[0]);
                 break;
 /*
             case AR_OPCODE_ADD: //REG = REG + REG
@@ -408,7 +404,14 @@ inline void output_op(const ar::processor::operation_set_t& operation_set)
             case AR_OPCODE_RET:
             case AR_OPCODE_MOVE:*/
         }
+
+        if(i != count - 1)
+        {
+            fmt::print(" | ");
+        }
     }
+
+    fmt::print("\n");
 }
 
 }

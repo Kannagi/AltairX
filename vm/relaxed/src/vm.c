@@ -92,6 +92,7 @@ ArResult arCreatePhysicalMemory(ArVirtualMachine virtualMachine, const ArPhysica
     output->memory = pInfo->pMemory;
     output->size = pInfo->size;
 
+    virtualMachine->memory = output;
     *pMemory = output;
 
     return AR_SUCCESS;
@@ -161,6 +162,7 @@ void arDestroyPhysicalMemory(ArVirtualMachine virtualMachine, ArPhysicalMemory m
     assert(virtualMachine->memory);
     assert(memory);
 
+    virtualMachine->memory = NULL;
     free(memory);
 }
 
