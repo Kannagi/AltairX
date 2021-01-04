@@ -160,6 +160,34 @@ typedef struct ArPhysicalMemoryCreateInfo
     uint64_t size;         //< The number of bytes of the memory
 } ArPhysicalMemoryCreateInfo;
 
+#define AR_OPERATION_MAX_OPERANDS 3
+
+typedef struct ArOperation
+{
+    ArOpcode op; //< The opcode
+    uint32_t operands[AR_OPERATION_MAX_OPERANDS]; //< Either register or immediate values
+    uint32_t size; //< The size parameter, real meaning depend on instruction
+    uint32_t data; //< Additionnal data, real meaning depend on instruction
+} ArOperation;
+
+#define AR_PROCESSOR_DSRAM_SIZE     (128u * 1024u)
+#define AR_PROCESSOR_ISRAM_SIZE     (128u * 1024u)
+#define AR_PROCESSOR_CACHE_SIZE     (32u * 1024u)
+#define AR_PROCESSOR_IOSRAM_SIZE    (256u)
+#define AR_PROCESSOR_IREG_COUNT     (64u)
+#define AR_PROCESSOR_FREG_COUNT     (128u)
+#define AR_PROCESSOR_MAX_OPERATIONS (4u)
+
+typedef struct ArProcessorMemoryInfo
+{
+    const uint8_t* dsram;
+    const uint8_t* isram;
+    const uint8_t* cache;
+    const uint8_t* iosram;
+    const uint64_t* ireg;
+    const uint64_t* freg;
+} ArProcessorMemoryInfo;
+
 #ifndef AR_NO_PROTOTYPES
 
 /** \brief Creates a new virtual machine
@@ -228,6 +256,21 @@ ArResult arExecuteInstruction(ArProcessor processor);
             AR_ERROR_HOST_OUT_OF_MEMORY if a host memory allocation failed
 */
 ArResult arExecuteDirectMemoryAccess(ArProcessor processor);
+
+/** \brief Get a copy of current processor fetch operations.
+
+    \param processor A ArProcessor handle
+    \param pOutput A pointer to a ArOperation structure array to be filled. The array's size must be of at least AR_PROCESSOR_MAX_OPERATIONS.
+    \param pCount A pointer to a size_t, the value is updated with the current amount of decoded instructions.
+*/
+void arGetProcessorOperations(ArProcessor processor, ArOperation* pOutput, size_t* pCount);
+
+/** \brief Get a pointer on internal memories of the processor.
+
+    \param processor A ArProcessor handle
+    \param pOutput A pointer to a ArProcessorMemoryInfo structure to be filled. The pointers returned by this fonction never expire until the destruction of the processor.
+*/
+void arGetProcessorMemoryInfo(ArProcessor processor, ArProcessorMemoryInfo* pOutput);
 
 /** \brief Destroy a virtual machine
 

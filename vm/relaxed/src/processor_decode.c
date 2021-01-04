@@ -16,35 +16,35 @@ static int32_t extendSign(uint32_t value, uint32_t bits)
     }
 }
 
-static const Opcode BRUComparators[16] =
+static const ArOpcode BRUComparators[16] =
 {
-    OPCODE_BNE,
-    OPCODE_BEQ,
-    OPCODE_BL,
-    OPCODE_BLE,
-    OPCODE_BG,
-    OPCODE_BGE,
-    OPCODE_BLS,
-    OPCODE_BLES,
-    OPCODE_BGS,
-    OPCODE_BGES,
-    OPCODE_UNKNOWN,
-    OPCODE_UNKNOWN,
-    OPCODE_UNKNOWN,
-    OPCODE_UNKNOWN,
-    OPCODE_UNKNOWN,
-    OPCODE_UNKNOWN
+    AR_OPCODE_BNE,
+    AR_OPCODE_BEQ,
+    AR_OPCODE_BL,
+    AR_OPCODE_BLE,
+    AR_OPCODE_BG,
+    AR_OPCODE_BGE,
+    AR_OPCODE_BLS,
+    AR_OPCODE_BLES,
+    AR_OPCODE_BGS,
+    AR_OPCODE_BGES,
+    AR_OPCODE_UNKNOWN,
+    AR_OPCODE_UNKNOWN,
+    AR_OPCODE_UNKNOWN,
+    AR_OPCODE_UNKNOWN,
+    AR_OPCODE_UNKNOWN,
+    AR_OPCODE_UNKNOWN
 };
 
-static const Opcode BRUJumpsCalls[4] =
+static const ArOpcode BRUJumpsCalls[4] =
 {
-    OPCODE_CALL,
-    OPCODE_JMP,
-    OPCODE_CALLR,
-    OPCODE_JMPR
+    AR_OPCODE_CALL,
+    AR_OPCODE_JMP,
+    AR_OPCODE_CALLR,
+    AR_OPCODE_JMPR
 };
 
-static int decodeBRU(uint32_t pc, uint32_t opcode, Operation* restrict output)
+static int decodeBRU(uint32_t pc, uint32_t opcode, ArOperation* restrict output)
 {
     const uint32_t type = (opcode >> 2u) & 0x03u;
 
@@ -58,7 +58,7 @@ static int decodeBRU(uint32_t pc, uint32_t opcode, Operation* restrict output)
             const uint32_t right = (opcode >> 20u) & 0x3F;
             const uint32_t left  = (opcode >> 26u) & 0x3F;
 
-            output->op = OPCODE_CMP;
+            output->op = AR_OPCODE_CMP;
             output->size = size;
             output->operands[0] = right;
             output->operands[1] = left;
@@ -68,7 +68,7 @@ static int decodeBRU(uint32_t pc, uint32_t opcode, Operation* restrict output)
             const uint32_t right = (opcode >> 18u) & 0x7F;
             const uint32_t left  = (opcode >> 25u) & 0x7F;
 
-            output->op = OPCODE_FCMP;
+            output->op = AR_OPCODE_FCMP;
             output->operands[0] = right;
             output->operands[1] = left;
         }
@@ -77,7 +77,7 @@ static int decodeBRU(uint32_t pc, uint32_t opcode, Operation* restrict output)
             const uint32_t right = (opcode >> 20u) & 0x3F;
             const uint32_t left  = (opcode >> 26u) & 0x3F;
 
-            output->op = OPCODE_DCMP;
+            output->op = AR_OPCODE_DCMP;
             output->operands[0] = right;
             output->operands[1] = left;
         }
@@ -93,7 +93,7 @@ static int decodeBRU(uint32_t pc, uint32_t opcode, Operation* restrict output)
                 output->op = BRUComparators[comp];
                 output->operands[0] = pc + extendSign(label, 14) * 2;
 
-                if(output->op == OPCODE_UNKNOWN)
+                if(output->op == AR_OPCODE_UNKNOWN)
                 {
                     return 0;
                 }
@@ -113,7 +113,7 @@ static int decodeBRU(uint32_t pc, uint32_t opcode, Operation* restrict output)
             }
             else //Ret
             {
-                output->op = OPCODE_RET;
+                output->op = AR_OPCODE_RET;
             }
         }
     }
@@ -123,7 +123,7 @@ static int decodeBRU(uint32_t pc, uint32_t opcode, Operation* restrict output)
         const uint32_t value = (opcode >> 6u ) & 0x0FFFFF;
         const uint32_t reg   = (opcode >> 26u) & 0x00003F;
 
-        output->op = OPCODE_CMPI;
+        output->op = AR_OPCODE_CMPI;
         output->size = size;
         output->operands[0] = value;
         output->operands[1] = reg;
@@ -133,7 +133,7 @@ static int decodeBRU(uint32_t pc, uint32_t opcode, Operation* restrict output)
         const uint32_t value = (opcode >> 4u ) & 0x1FFFFF;
         const uint32_t reg   = (opcode >> 25u) & 0x00007F;
 
-        output->op = OPCODE_FCMPI;
+        output->op = AR_OPCODE_FCMPI;
         output->operands[0] = value;
         output->operands[1] = reg;
     }
@@ -142,7 +142,7 @@ static int decodeBRU(uint32_t pc, uint32_t opcode, Operation* restrict output)
         const uint32_t value = (opcode >> 4u ) & 0x3FFFFF;
         const uint32_t reg   = (opcode >> 26u) & 0x00003F;
 
-        output->op = OPCODE_DCMPI;
+        output->op = AR_OPCODE_DCMPI;
         output->operands[0] = value;
         output->operands[1] = reg;
     }
@@ -150,7 +150,7 @@ static int decodeBRU(uint32_t pc, uint32_t opcode, Operation* restrict output)
     return 1;
 }
 
-static int decodeLSU(uint32_t opcode, Operation* restrict output)
+static int decodeLSU(uint32_t opcode, ArOperation* restrict output)
 {
     const uint32_t type = (opcode >> 2u) & 0x03u;
 
@@ -164,7 +164,7 @@ static int decodeLSU(uint32_t opcode, Operation* restrict output)
         const uint32_t reg   = (opcode >> 26u) & 0x003Fu;
 
         output->data = incr;
-        output->op   = store ? OPCODE_STM : OPCODE_LDM;
+        output->op   = store ? AR_OPCODE_STM : AR_OPCODE_LDM;
         output->size = size;
         output->operands[0] = value;
         output->operands[1] = src;
@@ -182,7 +182,7 @@ static int decodeLSU(uint32_t opcode, Operation* restrict output)
             const uint32_t src   = (opcode >> 25u) & 0x0001u;
             const uint32_t dest  = (opcode >> 26u) & 0x003Fu;
 
-            output->op   = store ? OPCODE_STMX : OPCODE_LDMX;
+            output->op   = store ? AR_OPCODE_STMX : AR_OPCODE_LDMX;
             output->size = size;
             output->operands[0] = value;
             output->operands[1] = src + 62;
@@ -195,7 +195,7 @@ static int decodeLSU(uint32_t opcode, Operation* restrict output)
             const uint32_t value = (opcode >> 16u) & 0xFFu;
             const uint32_t dest  = (opcode >> 26u) & 0x3Fu;
 
-            output->op   = store ? OPCODE_OUT : OPCODE_IN;
+            output->op   = store ? AR_OPCODE_OUT : AR_OPCODE_IN;
             output->size = size;
             output->operands[0] = value;
             output->operands[2] = dest;
@@ -206,7 +206,7 @@ static int decodeLSU(uint32_t opcode, Operation* restrict output)
             const uint32_t value = (opcode >> 16u) & 0xFFFFu;
             const uint32_t dest  = (opcode >> 26u) & 0x00FFu;
 
-            output->op   = OPCODE_OUTI;
+            output->op   = AR_OPCODE_OUTI;
             output->size = size;
             output->operands[0] = value;
             output->operands[2] = dest;
@@ -223,7 +223,7 @@ static int decodeLSU(uint32_t opcode, Operation* restrict output)
             if(cache)
             {
                 output->data = incr;
-                output->op = store ? OPCODE_STCV : OPCODE_LDCV;
+                output->op = store ? AR_OPCODE_STCV : AR_OPCODE_LDCV;
                 output->operands[0] = value;
                 output->operands[1] = src + 56;
                 output->operands[2] = dest;
@@ -231,7 +231,7 @@ static int decodeLSU(uint32_t opcode, Operation* restrict output)
             else
             {
                 output->data = incr;
-                output->op = store ? OPCODE_STMV : OPCODE_LDMV;
+                output->op = store ? AR_OPCODE_STMV : AR_OPCODE_LDMV;
                 output->operands[0] = value;
                 output->operands[1] = src + 56;
                 output->operands[2] = dest;
@@ -248,7 +248,7 @@ static int decodeLSU(uint32_t opcode, Operation* restrict output)
         const uint32_t dest  = (opcode >> 26u) & 0x003Fu;
 
         output->data = incr;
-        output->op   = store ? OPCODE_STC : OPCODE_LDC;
+        output->op   = store ? AR_OPCODE_STC : AR_OPCODE_LDC;
         output->size = size;
         output->operands[0] = value;
         output->operands[1] = src;
@@ -270,7 +270,7 @@ static int decodeLSU(uint32_t opcode, Operation* restrict output)
             if(cache)
             {
                 output->data = incr;
-                output->op = store ? OPCODE_STCF : OPCODE_LDCF;
+                output->op = store ? AR_OPCODE_STCF : AR_OPCODE_LDCF;
                 output->operands[0] = value;
                 output->operands[1] = src + 60;
                 output->operands[2] = dest;
@@ -278,7 +278,7 @@ static int decodeLSU(uint32_t opcode, Operation* restrict output)
             else
             {
                 output->data = incr;
-                output->op = store ? OPCODE_STMF : OPCODE_LDMF;
+                output->op = store ? AR_OPCODE_STMF : AR_OPCODE_LDMF;
                 output->operands[0] = value;
                 output->operands[1] = src + 60;
                 output->operands[2] = dest;
@@ -293,7 +293,7 @@ static int decodeLSU(uint32_t opcode, Operation* restrict output)
             if(cache)
             {
                 output->data = incr;
-                output->op = store ? OPCODE_STCD : OPCODE_LDCD;
+                output->op = store ? AR_OPCODE_STCD : AR_OPCODE_LDCD;
                 output->operands[0] = value;
                 output->operands[1] = src + 60;
                 output->operands[2] = dest;
@@ -301,7 +301,7 @@ static int decodeLSU(uint32_t opcode, Operation* restrict output)
             else
             {
                 output->data = incr;
-                output->op = store ? OPCODE_STMD : OPCODE_LDMD;
+                output->op = store ? AR_OPCODE_STMD : AR_OPCODE_LDMD;
                 output->operands[0] = value;
                 output->operands[1] = src + 60;
                 output->operands[2] = dest;
@@ -312,67 +312,67 @@ static int decodeLSU(uint32_t opcode, Operation* restrict output)
     return 1;
 }
 
-static const Opcode ALURegRegRegOpcodes[16] =
+static const ArOpcode ALURegRegRegOpcodes[16] =
 {
-    OPCODE_ADD,
-    OPCODE_SUB,
-    OPCODE_MULS,
-    OPCODE_MULU,
-    OPCODE_DIVS,
-    OPCODE_DIVU,
-    OPCODE_AND,
-    OPCODE_OR,
-    OPCODE_XOR,
-    OPCODE_ASL,
-    OPCODE_LSL,
-    OPCODE_ASR,
-    OPCODE_LSR,
-    OPCODE_UNKNOWN,
-    OPCODE_UNKNOWN,
-    OPCODE_UNKNOWN,
+    AR_OPCODE_ADD,
+    AR_OPCODE_SUB,
+    AR_OPCODE_MULS,
+    AR_OPCODE_MULU,
+    AR_OPCODE_DIVS,
+    AR_OPCODE_DIVU,
+    AR_OPCODE_AND,
+    AR_OPCODE_OR,
+    AR_OPCODE_XOR,
+    AR_OPCODE_ASL,
+    AR_OPCODE_LSL,
+    AR_OPCODE_ASR,
+    AR_OPCODE_LSR,
+    AR_OPCODE_UNKNOWN,
+    AR_OPCODE_UNKNOWN,
+    AR_OPCODE_UNKNOWN,
 };
 
-static const Opcode ALURegRegImmOpcodes[16] =
+static const ArOpcode ALURegRegImmOpcodes[16] =
 {
-    OPCODE_ADDI,
-    OPCODE_SUBI,
-    OPCODE_MULSI,
-    OPCODE_MULUI,
-    OPCODE_DIVSI,
-    OPCODE_DIVUI,
-    OPCODE_ANDI,
-    OPCODE_ORI,
-    OPCODE_XORI,
-    OPCODE_ASLI,
-    OPCODE_LSLI,
-    OPCODE_ASRI,
-    OPCODE_LSRI,
-    OPCODE_UNKNOWN,
-    OPCODE_UNKNOWN,
-    OPCODE_UNKNOWN,
+    AR_OPCODE_ADDI,
+    AR_OPCODE_SUBI,
+    AR_OPCODE_MULSI,
+    AR_OPCODE_MULUI,
+    AR_OPCODE_DIVSI,
+    AR_OPCODE_DIVUI,
+    AR_OPCODE_ANDI,
+    AR_OPCODE_ORI,
+    AR_OPCODE_XORI,
+    AR_OPCODE_ASLI,
+    AR_OPCODE_LSLI,
+    AR_OPCODE_ASRI,
+    AR_OPCODE_LSRI,
+    AR_OPCODE_UNKNOWN,
+    AR_OPCODE_UNKNOWN,
+    AR_OPCODE_UNKNOWN,
 };
 
-static const Opcode ALURegImmOpcodes[16] =
+static const ArOpcode ALURegImmOpcodes[16] =
 {
-    OPCODE_ADDQ,
-    OPCODE_SUBQ,
-    OPCODE_MULSQ,
-    OPCODE_MULUQ,
-    OPCODE_DIVSQ,
-    OPCODE_DIVUQ,
-    OPCODE_ANDQ,
-    OPCODE_ORQ,
-    OPCODE_XORQ,
-    OPCODE_ASLQ,
-    OPCODE_LSLQ,
-    OPCODE_ASRQ,
-    OPCODE_LSRQ,
-    OPCODE_UNKNOWN,
-    OPCODE_UNKNOWN,
-    OPCODE_UNKNOWN,
+    AR_OPCODE_ADDQ,
+    AR_OPCODE_SUBQ,
+    AR_OPCODE_MULSQ,
+    AR_OPCODE_MULUQ,
+    AR_OPCODE_DIVSQ,
+    AR_OPCODE_DIVUQ,
+    AR_OPCODE_ANDQ,
+    AR_OPCODE_ORQ,
+    AR_OPCODE_XORQ,
+    AR_OPCODE_ASLQ,
+    AR_OPCODE_LSLQ,
+    AR_OPCODE_ASRQ,
+    AR_OPCODE_LSRQ,
+    AR_OPCODE_UNKNOWN,
+    AR_OPCODE_UNKNOWN,
+    AR_OPCODE_UNKNOWN,
 };
 
-static int decodeALU(uint32_t opcode, Operation* restrict output)
+static int decodeALU(uint32_t opcode, ArOperation* restrict output)
 {
     const uint32_t category = (opcode >> 2u) & 0x03u;
 
@@ -394,21 +394,21 @@ static int decodeALU(uint32_t opcode, Operation* restrict output)
             output->operands[1] = src2;
             output->operands[2] = dest;
 
-            if(output->op == OPCODE_UNKNOWN)
+            if(output->op == AR_OPCODE_UNKNOWN)
             {
                 return 0;
             }
         }
         else if(type == 2) // XCHG
         {
-            output->op = OPCODE_XCHG;
+            output->op = AR_OPCODE_XCHG;
         }
         else if(type == 6) // NOP NOP.E
         {
             const uint32_t end = (opcode >> 7u) & 0x01u;
 
             output->data = end;
-            output->op   = OPCODE_NOP;
+            output->op   = AR_OPCODE_NOP;
         }
         else
         {
@@ -429,7 +429,7 @@ static int decodeALU(uint32_t opcode, Operation* restrict output)
         output->operands[1] = src;
         output->operands[2] = dest;
 
-        if(output->op == OPCODE_UNKNOWN)
+        if(output->op == AR_OPCODE_UNKNOWN)
         {
             return 0;
         }
@@ -446,7 +446,7 @@ static int decodeALU(uint32_t opcode, Operation* restrict output)
         output->operands[0] = value;
         output->operands[2] = dest;
 
-        if(output->op == OPCODE_UNKNOWN)
+        if(output->op == AR_OPCODE_UNKNOWN)
         {
             return 0;
         }
@@ -456,7 +456,7 @@ static int decodeALU(uint32_t opcode, Operation* restrict output)
         const uint32_t value = (opcode >> 4u ) & 0x3FFFFFu;
         const uint32_t dest  = (opcode >> 26u) & 0x00003Fu;
 
-        output->op = OPCODE_MOVEI;
+        output->op = AR_OPCODE_MOVEI;
         output->operands[0] = value;
         output->operands[2] = dest;
     }
@@ -464,7 +464,7 @@ static int decodeALU(uint32_t opcode, Operation* restrict output)
     return 1;
 }
 
-static int decodeAGU(uint32_t opcode, Operation* restrict output)
+static int decodeAGU(uint32_t opcode, ArOperation* restrict output)
 {
     const uint32_t category = (opcode >> 2u) & 0x01u;
 
@@ -477,7 +477,7 @@ static int decodeAGU(uint32_t opcode, Operation* restrict output)
         const uint32_t sramb = (opcode >> 8u ) & 0x0FFFu;
         const uint32_t ramb  = (opcode >> 20u) & 0x0FFFu;
 
-        output->op = store ? OPCODE_STDMA : OPCODE_LDDMA;
+        output->op = store ? AR_OPCODE_STDMA : AR_OPCODE_LDDMA;
         output->size = size;
         output->operands[0] = sram + 60;
         output->operands[1] = ram + 58;
@@ -494,7 +494,7 @@ static int decodeAGU(uint32_t opcode, Operation* restrict output)
             const uint32_t ram  = (opcode >> 8u ) & 0x003Fu;
             const uint32_t sram = (opcode >> 20u) & 0x003Fu;
 
-            output->op = store ? OPCODE_STDMAR : OPCODE_LDDMAR;
+            output->op = store ? AR_OPCODE_STDMAR : AR_OPCODE_LDDMAR;
             output->size = size;
             output->operands[0] = ram;
             output->operands[1] = sram;
@@ -505,14 +505,14 @@ static int decodeAGU(uint32_t opcode, Operation* restrict output)
             const uint32_t ram  = (opcode >> 8u ) & 0x003Fu;
             const uint32_t sram = (opcode >> 20u) & 0x003Fu;
 
-            output->op = OPCODE_DMAIR;
+            output->op = AR_OPCODE_DMAIR;
             output->size = size;
             output->operands[0] = ram;
             output->operands[1] = sram;
         }
         else if(type == 15) //WAIT
         {
-            output->op = OPCODE_WAIT;
+            output->op = AR_OPCODE_WAIT;
         }
         else
         {
@@ -523,7 +523,7 @@ static int decodeAGU(uint32_t opcode, Operation* restrict output)
     return 1;
 }
 
-static int decodeVFPU(uint32_t opcode, Operation* restrict output)
+static int decodeVFPU(uint32_t opcode, ArOperation* restrict output)
 {
     (void)opcode;
     (void)output;
@@ -531,12 +531,8 @@ static int decodeVFPU(uint32_t opcode, Operation* restrict output)
     return 1;
 }
 
-static int decode(uint32_t index, uint32_t pc, uint32_t opcode, Operation* restrict output)
+static int decode(uint32_t index, uint32_t pc, uint32_t opcode, ArOperation* restrict output)
 {
-#ifndef NDEBUG
-    memset(output, 0, sizeof(Operation)); //simplify debug
-#endif
-
     const uint32_t compute_unit = opcode & 0x03;
 
     if(index == 0)
@@ -595,7 +591,7 @@ static uint32_t opcodeSetSize(ArProcessor restrict processor)
     uint32_t size;
     if(processor->flags & 0x01)
     {
-        const uint32_t available = processor->pc - (ISRAM_SIZE / 4u); //we may overflow otherwise
+        const uint32_t available = processor->pc - (AR_PROCESSOR_ISRAM_SIZE / 4u); //we may overflow otherwise
         size = MIN(available, 4u);
     }
     else

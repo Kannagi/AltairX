@@ -350,8 +350,6 @@ int main(int argc, char** argv)
 {
     try
     {
-        std::cout.sync_with_stdio(false);
-
         std::vector<std::string_view> args{};
         args.reserve(static_cast<std::size_t>(argc));
         for(int i{}; i < argc; ++i)
