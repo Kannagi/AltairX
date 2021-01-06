@@ -163,19 +163,19 @@ Jumps to the specified label if conditional flag is true for the specified compa
 | :-----: | :-----: | :----------: | :---: | :---: | :---: | :---: |
 | 0       | *Label* | *Comparator* | 0     | 3     | 0     | 0     |
 
-| *Comparator* value | Comparator       | Notes         | Mnemonic |
-| :----------------: | :--------------: | :-----------: | :------: |
-| 0                  | Not equal        |               | BNE      |
-| 1                  | Equal            |               | BEQ      |
-| 2                  | Less             |               | BL       |
-| 3                  | Less or equal    |               | BLE      |
-| 4                  | Greater          |               | BG       |
-| 5                  | Greater or equal |               | BGE      |
-| 6                  | Less             | Sign-extended | BLS      |
-| 7                  | Less or equal    | Sign-extended | BLES     |
-| 8                  | Greater          | Sign-extended | BGS      |
-| 9                  | Greater or equal | Sign-extended | BGES     |
-| 10-15              | Illegal          |               |          |
+| *Comparator* value | Comparator       | Notes  | Mnemonic |
+| :----------------: | :--------------: | :----: | :------: |
+| 0                  | Not equal        |        | BNE      |
+| 1                  | Equal            |        | BEQ      |
+| 2                  | Less             |        | BL       |
+| 3                  | Less or equal    |        | BLE      |
+| 4                  | Greater          |        | BG       |
+| 5                  | Greater or equal |        | BGE      |
+| 6                  | Less             | Signed | BLS      |
+| 7                  | Less or equal    | Signed | BLES     |
+| 8                  | Greater          | Signed | BGS      |
+| 9                  | Greater or equal | Signed | BGES     |
+| 10-15              | Illegal          |        |          |
 
 * *Label*: the address, relative to current program counter, of the instruction to jump to in ISRAM. The total incrementation of the program counter, in bytes, is `Label * 8`. This value is sign-extended.
 * *Comparator*: the logical operation to perform 
@@ -571,24 +571,24 @@ Pseudo-code equivalent: `R <- R OP I`
 
 ##### Operations
 
-| Opcode | OP   | Name                           | Notes         |
-| :----: | :--: | :----------------------------: | :-----------: |
-| 0      | ADD  | Addition                       |               |
-| 1      | SUB  | Substraction                   |               |
-| 2      | MULS | Multiplication                 | Sign-extended |
-| 3      | MULU | Multiplication                 |               |
-| 4      | DIVS | Division                       | Sign-extended |
-| 5      | DIVU | Division                       |               |
-| 6      | AND  | Bitwise AND                    |               |
-| 7      | OR   | Bitwise OR                     |               |
-| 8      | XOR  | Bitwise XOR                    |               |
-| 9      | ASL  | Arithmetic bitwise left shift  | Sign-extended |
-| 10     | LSL  | Logical bitwise left shift     |               |
-| 11     | ASR  | Arithmetic bitwise right shift | Sign-extended |
-| 12     | LSR  | Logical bitwise right shift    |               |
-| 13     | ILL  | Illegal                        |               |
-| 14     | ILL  | Illegal                        |               |
-| 15     | ILL  | Illegal                        |               |
+| Opcode | OP   | Name                           | Notes  |
+| :----: | :--: | :----------------------------: | :----: |
+| 0      | ADD  | Addition                       |        |
+| 1      | SUB  | Substraction                   |        |
+| 2      | MULS | Multiplication                 | Signed |
+| 3      | MULU | Multiplication                 |        |
+| 4      | DIVS | Division                       | Signed |
+| 5      | DIVU | Division                       |        |
+| 6      | AND  | Bitwise AND                    |        |
+| 7      | OR   | Bitwise OR                     |        |
+| 8      | XOR  | Bitwise XOR                    |        |
+| 9      | ASL  | Arithmetic bitwise left shift  | Signed |
+| 10     | LSL  | Logical bitwise left shift     |        |
+| 11     | ASR  | Arithmetic bitwise right shift | Signed |
+| 12     | LSR  | Logical bitwise right shift    |        |
+| 13     | ILL  | Illegal                        |        |
+| 14     | ILL  | Illegal                        |        |
+| 15     | ILL  | Illegal                        |        |
 
 ### II.3.3) MOVEI
 
@@ -611,7 +611,7 @@ Write the value of a register in another one.
 
 | 31 - 3    | 2          | 1 - 0 |
 | :-------: | :--------: | :---: |
-| Dependent | *Category* | 2     |
+| Dependent | *Category* | 0     |
 
 | *Category* value | Instruction category |
 | :--------------: | :------------------: |
@@ -626,7 +626,7 @@ Direct transfer between DSRAM and RAM
 
 | 31 - 20    | 19 - 8       | 7             | 6 - 5           | 4      | 3       | 2   | 1 - 0 |
 | :--------: | :----------: | :-----------: | :-------------: | :----: | :-----: | :-: | :---: |
-| *RAM Base* | *DSRAM Base* | *RAM address* | *DSRAM address* | *Size* | *Store* | 0   | 2     |
+| *RAM Base* | *DSRAM Base* | *RAM address* | *DSRAM address* | *Size* | *Store* | 0   | 0     |
 
 * *Store*: if 0, then it is a transfer from RAM to SDRAM, if 1, then it is a tranfers from SDRAM to RAM.
 * *Size*: if 0, then transfer 32 bytes, if 1, then transfer 64 bytes.
@@ -642,7 +642,7 @@ The address in DSRAM is multiplied by 32, so the final address, in bytes, is `(D
 
 | 31 - 8    | 7 - 4  | 3       | 2   | 1 - 0 |
 | :-------: | :----: | :-----: | :-: | :---: |
-| Dependent | *Type* | *Store* | 1   | 2     |
+| Dependent | *Type* | *Store* | 1   | 0     |
 
 | *Type* value | Instruction   |
 | :----------: | :-----------: |
@@ -661,7 +661,7 @@ Transfer blocs of data between RAM and DSRAM.
 
 | 31 - 26         | 25 - 20       | 19 - 8 | 7 - 4  | 3       | 2   | 1 - 0 |
 | :-------------: | :-----------: | :----: | :----: | :-----: | :-: | :---: |
-| *DSRAM address* | *RAM address* | *Size* | 0      | *Store* | 1   | 2     |
+| *DSRAM address* | *RAM address* | *Size* | 0      | *Store* | 1   | 0     |
 
 * *Store*: if 0, then it is a transfer from RAM to SDRAM, if 1, then it is a tranfers from SDRAM to RAM.
 * *Size*: the amount of data to transfer, the total size in bytes is `32 * Size`.
@@ -674,7 +674,7 @@ Transfer blocs of data from RAM and ISRAM.
 
 | 31 - 26         | 25 - 20       | 19 - 8 | 7 - 4  | 3       | 2   | 1 - 0 |
 | :-------------: | :-----------: | :----: | :----: | :-----: | :-: | :---: |
-| *ISRAM address* | *RAM address* | *Size* | 1      | *Store* | 1   | 2     |
+| *ISRAM address* | *RAM address* | *Size* | 1      | *Store* | 1   | 0     |
 
 * *Store*: must be 0 (1 is illegal), it is always a transfer from RAM to ISRAM.
 * *Size*: the amount of data to transfer, the total size in bytes is `32 * Size`.
@@ -687,7 +687,7 @@ Blocks execution until the end of previous transfers.
 
 | 31 - 8 | 7 - 4 | 3   | 2   | 1 - 0 |
 | :----: | :---: | :-: | :-: | :---: |
-| 0      | 15    | 0   | 1   | 2     |
+| 0      | 15    | 0   | 1   | 0     |
 
 ## II.5) VFPU
 
