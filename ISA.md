@@ -55,24 +55,24 @@ The following table is applicable to **ALL** opcodes
 Depending on the value of *Compute Unit*, and of opcode index, the decoding steps will differ.
 Here is a table with all *Compute Unit* and opcode index possible values:
 
-| *Compute Unit* | Opcode index | Compute Unit |
-| :------------: | :----------: | :----------: |
-| 0              | 0            | BRU          |
-| 0              | 1            | LSU          |
-| 0              | 2            | ALU or XCHG  |
-| 0              | 3            | VFPU or VDIV |
-| 1              | 0            | AGU          |
-| 1              | 1            | LSU          |
-| 1              | 2            | ALU          |
-| 1              | 3            | VFPU         |
-| 2              | 0            | Illegal      |
-| 2              | 1            | Illegal      |
-| 2              | 2            | ALU          |
-| 2              | 3            | Illegal      |
-| 3              | 0            | Illegal      |
-| 3              | 1            | Illegal      |
-| 3              | 2            | ALU          |
-| 3              | 3            | Illegal      |
+| Opcode index | *Compute Unit* | Compute Unit |
+| :----------: | :------------: | :----------: |
+| 0            | 0              | BRU or CMP   |
+| 0            | 1              | LSU          |
+| 0            | 2              | ALU or XCHG  |
+| 0            | 3              | VFPU or VDIV |
+| 1            | 0              | AGU          |
+| 1            | 1              | LSU          |
+| 1            | 2              | ALU          |
+| 1            | 3              | VFPU         |
+| 2            | 0              | Illegal      |
+| 2            | 1              | Illegal      |
+| 2            | 2              | ALU          |
+| 2            | 3              | Illegal      |
+| 3            | 0              | Illegal      |
+| 3            | 1              | Illegal      |
+| 3            | 2              | ALU          |
+| 3            | 3              | Illegal      |
 
 # II) Compute units opcodes
 
