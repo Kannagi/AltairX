@@ -48,7 +48,7 @@ The advantage of this processor is that it has a simple design, and requires lit
 ## CPU Core
 <img src="die.png?raw=true" alt="CPU" width="256" height="256">
 
-
+## ---------------------------------------------------  
 
 # Altair GPU
 
@@ -71,8 +71,8 @@ he has access to EDRAM which will take several cycles.
 The EFU will have all the necessary instructions to speed up calculations and 3D rendering.  
 (sin, cos, arctan, dot, rasterization, Min / Max, Clip, Culling / Sorting etc etc).  
 
-The L2 SRAM (4MB), contains the vertex / tectcoord / normal / index / color / other + code of the shader.
-if the capacity of the SRAM is insufficient, the L2 cache is used.
+
+It has a L2 SRAM 4 MB to manage the code or the data of the different shader.  
 
 The Pixel Process Unit is used to manage the Frame buffer / Zbuffer and Blending.  
 The compute unit does the various necessary calculations and indicates a pixel line to write.  
