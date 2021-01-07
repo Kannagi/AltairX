@@ -49,11 +49,12 @@ The advantage of this processor is that it has a simple design, and requires lit
 <img src="die.png?raw=true" alt="CPU" width="256" height="256">
 
 
+
 # Altair GPU
 
 Altair for GPU shares many points in common with the CPU version, it is a simplified version oriented parallel computing and rendering.
 
-So Altair G1 is a VLIW command processor.  
+So Altair G1 is a VLIW in order processor.  
 It has the same L1 cache count.  
 It has 32MB eDRAM memory for textures.  
 A 128 KB SRAM for texture indexes (to manage palettes or VQ).  
@@ -70,8 +71,8 @@ he has access to EDRAM which will take several cycles.
 The EFU will have all the necessary instructions to speed up calculations and 3D rendering.  
 (sin, cos, arctan, dot, rasterization, Min / Max, Clip, Culling / Sorting etc etc).  
 
-
-It has a L2 SRAM 4 MB to manage the code or the data of the different shader.  
+The L2 SRAM (4MB), contains the vertex / tectcoord / normal / index / color / other + code of the shader.
+if the capacity of the SRAM is insufficient, the L2 cache is used.
 
 The Pixel Process Unit is used to manage the Frame buffer / Zbuffer and Blending.  
 The compute unit does the various necessary calculations and indicates a pixel line to write.  
