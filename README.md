@@ -70,10 +70,10 @@ The LSU will have specific instructions to load / store 32 vectors at a time.
 it has access to EDRAM / L2 SRAM / L2 Cache which will take several cycles, read only.  
 
 The EFU will have all the necessary instructions to speed up calculations and 3D rendering.  
-(sin, cos, arctan, dot, rasterization, Min / Max, Clip, Culling / Sorting etc etc).  
+(sin, cos, arctan, dot, rasterization, Min / Max, Clip, Culling , Sorting etc etc).  
 
-
-It has a L2 SRAM 4 MB to manage the code or the data of the different shader.  
+L2 SRAM (4 MB) stores the vertex / textcoord / normal / index / color / other + code of the shaders.  
+If this is insufficient, it is stored on the L2 cache.  
 
 The Pixel Process Unit is used to manage the Frame buffer / Zbuffer and Blending.  
 The compute unit does the various necessary calculations and indicates a pixel line to write.  
