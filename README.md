@@ -58,7 +58,8 @@ So Altair G1 is a VLIW in order processor.
 It has the same L1 cache count.  
 It has 32MB eDRAM memory for textures.  
 A 128 KB SRAM for texture indexes (to manage palettes or VQ).  
-L1 and L2 cache memory is intended for textures that are too large  
+
+L2 cache memory is intended for textures that are too large  
 For example if we use two non-compressive textures of 4096x4096, it does not enter the texture buffer, and it will be managed by the cache (longer and therefore with a lot of missing cache).  
 To avoid using the cache for managing images (or 2D rendering) with a large texture, there will be a “Sprite” type geometry management.  
 
@@ -66,7 +67,7 @@ The calculation unit can only execute 2 instructions / cycle.
 It has an ALU (no division), CMP, BRU, LSU and AGU.  
 And 32 VPU (Vector Posits Unit), 32 PDIV (Posits Division), 32 EFU (Elementary Function Unit).  
 The LSU will have specific instructions to load / store 32 vectors at a time.  
-he has access to EDRAM which will take several cycles.  
+it has access to EDRAM / L2 SRAM / L2 Cache which will take several cycles, read only.  
 
 The EFU will have all the necessary instructions to speed up calculations and 3D rendering.  
 (sin, cos, arctan, dot, rasterization, Min / Max, Clip, Culling / Sorting etc etc).  
