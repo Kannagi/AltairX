@@ -917,9 +917,9 @@ Depending on the value of *Operation* the decoding steps will differ.
 
 ###### DDIV or DSQRT
 
-| 31 - 26       | 25 - 20    | 19 - 14    | 9 - 8 | 7      | 6             | 5 - 4 | 3 - 2 | 1 - 0 |
-| :-----------: | :--------: | :--------: | :---: | :----: | :-----------: | :---: | :---: | :---: |
-| *Destination* | *Source 2* | *Source 1* | 3     | 1      | *Instruction* | 3     | 0     | 3     |
+| 31 - 26       | 25 - 20    | 19 - 14    | 13 - 10 | 9 - 8 | 7      | 6             | 5 - 4 | 3 - 2 | 1 - 0 |
+| :-----------: | :--------: | :--------: | :-----: | :---: | :----: | :-----------: | :---: | :---: | :---: |
+| *Destination* | *Source 2* | *Source 1* | 0       | 3     | 1      | *Instruction* | 3     | 0     | 3     |
 
 * *Instruction*: if 0, then it is DDIV, if 1, it is DSQRT.
 * *Source 1*: a double register, the left operand.
