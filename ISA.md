@@ -806,7 +806,7 @@ The 4 following operations does **not** follow the [Float operations](#float-ope
 These operations are applied using the following pattern: 
 * `d0 = d1 OP d2`
 
-| 31 - 26       | 25 - 20    | 19 - 14    | 16 - 10 | 9 - 8 | 7 - 6       | 5 - 4 | 3 - 2 | 1 - 0 |
+| 31 - 26       | 25 - 20    | 19 - 14    | 13 - 10 | 9 - 8 | 7 - 6       | 5 - 4 | 3 - 2 | 1 - 0 |
 | :-----------: | :--------: | :--------: | :-----: | :---: | :---------: | :---: | :---: | :---: |
 | *Destination* | *Source 1* | *Source 2* | 0       | 3     | *Operation* | 0     | 0     | 3     |
 
@@ -906,9 +906,9 @@ Depending on the value of *Operation* the decoding steps will differ.
 
 ###### FDIV or FSQRT
 
-| 31 - 25       | 24 - 18    | 17 - 11    | 9 - 8 | 7      | 6             | 5 - 4 | 3 - 2 | 1 - 0 |
-| :-----------: | :--------: | :--------: | :---: | :----: | :-----------: | :---: | :---: | :---: |
-| *Destination* | *Source 2* | *Source 1* | 3     | 0      | *Instruction* | 3     | 0     | 3     |
+| 31 - 25       | 24 - 18    | 17 - 11    | 10  | 9 - 8 | 7      | 6             | 5 - 4 | 3 - 2 | 1 - 0 |
+| :-----------: | :--------: | :--------: | :-: | :---: | :----: | :-----------: | :---: | :---: | :---: |
+| *Destination* | *Source 2* | *Source 1* | 0   | 3     | 0      | *Instruction* | 3     | 0     | 3     |
 
 * *Instruction*: if 0, then it is FDIV, if 1, it is FSQRT.
 * *Source 1*: a float register, the left operand.
