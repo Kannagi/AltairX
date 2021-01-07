@@ -86,4 +86,4 @@ The PPU takes care of this, internally it will have a buffer and a queue to mana
 <img src="PipelineGPU.png?raw=true" alt="Compute Unit" width="640" height="840">
 
 ## GPU Die
-<img src="dieGPU.png?raw=true" alt="GPU" width="640" height="1024">
+<img src="dieGPU.png?raw=true" alt="GPU" width="1000" height="1024">
