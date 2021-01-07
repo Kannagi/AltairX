@@ -1,0 +1,15 @@
+128 registre * Posites16 x32
+32 resgitres 64 bits
+
+ALU/BRU/CMP/LSU/AGU
+128 PMAC
+32 PDIV
+32 EFU
+
+128 ko RAM D
+128 ko RAM I
+32ko cache D
+
+
+opcode 1: ALU/LOAD/STORE/BRU/CMP
+opcode 2: VPU/PDIV/EFU x1-x32

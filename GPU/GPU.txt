@@ -1,0 +1,50 @@
+
+D'ailleurs je viens de voir ce que faisais Sony pour accélérer les flottants , en gros :
+-il gère qu'un type d'arrondie (Vers zéro et c'est une variante)
+-ne gère pas les nombres dénormalisé (pour lui c'est un 0)
+-ne gère pas les NaN (c'est la valeur 2^128)
+-ne gère pas les nombres infinis (c'est la valeur 2^128)
+
+
+
+--------pipeline vertex/pixel---------
+(Matrice*vecteur)
+
+code vertex shader
+
+div+ mul
+
+
+culling/clip
+-------
+
+tri point triangle
+code pixel shader
+draw ligne
+send ->
+
+-------------------------
+
+
+
+type de texture :
+RGB 8 bits (2/3/3)
+RGB 16 bits (5/6/5)
+RGBA 16 bits (1/5/5/5)
+RGBA 16 bits (4/4/4/4)
+RGB 24 bits
+RGBA 32 bits
+
+palette/index
+2/4/8bpp
+VQ compressed (2/4)
+
+32 Mo eDREAM
+
+4 mo de texture
+
+1024*1024p
+RGB(A) 1mo -4mo (1/2/4 byte)
+palette 256ko-1024ko (2bpp/4bpp/8bpp)
+VQ compressed  64ko-256ko (2x2/4x4)
+VQ compressed2 128ko-512ko (2x2/4x4)

@@ -17,6 +17,11 @@ git add die.png
 git add README.md
 git add vasm
 
+git add GPU/
+git add GPU.png
+git add dieGPU.png
+git add PipelineGPU.png
+
 git commit -m "$message"
 #git remote add origin https://github.com/Kannagi/Altair.git/ 
 #git push -u origin master

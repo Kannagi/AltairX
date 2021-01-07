@@ -1,0 +1,34 @@
+128 *4(float) * 4 (xyzw)
+*2 (double buffer
+
+
+212 * 4(index) * (3-4 tri)
+*double buffer
+
+14976
+
+
+-----------------------64 ko------------
+57ko
+2048 vertex/tc /2730 index 
+
+---
+2389 index :
+2150 vertex/tc 
+1344 vertex/tc/normal
+977 vertex/tc/normal/color3
+
+
+
+
+4778 vertex
+2867 vertex/tc 
+1792 vertex/tc/normal
+1592 vertex/tc/normal/color
+1303 vertex/tc/normal/color3
+
+
+16 ko libre
+
+
+

@@ -1,0 +1,154 @@
+; SPIR-V
+; Version: 1.0
+; Generator: Khronos; 0
+; Bound: 68
+; Schema: 0
+               OpCapability Shader
+               OpMemoryModel Logical GLSL450
+               OpEntryPoint Fragment %main "main" %vertNormal %vertUV %RenderTarget0
+               OpExecutionMode %main OriginUpperLeft
+               OpName %main "main"
+               OpName %ViewerData "ViewerData"
+               OpMemberName %ViewerData 0 "projectionMatrix"
+               OpMemberName %ViewerData 1 "invProjectionMatrix"
+               OpMemberName %ViewerData 2 "viewMatrix"
+               OpMemberName %ViewerData 3 "invViewMatrix"
+               OpMemberName %ViewerData 4 "viewProjMatrix"
+               OpMemberName %ViewerData 5 "invViewProjMatrix"
+               OpMemberName %ViewerData 6 "renderTargetSize"
+               OpMemberName %ViewerData 7 "invRenderTargetSize"
+               OpMemberName %ViewerData 8 "eyePosition"
+               OpName %InstanceData "InstanceData"
+               OpMemberName %InstanceData 0 "worldMatrix"
+               OpMemberName %InstanceData 1 "invWorldMatrix"
+               OpName %BasicSettings "BasicSettings"
+               OpMemberName %BasicSettings 0 "AlphaThreshold"
+               OpMemberName %BasicSettings 1 "DiffuseColor"
+               OpName %vertNormal "vertNormal"
+               OpName %vertUV "vertUV"
+               OpName %RenderTarget0 "RenderTarget0"
+               OpName %viewerData "viewerData"
+               OpName %instanceData "instanceData"
+               OpName %settings "settings"
+               OpName %MaterialAlphaMap "MaterialAlphaMap"
+               OpName %MaterialDiffuseMap "MaterialDiffuseMap"
+               OpName %TextureOverlay "TextureOverlay"
+               OpDecorate %vertNormal Location 0
+               OpDecorate %vertUV Location 1
+               OpDecorate %RenderTarget0 Location 0
+               OpDecorate %viewerData Binding 5
+               OpDecorate %viewerData DescriptorSet 0
+               OpDecorate %instanceData Binding 4
+               OpDecorate %instanceData DescriptorSet 0
+               OpDecorate %settings Binding 3
+               OpDecorate %settings DescriptorSet 0
+               OpDecorate %MaterialAlphaMap Binding 0
+               OpDecorate %MaterialAlphaMap DescriptorSet 0
+               OpDecorate %MaterialDiffuseMap Binding 1
+               OpDecorate %MaterialDiffuseMap DescriptorSet 0
+               OpDecorate %TextureOverlay Binding 2
+               OpDecorate %TextureOverlay DescriptorSet 0
+               OpDecorate %ViewerData Block
+               OpMemberDecorate %ViewerData 0 ColMajor
+               OpMemberDecorate %ViewerData 0 MatrixStride 16
+               OpMemberDecorate %ViewerData 0 Offset 0
+               OpMemberDecorate %ViewerData 1 ColMajor
+               OpMemberDecorate %ViewerData 1 MatrixStride 16
+               OpMemberDecorate %ViewerData 1 Offset 64
+               OpMemberDecorate %ViewerData 2 ColMajor
+               OpMemberDecorate %ViewerData 2 MatrixStride 16
+               OpMemberDecorate %ViewerData 2 Offset 128
+               OpMemberDecorate %ViewerData 3 ColMajor
+               OpMemberDecorate %ViewerData 3 MatrixStride 16
+               OpMemberDecorate %ViewerData 3 Offset 192
+               OpMemberDecorate %ViewerData 4 ColMajor
+               OpMemberDecorate %ViewerData 4 MatrixStride 16
+               OpMemberDecorate %ViewerData 4 Offset 256
+               OpMemberDecorate %ViewerData 5 ColMajor
+               OpMemberDecorate %ViewerData 5 MatrixStride 16
+               OpMemberDecorate %ViewerData 5 Offset 320
+               OpMemberDecorate %ViewerData 6 Offset 384
+               OpMemberDecorate %ViewerData 7 Offset 392
+               OpMemberDecorate %ViewerData 8 Offset 400
+               OpDecorate %InstanceData Block
+               OpMemberDecorate %InstanceData 0 ColMajor
+               OpMemberDecorate %InstanceData 0 MatrixStride 16
+               OpMemberDecorate %InstanceData 0 Offset 0
+               OpMemberDecorate %InstanceData 1 ColMajor
+               OpMemberDecorate %InstanceData 1 MatrixStride 16
+               OpMemberDecorate %InstanceData 1 Offset 64
+               OpDecorate %BasicSettings Block
+               OpMemberDecorate %BasicSettings 0 Offset 0
+               OpMemberDecorate %BasicSettings 1 Offset 16
+      %float = OpTypeFloat 32
+    %v3float = OpTypeVector %float 3
+    %float_0 = OpConstant %float 0
+%float_n0_707000017 = OpConstant %float -0.707000017
+%float_0_707000017 = OpConstant %float 0.707000017
+          %6 = OpConstantComposite %v3float %float_0 %float_n0_707000017 %float_0_707000017
+        %int = OpTypeInt 32 1
+      %int_1 = OpConstant %int 1
+      %int_0 = OpConstant %int 0
+       %bool = OpTypeBool
+       %true = OpConstantTrue %bool
+       %void = OpTypeVoid
+%_ptr_Input_v3float = OpTypePointer Input %v3float
+    %v2float = OpTypeVector %float 2
+%_ptr_Input_v2float = OpTypePointer Input %v2float
+    %v4float = OpTypeVector %float 4
+%_ptr_Output_v4float = OpTypePointer Output %v4float
+%mat4v4float = OpTypeMatrix %v4float 4
+ %ViewerData = OpTypeStruct %mat4v4float %mat4v4float %mat4v4float %mat4v4float %mat4v4float %mat4v4float %v2float %v2float %v3float
+%_ptr_Uniform_ViewerData = OpTypePointer Uniform %ViewerData
+%InstanceData = OpTypeStruct %mat4v4float %mat4v4float
+%_ptr_Uniform_InstanceData = OpTypePointer Uniform %InstanceData
+%BasicSettings = OpTypeStruct %float %v4float
+%_ptr_Uniform_BasicSettings = OpTypePointer Uniform %BasicSettings
+         %25 = OpTypeImage %float 2D 2 0 0 2 Unknown
+         %26 = OpTypeSampledImage %25
+%_ptr_UniformConstant_26 = OpTypePointer UniformConstant %26
+         %28 = OpTypeFunction %void
+%_ptr_Uniform_v4float = OpTypePointer Uniform %v4float
+%_ptr_Uniform_float = OpTypePointer Uniform %float
+ %vertNormal = OpVariable %_ptr_Input_v3float Input
+     %vertUV = OpVariable %_ptr_Input_v2float Input
+%RenderTarget0 = OpVariable %_ptr_Output_v4float Output
+ %viewerData = OpVariable %_ptr_Uniform_ViewerData Uniform
+%instanceData = OpVariable %_ptr_Uniform_InstanceData Uniform
+   %settings = OpVariable %_ptr_Uniform_BasicSettings Uniform
+%MaterialAlphaMap = OpVariable %_ptr_UniformConstant_26 UniformConstant
+%MaterialDiffuseMap = OpVariable %_ptr_UniformConstant_26 UniformConstant
+%TextureOverlay = OpVariable %_ptr_UniformConstant_26 UniformConstant
+       %main = OpFunction %void None %28
+         %39 = OpLabel
+         %40 = OpLoad %v3float %vertNormal
+         %41 = OpDot %float %40 %6
+         %42 = OpLoad %26 %MaterialDiffuseMap
+         %43 = OpLoad %v2float %vertUV
+         %44 = OpImageSampleImplicitLod %v4float %42 %43
+         %45 = OpAccessChain %_ptr_Uniform_v4float %settings %int_1
+         %47 = OpLoad %v4float %45
+         %48 = OpFMul %v4float %44 %47
+         %49 = OpVectorTimesScalar %v4float %48 %41
+         %50 = OpCompositeExtract %float %49 0
+         %51 = OpCompositeExtract %float %49 1
+         %52 = OpCompositeExtract %float %49 2
+         %53 = OpLoad %26 %MaterialAlphaMap
+         %54 = OpLoad %v2float %vertUV
+         %55 = OpImageSampleImplicitLod %v4float %53 %54
+         %56 = OpCompositeExtract %float %55 0
+         %57 = OpCompositeExtract %float %49 3
+         %58 = OpFMul %float %56 %57
+         %59 = OpCompositeConstruct %v4float %50 %51 %52 %58
+         %60 = OpCompositeExtract %float %59 3
+         %61 = OpAccessChain %_ptr_Uniform_float %settings %int_0
+         %63 = OpLoad %float %61
+         %64 = OpFOrdLessThan %bool %60 %63
+         %65 = OpLogicalEqual %bool %64 %true
+               OpBranchConditional %65 %66 %67
+         %66 = OpLabel
+               OpKill
+         %67 = OpLabel
+               OpStore %RenderTarget0 %59
+               OpReturn
+               OpFunctionEnd

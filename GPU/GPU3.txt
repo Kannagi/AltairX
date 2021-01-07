@@ -1,0 +1,53 @@
+while(1)
+{
+     command_line_send();
+
+     //mon jeu collision et j'y passe
+
+     
+     
+
+     vsync();
+
+
+
+}
+0xCCDD DDDA AAAA AAAA
+C = CMD
+D = Depend
+A = ADR or ID
+
+0 = buffer_select
+1 = VDATA in for vertex shader
+2 = PDATA in for pixel shader
+3 = model data (vertex,normal,index,tc,id,,other)
+4 = texture
+5 draw
+
+select_buffer_A
+VDATA1
+vertex_shader1
+pixel_shader1
+Model_A
+texture1
+texture2
+texturenormal_map
+draw
+
+DATA2
+Model_B
+draw
+
+DATA3
+vertex_shader1
+pixel_shader1
+Model_A
+texture1
+texture2
+texturenormal_map
+draw
+
+etc etc
+
+
+

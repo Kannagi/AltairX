@@ -32,26 +32,56 @@ For the calculation unit it has:
 
 The advantage of this processor is that it has a simple design, and requires little transistor for "high performance" and therefore consume / cost less than RISC Out Of Order processors.
 
-## Todo list
+### Todo list
 - Finish the assembler program
 - Make documentation (pdf / html) (ISA and hardware)
 - Translate the IR code (Clang) for Altair
 - Make the virtual machine
 
-# Pipeline
+## Pipeline
 <img src="Pipeline4.png?raw=true" alt="Pipeline" width="887" height="785">
 
-# CPU Die
+## CPU Die
 <img src="CPU.png?raw=true" alt="CPU" width="500" height="400">
 
 
-# CPU Core
+## CPU Core
 <img src="die.png?raw=true" alt="CPU" width="256" height="256">
 
 
+# Altair GPU
+
+Altair for GPU shares many points in common with the CPU version, it is a simplified version oriented parallel computing and rendering.
+
+So Altair G1 is a VLIW command processor.
+It has the same L1 cache count.
+It has 32MB eDRAM memory for textures.
+A 128 KB SRAM for texture indexes (to manage palettes or VQ).
+L1 and L2 cache memory is intended for textures that are too large
+For example if we use two non-compressive textures of 4096x4096, it does not enter the texture buffer, and it will be managed by the cache (longer and therefore with a lot of missing cache).
+To avoid using the cache for managing images (or 2D rendering) with a large texture, there will be a “Sprite” type geometry management.
+
+The calculation unit can only execute 2 instructions / cycle.
+It has an ALU (no division), CMP, BRU, LSU and AGU.
+And 32 VPU (Vector Posits Unit), 32 PDIV (Posits Division), 32 EFU (Elementary Function Unit).
+The LSU will have specific instructions to load / store 32 vectors at a time.
+he has access to EDRAM which will take several cycles.
+
+The EFU will have all the necessary instructions to speed up calculations and 3D rendering.
+(sin, cos, arctan, dot, rasterization, Min / Max, Clip, Culling / Sorting etc etc).
 
 
+It has a L2 SRAM 4 MB to manage the code or the data of the different shader.
 
+The Pixel Process Unit is used to manage the Frame buffer / Zbuffer and Blending.
+The compute unit does the various necessary calculations and indicates a pixel line to write.
+The PPU takes care of this, internally it will have a buffer and a queue to manage the different line draw commands of the different Compute Unit.
 
+## Pipeline GPU
+<img src="GPU.png?raw=true" alt="Pipeline" width="584" height="650">
 
+## Pipeline Compute Unit
+<img src="PipelineGPU.png?raw=true" alt="Compute Unit" width="640" height="840">
 
+## GPU Die
+<img src="dieGPU.png?raw=true" alt="GPU" width="640" height="1024">
