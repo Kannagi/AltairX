@@ -89,19 +89,24 @@ ii10 0100 0l00 0000
 pconvertsh ps0,ph1
 pconverths ph0,ps1
 
-;convert posit Half/float-double
-ii10 0110 0l00 0000
-000f ffff fppp pppp
+;convert posit /float-double
+ii10 0110 0ll0 0000
+000r rrrr rppp pppp
 
-pconverthf ph0,ps1
-pconverthd ph0,pv1
+pconverthf ph0,r0 ; posit16 <-float
+pconverthd ph0,r0 ; posit16 <-double
 
-;convert posit Single/float-double
-ii10 0101 0l00 0000
-0000 ffff ffpp pppp
+pconvertfh r0,ph0 ; float <- posit16
+pconvertdh r0,ph0 ; double <-posit16
 
-pconvertsf ps0,ps1
-pconvertsd ps0,pv1
+ii10 0101 0ll0 0000
+0000 rrrr rrpp pppp
+
+pconvertsf ps0,r0 ; posit16 <-float
+pconvertsd ps0,r0 ; posit16 <-double
+
+pconvertfs r0,ps0 ; float <- posit16
+pconvertds r0,ps0 ; double <-posit16
 
 ;Convert posit half/int
 ii10 0110 0lss 0000
@@ -112,7 +117,7 @@ pconvertih.b r0,ph1
 
 ;Convert posit single/int
 ii10 0111 0lss 0000
-000r rrrr rppp pppp
+0000 rrrr rrpp pppp
 
 pconvertsi.w ps0,r0
 pconvertis.b r0,ps1
