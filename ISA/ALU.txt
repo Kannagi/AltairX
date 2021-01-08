@@ -47,9 +47,11 @@ ii00 011x 0000 0000
 nop
 nop.e
 
-xchg
-ii00 0100 0000 0000
+
+ii00 100c 0000 0000
 0000 0000 0000 0000
+
+switch 0
 
 e = end
 c = change insturction /cycle

@@ -1,0 +1,109 @@
+B = Byte
+H = half
+S = single
+D = double
+
+-------------------------
+VPU
+
+---------Vector--------
+j:0 = half
+j:1 = single
+
+ii00 j000 ll0p pppp
+pppp pppp pppp pppp
+
+padds,psubs,pmuls,pmuladds
+padds.h ph0,ph0,ph0
+
+
+ii00 j100 llss 0000
+0000 vvvv vvvv vvvv
+
+padd,psub,pmul,pmuladd  //xyzw = xyzw + xyzw
+padd.xyzw vp0,vp0,vp1
+
+
+ii00 j010 llss 000p
+pppp ppvv vvvv vvvv
+
+paddvh,pmulvh,psubvh,pmuladdvh //xyzw = xyzw + x
+paddv.xyz vp0,vp0,ph5
+
+
+ii00 j010 ll00 000p
+pppp ppvv vvvv vvvv
+pmulvah //ACC = xyzw * x
+pmuladdvah //ACC += xyzw * y
+pmuladdvaoh //xyzw = ACC + xyzw * w
+
+pmulvah vp0,ph4
+pmuladdvaoh vp1,vp0,ph4
+
+ii00 j010 11ss 000p
+pppp ppvv vvvv vvvv
+pipr, //x = x1*x2 + y1*y2 + z1*z2 + w1*w2
+
+pipr.xyz f0,v0,v1
+
+
+---------Copy--------
+
+ii10 0000 ss00 0000
+00pp pppp pppp pppp
+
+pmove.x ph0,ph4
+
+
+;convert posit half/single
+ii10 100l 0000 0000
+000s ssss sshh hhhh
+
+pmovesh ps0,ph1
+pmovehs ph0,ps1
+
+;convert posit Half/float-double
+ii10 010l 0000 0000
+000f ffff fppp pppp
+
+pmovehf ph0,ps1
+pmovehd ph0,pv1
+
+;convert posit Single/float-double
+ii10 100l 0000 0000
+000f ffff f0pp pppp
+
+movepsf ps0,ps1
+movepsd ps0,pv1
+
+;imm
+;posit 16 bits
+ii10 0010 mmmm mmmm
+mmmm mmmm 0ppp pppp
+
+pmovei.h f0,imm
+
+;posit 32 bits (convert 16 -> 32)
+ii10 1010 mmmm mmmm
+mmmm mmmm 00pp pppp
+
+pmovei.s d0,imm
+
+;posit 16 bits
+ii10 0110 mmmm mmmm
+mmmm mmmm ss0v vvvv
+
+vpmovei.xy v0,imm
+
+-------------------------
+VDIV
+ii01 jl00 000p pppp
+pppp pppp pppp pppp
+
+pdiv.h ph0,ph0,ph1
+psqrt.h ph0,ph0,ph1
+
+pdiv.s ps0,ps0,ps1
+psqrt.s ps0,ps0,ps1
+
+
