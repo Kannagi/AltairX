@@ -13,12 +13,12 @@ j:1 = single
 ii00 j000 ll0p pppp
 pppp pppp pppp pppp
 
-padds,psubs,pmuls,pmuladds
-padds.h ph0,ph0,ph0
+padd,psub,pmul,pmuladd
+padd.h ph0,ph0,ph0
 
 
 ii00 j100 llss 0000
-0000 vvvv vvvv vvvv
+0000 00vv vvvv vvvv
 
 padd,psub,pmul,pmuladd  //xyzw = xyzw + xyzw
 padd.xyzw vp0,vp0,vp1
@@ -44,56 +44,70 @@ ii00 j010 11ss 000p
 pppp ppvv vvvv vvvv
 pipr, //x = x1*x2 + y1*y2 + z1*z2 + w1*w2
 
-pipr.xyz f0,v0,v1
+pipr.xyz ph0,v0,v1
 
 
 ---------Copy--------
 
-ii10 0000 ss00 0000
+ii10 0000 00ss 0000
 00pp pppp pppp pppp
 
 pmove.x ph0,ph4
 
 
 ;convert posit half/single
-ii10 100l 0000 0000
+ii10 000l 1000 0000
 000s ssss sshh hhhh
 
 pmovesh ps0,ph1
 pmovehs ph0,ps1
 
 ;convert posit Half/float-double
-ii10 010l 0000 0000
+ii10 100l 0000 0000
 000f ffff fppp pppp
 
 pmovehf ph0,ps1
 pmovehd ph0,pv1
 
 ;convert posit Single/float-double
-ii10 100l 0000 0000
+ii10 100l 1000 0000
 000f ffff f0pp pppp
 
-movepsf ps0,ps1
-movepsd ps0,pv1
+pmovesf ps0,ps1
+pmovesd ps0,pv1
+
+;Convert posit half/int
+ii10 010l 00ss 0000
+000r rrrr rppp pppp
+
+pmovehi.w ph0,r0
+pmoveih.b r0,ph1
+
+;Convert posit single/int
+ii10 010l 10ss 0000
+000r rrrr rppp pppp
+
+pmovesi.w ps0,r0
+pmoveis.b r0,ps1
 
 ;imm
 ;posit16
 ii10 0010 mmmm mmmm
 mmmm mmmm 0ppp pppp
 
-pmovei.h f0,imm
+pmovei.h ph0,imm
 
 ;posit32 copy upper bit
 ii10 1010 mmmm mmmm
 mmmm mmmm mmpp pppp
 
-pmovei.s d0,imm
+pmovei.s ps0,imm
 
 ;posit 16 bits
 ii10 0110 mmmm mmmm
 mmmm mmmm ss0v vvvv
 
-vpmovei.xy v0,imm
+vpmovei.xy vp0,imm
 
 -------------------------
 VDIV
