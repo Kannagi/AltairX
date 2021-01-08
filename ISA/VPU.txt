@@ -77,15 +77,15 @@ movepsf ps0,ps1
 movepsd ps0,pv1
 
 ;imm
-;posit 16 bits
+;posit16
 ii10 0010 mmmm mmmm
 mmmm mmmm 0ppp pppp
 
 pmovei.h f0,imm
 
-;posit 32 bits (convert 16 -> 32)
+;posit32 copy upper bit
 ii10 1010 mmmm mmmm
-mmmm mmmm 00pp pppp
+mmmm mmmm mmpp pppp
 
 pmovei.s d0,imm
 

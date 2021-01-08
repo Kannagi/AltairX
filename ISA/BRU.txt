@@ -11,24 +11,24 @@ mmmm mmmm mmrr rrrr
 cmpi.w r0,imm
 
 --------
-ii00 1000 0000 0000
+ii00 1l00 0000 0000
 00ff ffff ffff ffff
-fcmp f0,f1
+pcmp.h ph0,ph1
 
-ii00 0100 0000 0000
-0000 dddd dddd dddd
-dcmp d0,d1
+ii00 1l00 0000 0000
+000d dddd d0dd dddd
+pcmp.s ps0,ps1
 
 ------
-;1 bit de signe , 8 mantisse , 12 exposant
+;posit16
 ii01 mmmm mmmm mmmm
-mmmm mmmm mfff ffff
-fcmpi f0,imm
+mmmm 0000 0ppp pppp
+phcmpi f0,imm
 
-;1 bit de signe , 11 mantisse , 10 exposant
+;posit32 copy upper bit
 ii11 mmmm mmmm mmmm
-mmmm mmmm mmdd dddd
-dcmpi d0,imm
+mmmm mmmm mmpp pppp
+pscmpi d0,imm
 
 ;branch-----------------
 ii00 1100 llll mmmm
