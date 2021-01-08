@@ -49,65 +49,75 @@ pipr.xyz ph0,v0,v1
 
 ---------Copy--------
 
-ii10 0000 00ss 0000
+ii10 0000 ss00 0000
 00pp pppp pppp pppp
 
 pmove.x ph0,ph4
 
-
-;convert posit half/single
-ii10 000l 1000 0000
-000s ssss sshh hhhh
-
-pmovesh ps0,ph1
-pmovehs ph0,ps1
-
-;convert posit Half/float-double
-ii10 100l 0000 0000
-000f ffff fppp pppp
-
-pmovehf ph0,ps1
-pmovehd ph0,pv1
-
-;convert posit Single/float-double
-ii10 100l 1000 0000
-000f ffff f0pp pppp
-
-pmovesf ps0,ps1
-pmovesd ps0,pv1
-
-;Convert posit half/int
-ii10 010l 00ss 0000
+ii10 001l ss00 0000
 000r rrrr rppp pppp
 
-pmovehi.w ph0,r0
-pmoveih.b r0,ph1
-
-;Convert posit single/int
-ii10 010l 10ss 0000
-000r rrrr rppp pppp
-
-pmovesi.w ps0,r0
-pmoveis.b r0,ps1
+pmovero.x r0,ph4
+pmoveri.x ph0,r4
 
 ;imm
 ;posit16
-ii10 0010 mmmm mmmm
+ii10 1000 mmmm mmmm
 mmmm mmmm 0ppp pppp
 
 pmovei.h ph0,imm
 
 ;posit32 copy upper bit
-ii10 1010 mmmm mmmm
+ii10 1001 mmmm mmmm
 mmmm mmmm mmpp pppp
 
 pmovei.s ps0,imm
 
 ;posit 16 bits
-ii10 0110 mmmm mmmm
+ii10 1010 mmmm mmmm
 mmmm mmmm ss0v vvvv
 
 vpmovei.xy vp0,imm
+
+
+---------Convert--------
+
+;convert posit half/single
+ii10 0100 0l00 0000
+000s ssss shhh hhhh
+
+pconvertsh ps0,ph1
+pconverths ph0,ps1
+
+;convert posit Half/float-double
+ii10 0110 0l00 0000
+000f ffff fppp pppp
+
+pconverthf ph0,ps1
+pconverthd ph0,pv1
+
+;convert posit Single/float-double
+ii10 0101 0l00 0000
+0000 ffff ffpp pppp
+
+pconvertsf ps0,ps1
+pconvertsd ps0,pv1
+
+;Convert posit half/int
+ii10 0110 0lss 0000
+000r rrrr rppp pppp
+
+pconverthi.w ph0,r0
+pconvertih.b r0,ph1
+
+;Convert posit single/int
+ii10 0111 0lss 0000
+000r rrrr rppp pppp
+
+pconvertsi.w ps0,r0
+pconvertis.b r0,ps1
+
+
 
 -------------------------
 VDIV
