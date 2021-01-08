@@ -91,7 +91,7 @@ enum class branch_categories : uint32_t
 	RET         = 3,
 };
 
-struct branch_op
+struct branching_op
 {
 	compute_units compute_unit : 2;
 	BRU_types type             : 2;
@@ -100,7 +100,7 @@ struct branch_op
 	branch_categories category : 2;
 	uint32_t                   : 24;
 };
-static_assert(sizeof(branch_op) == sizeof(uint32_t));
+static_assert(sizeof(branching_op) == sizeof(uint32_t));
 
 enum class branch_comparators : uint32_t
 {
@@ -121,6 +121,19 @@ enum class branch_comparators : uint32_t
 	// illegal                 = 14,
 	// illegal                 = 15,
 };
+
+struct branch_op
+{
+	compute_units compute_unit : 2 = compute_units::BRU;
+	BRU_types type : 2 = BRU_types::REGREG_branch;
+	REGREG_branch_instructions instruction
+		: 2 = REGREG_branch_instructions::branching;
+	branch_categories category : 2 = branch_categories::branch;
+	branch_comparators comparator
+		: 4 = branch_comparators::not_equal;
+	uint32_t label : 14;
+};
+static_assert(sizeof(branch_op) == sizeof(uint32_t));
 
 struct BNE
 {
@@ -262,7 +275,7 @@ enum class jumps_calls_subtypes : uint32_t
 	jump_relative = 3,
 };
 
-struct jumps_calls
+struct jumps_calls_op
 {
 	compute_units compute_unit : 2 = compute_units::BRU;
 	BRU_types type             : 2 = BRU_types::REGREG_branch;
@@ -275,7 +288,7 @@ struct jumps_calls
 	uint32_t label             : 14;
 	uint32_t                   : 6;
 };
-static_assert(sizeof(jumps_calls) == sizeof(uint32_t));
+static_assert(sizeof(jumps_calls_op) == sizeof(uint32_t));
 
 struct CALL
 {

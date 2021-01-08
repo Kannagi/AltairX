@@ -23,7 +23,7 @@ struct AGU_op
 };
 static_assert(sizeof(AGU_op) == sizeof(uint32_t));
 
-struct direct_load_store
+struct direct_load_store_op
 {
 	compute_units compute_unit     : 2 = compute_units::AGU;
 	AGU_categories category        : 1 = AGU_categories::direct_load_store;
@@ -34,7 +34,7 @@ struct direct_load_store
 	uint32_t DSRAM_base            : 12;
 	uint32_t RAM_base              : 12;
 };
-static_assert(sizeof(direct_load_store) == sizeof(uint32_t));
+static_assert(sizeof(direct_load_store_op) == sizeof(uint32_t));
 
 struct LDDMA
 {
@@ -82,7 +82,7 @@ enum class load_store_list_types : uint32_t
 	WAIT          = 15,
 };
 
-struct load_store_list
+struct load_store_list_op
 {
 	compute_units compute_unit     : 2 = compute_units::AGU;
 	AGU_categories category        : 1 = AGU_categories::load_store_list;
@@ -90,7 +90,19 @@ struct load_store_list
 	load_store_list_types type     : 4;
 	uint32_t                       : 24;
 };
-static_assert(sizeof(load_store_list) == sizeof(uint32_t));
+static_assert(sizeof(load_store_list_op) == sizeof(uint32_t));
+
+struct LDDMAR_STDMAR_op
+{
+	compute_units compute_unit     : 2 = compute_units::AGU;
+	AGU_categories category        : 1 = AGU_categories::load_store_list;
+	uint32_t store                 : 1;
+	load_store_list_types type     : 4 = load_store_list_types::LDDMAR_STDMAR;
+	uint32_t size                  : 12;
+	uint32_t RAM_address           : 6;
+	uint32_t DSRAM_address         : 6;
+};
+static_assert(sizeof(LDDMAR_STDMAR_op) == sizeof(uint32_t));
 
 struct LDDMAR
 {

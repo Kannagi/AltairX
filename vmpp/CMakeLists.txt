@@ -1,33 +1,54 @@
 cmake_minimum_required(VERSION 3.0.0)
 
 project(altair_vmpp
-        LANGUAGES CXX
-        VERSION 0.1.0)
+	LANGUAGES CXX
+	VERSION 0.1.0
+)
 
 set(CMAKE_CXX_STANDARD 20)
 
-add_subdirectory(common)
-add_subdirectory(relaxed)
-add_subdirectory(pedantic)
+set(COMMON_SOURCES
+	src/main.cpp
+	src/vm_wrapper.hpp
+	src/execution.hpp
 
-add_executable(altair_vmpp
-    src/vm.hpp
-    src/debug.hpp
-    src/execution.hpp
+	src/common/base/agu.hpp
+	src/common/base/alu.hpp
+	src/common/base/bru.hpp
+	src/common/base/lsu.hpp
+	src/common/base/ops.hpp
+	src/common/base/vfpu.hpp
+	src/common/base/vm.h
+)
 
-    src/main.cpp)
+# set(PEDANTIC_SOURCES
+# 	src/pedantic/
+# )
 
-target_link_libraries(altair_vmpp PRIVATE altair_vmpp_base)
-target_compile_definitions(altair_vmpp PRIVATE AR_NO_PROTOTYPES FMT_HEADER_ONLY=1)
+set(RELAXED_SOURCES
+	src/relaxed/processor_decode.cpp
+	src/relaxed/processor_execution.cpp
+	src/relaxed/vm.cpp
+	src/relaxed/vm.hpp
+)
 
-install(TARGETS altair_vmpp
-        CONFIGURATIONS Debug
-        RUNTIME DESTINATION ${PROJECT_SOURCE_DIR}/test/debug
-        ARCHIVE DESTINATION ${PROJECT_SOURCE_DIR}/test/debug
-        COMPONENT executable)
+add_executable(altair_vmpp_relaxed
+	${COMMON_SOURCES}
+	${RELAXED_SOURCES}
+)
 
-install(TARGETS altair_vmpp
-        CONFIGURATIONS Release
-        RUNTIME DESTINATION ${PROJECT_SOURCE_DIR}/test/release
-        ARCHIVE DESTINATION ${PROJECT_SOURCE_DIR}/test/release
-        COMPONENT executable)
+target_include_directories(altair_vmpp_relaxed PRIVATE src)
+
+install(TARGETS altair_vmpp_relaxed
+	CONFIGURATIONS Debug
+	RUNTIME DESTINATION ${PROJECT_SOURCE_DIR}/test/debug
+	ARCHIVE DESTINATION ${PROJECT_SOURCE_DIR}/test/debug
+	COMPONENT executable
+)
+
+install(TARGETS altair_vmpp_relaxed
+	CONFIGURATIONS Release
+	RUNTIME DESTINATION ${PROJECT_SOURCE_DIR}/test/release
+	ARCHIVE DESTINATION ${PROJECT_SOURCE_DIR}/test/release
+	COMPONENT executable
+)

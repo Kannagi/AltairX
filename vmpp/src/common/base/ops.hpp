@@ -6,6 +6,17 @@
 namespace ar
 {
 
+template<typename T, typename U>
+T bit_cast(U&& u)
+{
+	static_assert(sizeof(T) == sizeof(U));
+
+	T t;
+	memcpy(&t, &u, sizeof(T));
+
+	return t;
+}
+
 namespace op
 {
 
@@ -22,14 +33,14 @@ enum class compute_units : uint32_t
 	VDIV = 3,
 };
 
-struct operation
+struct opcode
 {
 	compute_units compute_unit : 2;
 	uint32_t : 30;
 };
-static_assert(sizeof(operation) == sizeof(uint32_t));
+static_assert(sizeof(opcode) == sizeof(uint32_t));
 
-constexpr bool assertOpcodeIndex(operation o, uint32_t index) noexcept
+constexpr bool assertOpcodeIndex(opcode o, uint32_t index) noexcept
 {
 	const compute_units compute_unit = o.compute_unit;
 

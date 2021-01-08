@@ -37,14 +37,14 @@ enum class NOP_and_XCHG_types : uint32_t
 	// illegal   = 7,
 };
 
-struct NOP_and_XCHG
+struct NOP_and_XCHG_op
 {
 	compute_units compute_unit     : 2;
 	ALU_categories category        : 2;
 	NOP_and_XCHG_types type        : 3;
 	uint32_t                       : 25;
 };
-static_assert(sizeof(NOP_and_XCHG) == sizeof(uint32_t));
+static_assert(sizeof(NOP_and_XCHG_op) == sizeof(uint32_t));
 
 struct XCHG
 {

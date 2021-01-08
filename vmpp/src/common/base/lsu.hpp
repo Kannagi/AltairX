@@ -25,7 +25,7 @@ struct LSU_op
 };
 static_assert(sizeof(LSU_op) == sizeof(uint32_t));
 
-struct DSRAM
+struct DSRAM_load_store_op
 {
 	compute_units compute_unit     : 2 = compute_units::LSU;
 	LSU_types type                 : 2 = LSU_types::DSRAM_load_store;
@@ -36,7 +36,7 @@ struct DSRAM
 	uint32_t source                : 6;
 	uint32_t register_value        : 6;
 };
-static_assert(sizeof(DSRAM) == sizeof(uint32_t));
+static_assert(sizeof(DSRAM_load_store_op) == sizeof(uint32_t));
 
 enum class subtype_types : uint32_t
 {
@@ -129,22 +129,22 @@ enum class floating_load_store_sizes : uint32_t
 	double_size = 1,
 };
 
-struct FDSRAM_or_cache_load_store
+struct FDSRAM_or_cache_load_store_op
 {
 	compute_units compute_unit     : 2;
 	LSU_types type                 : 2;
 	floating_load_store_sizes size : 1;
 	uint32_t                       : 27;
 };
-static_assert(sizeof(FDSRAM_or_cache_load_store) == sizeof(uint32_t));
+static_assert(sizeof(FDSRAM_or_cache_load_store_op) == sizeof(uint32_t));
 
-enum class float_load_store_cache : uint32_t
+enum class load_store_cache : uint32_t
 {
 	SDRAM = 0,
 	cache = 1,
 };
 
-enum class float_load_store_store : uint32_t
+enum class load_store_store : uint32_t
 {
 	load  = 0,
 	store = 1,
@@ -155,8 +155,8 @@ struct float_DSRAM_or_cache_load_store
 	compute_units compute_unit     : 2;
 	LSU_types type                 : 2;
 	floating_load_store_sizes size : 1;
-	float_load_store_cache cache   : 1;
-	float_load_store_store store   : 1;
+	load_store_cache cache         : 1;
+	load_store_store store         : 1;
 	uint32_t incrementation        : 1;
 	uint32_t base_address          : 15;
 	uint32_t source                : 2;
@@ -169,8 +169,8 @@ struct LDMF
 	compute_units compute_unit     : 2 = compute_units::LSU;
 	LSU_types type                 : 2 = LSU_types::cache_load_store;
 	floating_load_store_sizes size : 1 = floating_load_store_sizes::float_size;
-	float_load_store_cache cache   : 1 = float_load_store_cache::SDRAM;
-	float_load_store_store store   : 1 = float_load_store_store::load;
+	load_store_cache cache         : 1 = load_store_cache::SDRAM;
+	load_store_store store         : 1 = load_store_store::load;
 	uint32_t incrementation        : 1;
 	uint32_t base_address          : 15;
 	uint32_t source                : 2;
@@ -183,8 +183,8 @@ struct STMF
 	compute_units compute_unit     : 2 = compute_units::LSU;
 	LSU_types type                 : 2 = LSU_types::cache_load_store;
 	floating_load_store_sizes size : 1 = floating_load_store_sizes::float_size;
-	float_load_store_cache cache   : 1 = float_load_store_cache::SDRAM;
-	float_load_store_store store   : 1 = float_load_store_store::store;
+	load_store_cache cache         : 1 = load_store_cache::SDRAM;
+	load_store_store store         : 1 = load_store_store::store;
 	uint32_t incrementation        : 1;
 	uint32_t base_address          : 15;
 	uint32_t source                : 2;
@@ -197,8 +197,8 @@ struct LDCF
 	compute_units compute_unit     : 2 = compute_units::LSU;
 	LSU_types type                 : 2 = LSU_types::cache_load_store;
 	floating_load_store_sizes size : 1 = floating_load_store_sizes::float_size;
-	float_load_store_cache cache   : 1 = float_load_store_cache::cache;
-	float_load_store_store store   : 1 = float_load_store_store::load;
+	load_store_cache cache         : 1 = load_store_cache::cache;
+	load_store_store store         : 1 = load_store_store::load;
 	uint32_t incrementation        : 1;
 	uint32_t base_address          : 15;
 	uint32_t source                : 2;
@@ -211,8 +211,8 @@ struct STCF
 	compute_units compute_unit     : 2 = compute_units::LSU;
 	LSU_types type                 : 2 = LSU_types::cache_load_store;
 	floating_load_store_sizes size : 1 = floating_load_store_sizes::float_size;
-	float_load_store_cache cache   : 1 = float_load_store_cache::cache;
-	float_load_store_store store   : 1 = float_load_store_store::store;
+	load_store_cache cache         : 1 = load_store_cache::cache;
+	load_store_store store         : 1 = load_store_store::store;
 	uint32_t incrementation        : 1;
 	uint32_t base_address          : 15;
 	uint32_t source                : 2;
@@ -227,8 +227,8 @@ struct double_DSRAM_or_cache_load_store
 	compute_units compute_unit     : 2;
 	LSU_types type                 : 2;
 	floating_load_store_sizes size : 1;
-	float_load_store_cache cache   : 1;
-	float_load_store_store store   : 1;
+	load_store_cache cache         : 1;
+	load_store_store store         : 1;
 	uint32_t incrementation        : 1;
 	uint32_t base_address          : 16;
 	uint32_t source                : 2;
@@ -241,8 +241,8 @@ struct LDMD
 	compute_units compute_unit     : 2 = compute_units::LSU;
 	LSU_types type                 : 2 = LSU_types::cache_load_store;
 	floating_load_store_sizes size : 1 = floating_load_store_sizes::double_size;
-	float_load_store_cache cache   : 1 = float_load_store_cache::SDRAM;
-	float_load_store_store store   : 1 = float_load_store_store::load;
+	load_store_cache cache         : 1 = load_store_cache::SDRAM;
+	load_store_store store         : 1 = load_store_store::load;
 	uint32_t incrementation        : 1;
 	uint32_t base_address          : 16;
 	uint32_t source                : 2;
@@ -255,8 +255,8 @@ struct STMD
 	compute_units compute_unit     : 2 = compute_units::LSU;
 	LSU_types type                 : 2 = LSU_types::cache_load_store;
 	floating_load_store_sizes size : 1 = floating_load_store_sizes::double_size;
-	float_load_store_cache cache   : 1 = float_load_store_cache::SDRAM;
-	float_load_store_store store   : 1 = float_load_store_store::store;
+	load_store_cache cache         : 1 = load_store_cache::SDRAM;
+	load_store_store store         : 1 = load_store_store::store;
 	uint32_t incrementation        : 1;
 	uint32_t base_address          : 16;
 	uint32_t source                : 2;
@@ -269,8 +269,8 @@ struct LDCD
 	compute_units compute_unit     : 2 = compute_units::LSU;
 	LSU_types type                 : 2 = LSU_types::cache_load_store;
 	floating_load_store_sizes size : 1 = floating_load_store_sizes::double_size;
-	float_load_store_cache cache   : 1 = float_load_store_cache::cache;
-	float_load_store_store store   : 1 = float_load_store_store::load;
+	load_store_cache cache         : 1 = load_store_cache::cache;
+	load_store_store store         : 1 = load_store_store::load;
 	uint32_t incrementation        : 1;
 	uint32_t base_address          : 16;
 	uint32_t source                : 2;
@@ -283,8 +283,8 @@ struct STCD
 	compute_units compute_unit     : 2 = compute_units::LSU;
 	LSU_types type                 : 2 = LSU_types::cache_load_store;
 	floating_load_store_sizes size : 1 = floating_load_store_sizes::double_size;
-	float_load_store_cache cache   : 1 = float_load_store_cache::cache;
-	float_load_store_store store   : 1 = float_load_store_store::store;
+	load_store_cache cache         : 1 = load_store_cache::cache;
+	load_store_store store         : 1 = load_store_store::store;
 	uint32_t incrementation        : 1;
 	uint32_t base_address          : 16;
 	uint32_t source                : 2;

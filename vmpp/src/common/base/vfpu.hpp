@@ -50,7 +50,7 @@ enum class arithmetic_categories : uint32_t
 	double_double      = 3,
 };
 
-struct arithmetic
+struct arithmetic_op
 {
 	compute_units compute_unit     : 2 = compute_units::VFPU;
 	VFPU_types type                : 2 = VFPU_types::subtype;
@@ -59,7 +59,7 @@ struct arithmetic
 	arithmetic_categories category : 2;
 	uint32_t                       : 22;
 };
-static_assert(sizeof(arithmetic) == sizeof(uint32_t));
+static_assert(sizeof(arithmetic_op) == sizeof(uint32_t));
 
 enum class operations : uint32_t
 {
@@ -69,7 +69,7 @@ enum class operations : uint32_t
 	FMULADD = 3,
 };
 
-struct vector_vector_operation
+struct vector_vector_op
 {
 	compute_units compute_unit     : 2 = compute_units::VFPU;
 	VFPU_types type                : 2 = VFPU_types::subtype;
@@ -82,9 +82,9 @@ struct vector_vector_operation
 	uint32_t source1               : 5;
 	uint32_t destination           : 5;
 };
-static_assert(sizeof(vector_vector_operation) == sizeof(uint32_t));
+static_assert(sizeof(vector_vector_op) == sizeof(uint32_t));
 
-struct vector_float_operation
+struct vector_float_op
 {
 	compute_units compute_unit     : 2 = compute_units::VFPU;
 	VFPU_types type                : 2 = VFPU_types::subtype;
@@ -97,7 +97,7 @@ struct vector_float_operation
 	uint32_t source1               : 5;
 	uint32_t destination           : 5;
 };
-static_assert(sizeof(vector_float_operation) == sizeof(uint32_t));
+static_assert(sizeof(vector_float_op) == sizeof(uint32_t));
 
 enum class operations2 : uint32_t
 {
@@ -107,7 +107,7 @@ enum class operations2 : uint32_t
 	FIPR       = 3,
 };
 
-struct vector_accumulator_operation
+struct vector_accumulator_op
 {
 	compute_units compute_unit     : 2 = compute_units::VFPU;
 	VFPU_types type                : 2 = VFPU_types::subtype;
@@ -120,9 +120,9 @@ struct vector_accumulator_operation
 	uint32_t vector1               : 5;
 	uint32_t vector2               : 5;
 };
-static_assert(sizeof(vector_accumulator_operation) == sizeof(uint32_t));
+static_assert(sizeof(vector_accumulator_op) == sizeof(uint32_t));
 
-struct double_double_operation
+struct double_double_op
 {
 	compute_units compute_unit     : 2 = compute_units::VFPU;
 	VFPU_types type                : 2 = VFPU_types::subtype;
@@ -134,16 +134,16 @@ struct double_double_operation
 	uint32_t source1               : 6;
 	uint32_t destination           : 6;
 };
-static_assert(sizeof(double_double_operation) == sizeof(uint32_t));
+static_assert(sizeof(double_double_op) == sizeof(uint32_t));
 
-struct moves
+struct moves_op
 {
 	compute_units compute_unit     : 2 = compute_units::VFPU;
 	VFPU_types type                : 2 = VFPU_types::subtype;
 	VFPU_subtype_types subtype     : 2 = VFPU_subtype_types::moves;
 	uint32_t                       : 26;
 };
-static_assert(sizeof(moves) == sizeof(uint32_t));
+static_assert(sizeof(moves_op) == sizeof(uint32_t));
 
 enum class float_conversion_directions : uint32_t
 {
@@ -151,7 +151,7 @@ enum class float_conversion_directions : uint32_t
 	double_to_float = 1,
 };
 
-struct float_conversion
+struct float_conversion_op
 {
 	compute_units compute_unit     : 2 = compute_units::VFPU;
 	VFPU_types type                : 2 = VFPU_types::subtype;
@@ -162,7 +162,7 @@ struct float_conversion
 	uint32_t float_register        : 7;
 	uint32_t double_register       : 6;
 };
-static_assert(sizeof(float_conversion) == sizeof(uint32_t));
+static_assert(sizeof(float_conversion_op) == sizeof(uint32_t));
 
 enum class float_int_conversion_or_VDIV_operations : uint32_t
 {
@@ -172,7 +172,7 @@ enum class float_int_conversion_or_VDIV_operations : uint32_t
 	float_double_division_and_square_root = 3,
 };
 
-struct float_int_conversion_or_VDIV
+struct float_int_conversion_or_VDIV_op
 {
 	compute_units compute_unit     : 2 = compute_units::VFPU;
 	VFPU_types type                : 2 = VFPU_types::subtype;
@@ -183,7 +183,7 @@ struct float_int_conversion_or_VDIV
 	uint32_t float_register        : 7;
 	uint32_t double_register       : 6;
 };
-static_assert(sizeof(float_int_conversion_or_VDIV) == sizeof(uint32_t));
+static_assert(sizeof(float_int_conversion_or_VDIV_op) == sizeof(uint32_t));
 
 enum class fixed_point_conversion_instructions : uint32_t
 {
@@ -197,7 +197,7 @@ enum class fixed_point_conversion_instructions : uint32_t
 	FTOI15 = 7,
 };
 
-struct fixed_point_conversion
+struct fixed_point_conversion_op
 {
 	compute_units compute_unit     : 2 = compute_units::VFPU;
 	VFPU_types type                : 2 = VFPU_types::subtype;
@@ -212,7 +212,7 @@ struct fixed_point_conversion
 	uint32_t vector                : 5;
 	uint32_t register_value        : 6;
 };
-static_assert(sizeof(fixed_point_conversion) == sizeof(uint32_t));
+static_assert(sizeof(fixed_point_conversion_op) == sizeof(uint32_t));
 
 enum class float_int_conversion_directions : uint32_t
 {
@@ -220,7 +220,7 @@ enum class float_int_conversion_directions : uint32_t
 	float_to_register = 1,
 };
 
-struct float_int_conversion
+struct float_int_conversion_op
 {
 	compute_units compute_unit     : 2 = compute_units::VFPU;
 	VFPU_types type                : 2 = VFPU_types::subtype;
@@ -234,7 +234,7 @@ struct float_int_conversion
 	uint32_t float_register        : 7;
 	uint32_t register_value        : 6;
 };
-static_assert(sizeof(float_int_conversion) == sizeof(uint32_t));
+static_assert(sizeof(float_int_conversion_op) == sizeof(uint32_t));
 
 enum class double_int_conversion_directions : uint32_t
 {
@@ -242,7 +242,7 @@ enum class double_int_conversion_directions : uint32_t
 	double_to_register = 1,
 };
 
-struct double_int_conversion
+struct double_int_conversion_op
 {
 	compute_units compute_unit     : 2 = compute_units::VFPU;
 	VFPU_types type                : 2 = VFPU_types::subtype;
@@ -256,7 +256,7 @@ struct double_int_conversion
 	uint32_t double_register       : 6;
 	uint32_t register_value        : 6;
 };
-static_assert(sizeof(double_int_conversion) == sizeof(uint32_t));
+static_assert(sizeof(double_int_conversion_op) == sizeof(uint32_t));
 
 enum class float_double_division_and_square_root_instructions : uint32_t
 {
@@ -270,7 +270,7 @@ enum class float_double_division_and_square_root_sizes : uint32_t
 	double_size = 1,
 };
 
-struct float_double_division_and_square_root
+struct float_double_division_and_square_root_op
 {
 	compute_units compute_unit     : 2 = compute_units::VFPU;
 	VFPU_types type                : 2 = VFPU_types::subtype;
@@ -283,7 +283,7 @@ struct float_double_division_and_square_root
 	                               : 2 = float_int_conversion_or_VDIV_operations::float_double_division_and_square_root;
 	uint32_t                       : 22;
 };
-static_assert(sizeof(float_double_division_and_square_root) == sizeof(uint32_t));
+static_assert(sizeof(float_double_division_and_square_root_op) == sizeof(uint32_t));
 
 struct FDIV_FSQRT
 {
