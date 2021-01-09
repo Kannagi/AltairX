@@ -31,8 +31,10 @@ paddvh,pmulvh,psubvh,pmuladdvh //xyzw = xyzw + x
 paddv.xyz vp0,vp0,ph5
 
 
-ii00 j010 ll00 000p
+ii00 j110 ll00 000p
 pppp ppvv vvvv vvvv
+
+ll = 0-2
 pmulvah //ACC = xyzw * x
 pmuladdvah //ACC += xyzw * y
 pmuladdvaoh //xyzw = ACC + xyzw * w
@@ -40,7 +42,7 @@ pmuladdvaoh //xyzw = ACC + xyzw * w
 pmulvah vp0,ph4
 pmuladdvaoh vp1,vp0,ph4
 
-ii00 j010 11ss 000p
+ii00 j110 11ss 000p
 pppp ppvv vvvv vvvv
 pipr, //x = x1*x2 + y1*y2 + z1*z2 + w1*w2
 
