@@ -938,28 +938,6 @@ Perform a convertion between single precision posits (32-bits) and signed intege
 * *Register*: the integer register.
 * *Single*: the 32-bits posit register.
 
-###### FDIV or FSQRT
-
-| 31 - 25       | 24 - 18    | 17 - 11    | 10  | 9 - 8 | 7      | 6             | 5 - 4 | 3 - 2 | 1 - 0 |
-| :-----------: | :--------: | :--------: | :-: | :---: | :----: | :-----------: | :---: | :---: | :---: |
-| *Destination* | *Source 2* | *Source 1* | 0   | 3     | 0      | *Instruction* | 3     | 0     | 3     |
-
-* *Instruction*: if 0, then it is FDIV, if 1, it is FSQRT.
-* *Source 1*: a float register, the left operand.
-* *Source 2*: a float register, the right operand.
-* *Destination*: a float register, where the result of the operation is gonne be written.
-
-###### DDIV or DSQRT
-
-| 31 - 26       | 25 - 20    | 19 - 14    | 13 - 10 | 9 - 8 | 7      | 6             | 5 - 4 | 3 - 2 | 1 - 0 |
-| :-----------: | :--------: | :--------: | :-----: | :---: | :----: | :-----------: | :---: | :---: | :---: |
-| *Destination* | *Source 2* | *Source 1* | 0       | 3     | 1      | *Instruction* | 3     | 0     | 3     |
-
-* *Instruction*: if 0, then it is DDIV, if 1, it is DSQRT.
-* *Source 1*: a double register, the left operand.
-* *Source 2*: a double register, the right operand.
-* *Destination*: a double register, where the result of the operation is gonne be written.
-
 ### II.5.3) Division
 
 | 31 - 6    | 5           | 4           | 3 - 2 | 1 - 0 |
