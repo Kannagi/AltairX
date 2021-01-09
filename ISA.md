@@ -965,16 +965,6 @@ Perform a convertion between single precision posits (32-bits) and signed intege
 
 ### II.5.3) Division
 
-VDIV
-ii01 jl00 000p pppp
-pppp pppp pppp pppp
-
-pdiv.h ph0,ph0,ph1
-psqrt.h ph0,ph0,ph1
-
-pdiv.s ps0,ps0,ps1
-psqrt.s ps0,ps0,ps1
-
 | 31 - 6    | 5           | 4           | 3 - 2 | 1 - 0 |
 | :-------: | :---------: | :---------: | :---: | :---: |
 | Dependent | *Operation* | *Precision* | 2     | 3     |
