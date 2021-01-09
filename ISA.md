@@ -8,7 +8,7 @@
   * [II.2) LSU](#ii2-lsu)
   * [II.3) ALU](#ii3-alu)
   * [II.4) AGU](#ii4-agu)
-  * [II.5) VFPU](#ii5-vfpu)
+  * [II.5) VPU](#ii5-vpu)
 
 # I) General opcode structure
 
@@ -21,21 +21,22 @@ Bitfiels bounds are inclusive (3 - 0 means both bits 3, 2, 1 and 0)
 Altair K1 has the following compute units:
 
 * 4 ALU
-* 2 VFPU 
-* 1 FDIV 
+* 2 VPU 
+* 1 PDIV 
 * 1 DIV 
+* 1 CMP 
 * 1 BRU 
 * 1 LSU 
 * 1 AGU
 
 Each cycle 2 or 4 opcodes are decoded. Each opcode as an index in the range [0; 3], which is its index in the 2 (or 4) uint32 opcodes buffer. Compute units are bound to some index, you can only use some compute units on some indices.
 
-| Opcode index | Available compute units for index                           |
-| :----------: | :---------------------------------------------------------: |
-| 0            | ALU#1 or LSU#1 (load-only) or VFPU#1 or VDIV or BRU or XCHG |
-| 1            | ALU#2 or LSU#2 or VFPU#2 or AGU                             |
-| 2            | ALU#3                                                       |
-| 3            | ALU#4                                                       |
+| Opcode index | Available compute units for index                                  |
+| :----------: | :----------------------------------------------------------------: |
+| 0            | ALU#1 or LSU#1 (load-only) or VFPU#1 or VDIV or BRU or CMP or XCHG |
+| 1            | ALU#2 or LSU#2 or VFPU#2 or AGU                                    |
+| 2            | ALU#3                                                              |
+| 3            | ALU#4                                                              |
 
 ## I.2) Basic opcode structure
 
@@ -45,12 +46,12 @@ The following table is applicable to **ALL** opcodes
 | :-------: | :------------: |
 | Dependent | *Compute Unit* |
 
-| *Compute Unit* value | Compute Unit |
-| :------------------: | :----------: |
-| 0                    | AGU or BRU   |
-| 1                    | LSU          |
-| 2                    | ALU          |
-| 3                    | VFPU or VDIV |
+| *Compute Unit* value | Compute Unit       |
+| :------------------: | :----------------: |
+| 0                    | AGU or BRU or CMP  |
+| 1                    | LSU                |
+| 2                    | ALU                |
+| 3                    | VPU or PDIV        |
 
 Depending on the value of *Compute Unit*, and of opcode index, the decoding steps will differ.
 Here is a table with all *Compute Unit* and opcode index possible values:
@@ -82,12 +83,12 @@ Here is a table with all *Compute Unit* and opcode index possible values:
 | :-------: | :-----: | :---: |
 | Dependent | *Type*  | 0     |
 
-| *Type* value | Instruction                  |
-| :----------: | :--------------------------: |
-| 0            | REG-REG comparison or Branch |
-| 1            | CMPI                         |
-| 2            | FCMPI                        |
-| 3            | DCMPI                        |
+| *Type* value | Instruction           |
+| :----------: | :-------------------: |
+| 0            | REG-REG CMP or Branch |
+| 1            | CMPI                  |
+| 2            | PCMPI.H               |
+| 3            | PCMPI.S               |
 
 Depending on the value of *Type* the decoding steps will differ.
 
@@ -100,8 +101,8 @@ Depending on the value of *Type* the decoding steps will differ.
 | *Instruction* value | Instruction |
 | :-----------------: | :---------: |
 | 0                   | CMP         |
-| 1                   | FCMP        |
-| 2                   | DCMP        |
+| 1                   | PCMP.H      |
+| 2                   | PCMP.S      |
 | 3                   | Branching   |
 
 Depending on the value of *Instruction* the decoding steps will differ.
@@ -114,31 +115,31 @@ Update the comparison flags based on integer comparison.
 | :--------: | :---------: | :-----: | :----: | :---: | :---: | :---: | :---: |
 | *Source 2* | *Source 1*  | 0       | *Size* | 0     | 0     | 0     | 0     |
 
-* *Size*: if 0, then the operation is done on 1 byte, if 1, then the operation is done on 2 byte, if 2 then the operation is done on 4 byte, if 3, then the operation is done on 8 byte.
-* *Source 1*: The first register to compare with *Source 2* (right operand)
-* *Source 2*: The second register (left operand)
+* *Size*: if 0, then the operation is done on 1 bytes, if 1, then the operation is done on 2 bytes, if 2 then the operation is done on 4 bytes, if 3, then the operation is done on 8 bytes.
+* *Source 1*: the first register to compare with *Source 2* (right operand)
+* *Source 2*: the second register (left operand)
 
-#### II.1.1.2) FCMP
+#### II.1.1.2) PCMP.H
 
-Update the comparison flags base on single-precision float comparison.
+Update the comparison flags base on 16-bits posit comparison.
 
 | 31 - 25    | 24 - 18    | 17 - 6 | 5 - 4 | 3 - 2 | 1 - 0 |
 | :--------: | :--------: | :----: | :---: | :---: | :---: |
 | *Source 2* | *Source 1* | 0      | 1     | 0     | 0     |
 
-* *Source 1*: The first register to compare with *Source 2* (right operand)
-* *Source 2*: The second register (left operand)
+* *Source 1*: the first register to compare with *Source 2* (right operand)
+* *Source 2*: the second register (left operand)
 
-#### II.1.1.3) DCMP
+#### II.1.1.3) PCMP.S
 
-Update the comparison flags base on double-precision float comparison.
+Update the comparison flags base on 32-bits posit comparison.
 
-| 31 - 26    | 25 - 20    | 19 - 6 | 5 - 4 | 3 - 2 | 1 - 0 |
-| :--------: | :--------: | :----: | :---: | :---: | :---: |
-| *Source 2* | *Source 1* | 0      | 2     | 0     | 0     |
+| 31 - 26    | 25  | 24 - 19    | 18 - 6 | 5 - 4 | 3 - 2 | 1 - 0 |
+| :--------: | :-: | :--------: | :----: | :---: | :---: | :---: |
+| *Source 2* | 0   | *Source 1* | 0      | 2     | 0     | 0     |
 
-* *Source 1*: The first register to compare with *Source 2* (right operand)
-* *Source 2*: The second register (left operand)
+* *Source 1*: the first register to compare with *Source 2* (right operand)
+* *Source 2*: the second register (left operand)
 
 #### II.1.1.4) Branching
 
@@ -180,10 +181,10 @@ Jumps to the specified label if conditional flag is true for the specified compa
 * *Label*: the address, relative to current program counter, of the instruction to jump to in ISRAM. The total incrementation of the program counter, in bytes, is `Label * 8`. This value is sign-extended.
 * *Comparator*: the logical operation to perform 
 
-###### II.1.1.4.1.1) Float branch
+###### II.1.1.4.1.1) Posit branch
 
-`fcmp` and `dcmp` modifies the signed (`S`) and equality (`Z`) flags.
-`fbcc` and `dbcc` generates `bccs` instruction, where `cc` is the comparator (`L`, `LE`, `G`, `GE`)
+`pcmp` modifies the signed (`S`) and equality (`Z`) flags.
+`pbcc` generates `bccs` instruction, where `cc` is the comparator (`L`, `LE`, `G`, `GE`)
 
 ##### II.1.1.4.2) Jumps or Calls
 
@@ -219,35 +220,22 @@ Update the comparison flags based on integer comparison.
 | :------: | :---------: | :----: | :---: | :---: |
 | *Source* | *Immediate* | *Size* | 1     | 0     |
 
-* *Size*: if 0, then the operation is done on 1 byte, if 1, then the operation is done on 2 byte, if 2 then the operation is done on 4 byte, if 3, then the operation is done on 8 byte.
+* *Size*: if 0, then the operation is done on 1 bytes, if 1, then the operation is done on 2 bytes, if 2 then the operation is done on 4 bytes, if 3, then the operation is done on 8 bytes.
 * *Immediate*: The value to compare with *Source*
 * *Source*: The register to be compared with
 
-### II.1.3) FCMPI
+### II.1.3) PCMPI.H
 
 Update the comparison flags based on float comparison.
 
-| 31 - 25  | 24 - 4      | 3 - 2 | 1 - 0 |
-| :------: | :---------: | :---: | :---: |
-| *Source* | *Immediate* | 2     | 0     |
+| 31 - 25  | 24 - 20 | 19 - 4      | 3 - 2 | 1 - 0 |
+| :------: | :-----: | :---------: | :---: | :---: |
+| *Source* | 0       | *Immediate* | 2     | 0     |
 
-* *Size*: if 0, then the operation is done on 1 byte, if 1, then the operation is done on 2 byte, if 2 then the operation is done on 4 byte, if 3, then the operation is done on 8 byte.
-* *Immediate*: The value to compare with *Source* (21-bits).
+* *Immediate*: The value to compare with *Source*, a 16-bits posit.
 * *Source*: The register to be compared with.
 
-*Immediate* has a non-standard IEEE-754 format:
-
-| 20     | 19 - 12    | 11 - 0     |
-| :----: | :--------: | :--------: |
-| *Sign* | *Exponent* | *Mantissa* |
-
-*Mantissa*: 12-bits mantissa
-*Exponent*: 8-bits exponent 
-*Sign*: 0 is positive, 1 is negative
-
-To make a full single-precision ieee-754 floating point value the *Immediate* value simply need to be copied in the higher bits of the floating point value.
-
-### II.1.4) DCMPI
+### II.1.4) PCMPI.S
 
 Update the comparison flags based on double comparison.
 
@@ -255,18 +243,8 @@ Update the comparison flags based on double comparison.
 | :------: | :---------: | :---: | :---: |
 | *Source* | *Immediate* | 3     | 0     |
 
-* *Immediate*: The value to compare with *Source* (22-bits).
+* *Immediate*: The value to compare with *Source* (22-bits), a 32-bits posit with the lowest fraction bits truncated.
 * *Source*: The register to be compared with.
-
-*Immediate* has a non-standard IEEE-754 format:
-
-| 21     | 20 - 10    | 9 - 0      |
-| :----: | :--------: | :--------: |
-| *Sign* | *Exponent* | *Mantissa* |
-
-*Mantissa*: 10-bits mantissa
-*Exponent*: 11-bits exponent 
-*Sign*: 0 is positive, 1 is negative
 
 To make a full double-precision ieee-754 floating point value the *Immediate* value simply need to be copied in the higher bits of the floating point value.
 
@@ -276,12 +254,12 @@ To make a full double-precision ieee-754 floating point value the *Immediate* va
 | :-------: | :-----: | :---: |
 | Dependent | *Type*  | 1     |
 
-| *Type* value | Instruction                                      |
-| :----------: | :----------------------------------------------: |
-| 0            | DSRAM load/store                                 |
-| 1            | *Subtype*                                        |
-| 2            | Cache load/store                                 |
-| 3            | DSRAM or cache load/store (for floating points)  |
+| *Type* value | Instruction                             |
+| :----------: | :-------------------------------------: |
+| 0            | DSRAM load/store                        |
+| 1            | *Subtype*                               |
+| 2            | Cache load/store                        |
+| 3            | DSRAM or cache load/store (for posits)  |
 
 Depending on the value of *Type* and *Subtype* the decoding steps will differ.
 
@@ -302,8 +280,8 @@ Load or store memory from/in DSRAM
 
 Examples:
 ```
-ldm r3, 128(r60+) -> 0000'1111 1100'0000 1000'0000 1101'0001
-stm.w r4, 2(r30)  -> 0001'0001 1110'0000 0000'0010 0110'0001
+ldm r3, 128[r60+]
+stm.w r4, 2[r30]
 ```
 
 ### II.2.2) *Subtype*
@@ -337,8 +315,8 @@ Load or store memory from/in DSRAM (extended version)
 
 Examples:
 ```
-ldmx.b r1,$3FFF[r63] -> 0000'0100 0111'1111 1111'1110 0000'0101
-stmx.w r3,$0FFF[r62] -> 0000'1110 0001'1111 1111'1110 1100'0101
+ldmx.b r1,$3FFF[r63]
+stmx.w r3,$0FFF[r62]
 ```
 
 #### II.2.2.2) IN/OUT
@@ -356,8 +334,8 @@ Load or store memory from/in IOSRAM
 
 Examples:
 ```
-in.b 42, r5 -> 0001'0100 0010'1010 0000'0000 0001'0101
-out.w 2, r2 -> 0000'1000 0000'0010 0000'0000 1101'0101
+in.b 42, r5
+out.w 2, r2
 ```
 
 #### II.2.2.3) OUTI
@@ -374,12 +352,12 @@ Store memory in IOSRAM (immediate)
 
 Examples:
 ```
-outi.w 4, $03FF -> 0000'0100 0000'0011 1111'1111 1001'0101
+outi.w 4, $03FF
 ```
 
 #### II.2.2.4) DSRAM or cache load/store (for vectors)
 
-Load or store memory from/in SDRAM or cache (vectors (4x IEEE 32-bits float) version)
+Load or store memory from/in SDRAM or cache (vectors (4x 16-bits posits) version)
 
 | 31 - 27    | 26 - 24   | 23 - 9         | 8                | 7       | 6       | 5 - 4 | 3 - 2 | 1 - 0 |
 | :--------: | :-------: | :------------: | :--------------: | :-----: | :-----: | :---: | :---: | :---: |
@@ -409,11 +387,11 @@ Load or store memory from/in cache
 
 Examples:
 ```
-ldc r3, $80[r60+]  -> 0000'1111 1100'0000 1000'0000 1101'1001
-stc.w r4, $02[r30] -> 0001'0001 1110'0000 0000'0010 0110'1001
+ldc r3, $80[r60+] 
+stc.w r4, $02[r30]
 ```
 
-### II.2.4) DSRAM or cache load/store (for floating points)
+### II.2.4) DSRAM or cache load/store (for posits)
 
 Load or store memory from/in SDRAM or cache.
 
@@ -421,38 +399,38 @@ Load or store memory from/in SDRAM or cache.
 | :-------: | :----: | :---: | :---: |
 | Dependent | *Size* | 2     | 1     |
 
-| *Size* value | Instruction                     |
-| :----------: | :-----------------------------: |
-| 0            | LDMF/STMF or LDCF/STCF (float)  |
-| 1            | LDMD/STMD or LDCD/STCD (double) |
+| *Size* value | Instruction                    |
+| :----------: | :----------------------------: |
+| 0            | LDMP.H/STMP.H or LDCP.H/STCP.H |
+| 1            | LDMP.S/STMP.S or LDCP.S/STCP.S |
 
 Depending on the value of *Size* the decoding steps will differ.
 
-#### II.2.4.1) LDMF/STMF or LDCF/STCF
+#### II.2.4.1) LDMP.H/STMP.H or LDCP.H/STCP.H
 
-Load or store memory from/in SDRAM or cache (float (IEEE 32-bits) version).
+Load or store memory from/in SDRAM or cache (16-bits posit version).
 
 | 31 - 25    | 24 - 23  | 22 - 8         | 7                | 6       | 5       | 4   | 3 - 2 | 1 - 0 |
 | :--------: | :------: | :------------: | :--------------: | :-----: | :-----: | :-: | :---: | :---: |
 | *Register* | *Source* | *Base address* | *Incrementation* | *Store* | *Cache* | 0   | 3     | 1     |
 
 * *Cache*: if 1 then the transfer occurs between cache and register, if 0, the transfer occurs between SDRAM and register.
-* *Store*: if 1 then the operation is STMF or STCF (store-memory), otherwise it's LDMF or LDCF (load-memory).
+* *Store*: if 1 then the operation is STMP or STCP (store-memory), otherwise it's LDMP or LDCP (load-memory).
 * *Incrementation*: if 1, then *Address* will be incremented after this operation
 * *Base address*: base address (15-bits) of the memory to be loaded or the base address of the memory destination in DSRAM or in cache.
 * *Source*: a register, in range r60-63, containing the address of the memory to be loaded or the address of the memory destination. The value in this register will be added to *Immediate* to compute the final address.
 * *Register*: a register, in case of load it is where the memory load will be stored, in case of store it represents the value to be written.
 
-#### II.2.4.2) LDMD/STMD or LDCD/STCD
+#### II.2.4.2) LDMP.S/STMP.S or LDCP.S/STCP.S
 
-Load or store memory from/in SDRAM or cache (double (IEEE 64-bits) version).
+Load or store memory from/in SDRAM or cache (32-bits posit version).
 
 | 31 - 26    | 25 - 24  | 23 - 8         | 7                | 6       | 5       | 4   | 3 - 2 | 1 - 0 |
 | :--------: | :------: | :------------: | :--------------: | :-----: | :-----: | :-: | :---: | :---: |
 | *Register* | *Source* | *Base address* | *Incrementation* | *Store* | *Cache* | 1   | 3     | 1     |
 
 * *Cache*: if 1 then the transfer occurs between cache and register, if 0, the transfer occurs between SDRAM and register.
-* *Store*: if 1 then the operation is STMD or STCD (store-memory), otherwise it's LDMD or LDCD (load-memory).
+* *Store*: if 1 then the operation is STMP or STCP (store-memory), otherwise it's LDMP or LDCP (load-memory).
 * *Incrementation*: if 1, then *Address* will be incremented after this operation
 * *Base address*: base address (16-bits) of the memory to be loaded or the base address of the memory destination in DSRAM or in cache.
 * *Source*: a register, in range r60-63, containing the address of the memory to be loaded or the address of the memory destination. The value in this register will be added to *Immediate* to compute the final address.
@@ -464,16 +442,16 @@ Load or store memory from/in SDRAM or cache (double (IEEE 64-bits) version).
 | :-------: | :--------: | :---: |
 | Dependent | *Category* | 2     |
 
-| *Category* value | Instruction category       |
-| :--------------: | :------------------------: |
-| 0                | NOP or XCHG or REG-REG-REG |
-| 1                | REG-REG-IMM                |
-| 2                | REG-IMM                    |
-| 3                | MOVEI                      |
+| *Category* value | Instruction category         |
+| :--------------: | :--------------------------: |
+| 0                | NOP or SWITCH or REG-REG-REG |
+| 1                | REG-REG-IMM                  |
+| 2                | REG-IMM                      |
+| 3                | MOVEI                        |
 
 Depending on the value of *Category* the decoding steps will differ.
 
-### II.3.1) NOP and XCHG
+### II.3.1) NOP and SWITCH
 
 | 31 - 7    | 6 - 4  | 3 - 2 | 1 - 0 |
 | :-------: | :---:  | :---: | :---: |
@@ -483,26 +461,28 @@ Depending on the value of *Category* the decoding steps will differ.
 | :-----------: | :---------: |
 | 0             | REG-REG-REG |
 | 1             | Illegal     |
-| 2             | XCHG        |
+| 2             | SWITCH      |
 | 3 - 5         | Illegal     |
 | 6             | NOP         |
 | 7             | Illegal     |
 
 Depending on the value of *Type* the decoding steps will differ.
 
-#### II.3.1.1) XCHG
+#### II.3.1.1) SWITCH
 
-Change the amount of instructions decoded each cycle. This instruction flip the XCHG bit.
-If the XCHG bit is 1, 4 instructions are decoded each cycle, if it is 0, 2 instructions are decoded each cycle.
+Change the amount of instructions decoded each cycle. This instruction set the SWITCH bit.
+If the SWITCH bit is 1, 4 instructions are decoded each cycle, if it is 0, 2 instructions are decoded each cycle.
 This is useful to avoid too many "nop" and therefore not waste unnecessary space in the ISRAM.
 
-| 31 - 7 | 6 - 4 | 3 - 2 | 1 - 0 |
-| :----: | :---: | :---: | :---: |
-| 0      | 2     | 0     | 2     |
+| 31 - 8 | 7       | 6 - 4 | 3 - 2 | 1 - 0 |
+| :----: | :-----: | :---: | :---: | :---: |
+| 0      | *Value* | 2     | 0     | 2     |
+
+* *Value*: the value of the flag as defined above.
 
 #### II.3.1.2) NOP
 
-Does nothing. May be used to add cycle-accurate delay and also used to indicate end-of-program (mov.e).
+Does nothing. May be used to add cycle-accurate delay and also used to indicate end-of-program (`mov.e`).
 
 | 31 - 8 | 7     | 6 - 4 | 3 - 2 | 1 - 0 |
 | :----: | :---: | :---: | :---: | :---: |
@@ -527,7 +507,7 @@ Pseudo-code equivalent: `R1 <- R2 OP R3`
 | *Destination* | *Source 2* | *Source 1* | *Size*  | *OP*   | 0     | 0     | 2     |
 
 * *OP*: The operation (see below)
-* *Size*: if 0, then the operation is done on 1 byte, if 1, then the operation is done on 2 byte, if 2 then the operation is done on 4 byte, if 3, then the operation is done on 8 byte.
+* *Size*: if 0, then the operation is done on 1 bytes, if 1, then the operation is done on 2 bytes, if 2 then the operation is done on 4 bytes, if 3, then the operation is done on 8 bytes.
 * *Source 1*: the first operand register
 * *Source 2*: the second operand register
 * *Destination*: the register in which the result is stored
@@ -546,7 +526,7 @@ Pseudo-code equivalent: `R1 <- R2 OP I`
 | *Destination* | *Source 2* | *Immediate* | *Size* | *OP*  | 1     | 2     |
 
 * *OP*: The operation (see below)
-* *Size*: if 0, then the operation is done on 1 byte, if 1, then the operation is done on 2 byte, if 2 then the operation is done on 4 byte, if 3, then the operation is done on 8 byte.
+* *Size*: if 0, then the operation is done on 1 byte, if 1, then the operation is done on 2 bytes, if 2 then the operation is done on 4 bytes, if 3, then the operation is done on 8 bytes.
 * *Immediate*: the first operand value (10-bits)
 * *Source 2*: the second operand register
 * *Destination*: the register in which the result is stored
@@ -565,7 +545,7 @@ Pseudo-code equivalent: `R <- R OP I`
 | *Destination* | *Immediate* | *Size* | *OP*  | 2     | 2     |
 
 * *OP*: The operation (see below)
-* *Size*: if 0, then the operation is done on 1 byte, if 1, then the operation is done on 2 byte, if 2 then the operation is done on 4 byte, if 3, then the operation is done on 8 byte.
+* *Size*: if 0, then the operation is done on 1 byte, if 1, then the operation is done on 2 bytes, if 2 then the operation is done on 4 bytes, if 3, then the operation is done on 8 bytes.
 * *Immediate*: the first operand value (16-bits)
 * *Destination*: the register in which the result is stored
 
@@ -689,63 +669,48 @@ Blocks execution until the end of previous transfers.
 | :----: | :---: | :-: | :-: | :---: |
 | 0      | 15    | 0   | 1   | 0     |
 
-## II.5) VFPU
+## II.5) VPU
 
 | 31 - 4    | 3 - 2   | 1 - 0 |
 | :-------: | :-----: | :---: |
 | Dependent | *Type*  | 3     |
 
-| *Type* value | Instruction |
-| :----------: | :---------: |
-| 0            | *Subtype*   |
-| 1            | MOVEFI      |
-| 2            | MOVEDI      |
-| 3            | MOVEVI      |
+| *Type* value | Instruction           |
+| :----------: | :-------------------: |
+| 0            | Arithmetic            |
+| 1            | Moves and conversions |
+| 2            | Division              |
+| 3            | Illegal               |
 
 Depending on the value of *Type* and *Subtype* the decoding steps will differ.
 
-### II.5.1) *Subtype*
+### II.5.1) Arithmetic
 
-| 31 - 6    | 5 - 4     | 3 - 2 | 1 - 0 |
-| :-------: | :-------: | :---: | :---: |
-| Dependent | *Subtype* | 0     | 3     |
+| 31 - 10   | 9 - 8       | 7   | 6 - 5     |  4          | 3 - 2 | 1 - 0 |
+| :-------: | :---------: | :-: | :-------: | :---------: | :---: | :---: |
+| Dependent | *Operation* | 0   | *Subtype* | *Precision* | 0     | 3     |
 
-| *Subtype* value | Instruction                  |
-| :-------------: | :--------------------------: |
-| 0               | Arithmetic                   |
-| 1               | Moves                        |
-| 2               | Float conversion             |
-| 3               | Float/int conversion or VDIV |
+| *Subtype* value | Instruction                           |
+| :-------------: | :-----------------------------------: |
+| 0               | Posit ADD/SUB/MUL/MULADD              |
+| 1               | Vector ADD/SUB/MUL/MULADD             |
+| 2               | Vector/posit ADD/SUB/MUL/MULADD       |
+| 3               | Vector accumulator MUL/MULADD or FIPR |
 
 Depending on the value of *Subtype* the decoding steps will differ.
 
-#### II.5.1.1) Arithmetic
+#### Posit arithmetic operations
 
-| 31 - 10   | 9 - 8      | 7 - 6     | 5 - 4 | 3 - 2 | 1 - 0 |
-| :-------: | :--------: | :-------: | :---: | :---: | :---: |
-| Dependent | *Category* | Dependent | 0     | 0     | 3     |
+Each operation set, except vector accumulator MUL/MULADD or FIPR, support addition, substraction, multiplication, and multiply-add.
 
-| *Category* value | Instruction                           |
-| :--------------: | :-----------------------------------: |
-| 0                | vector/vector ADD/SUB/MUL/MULADD      |
-| 1                | vector/float ADD/SUB/MUL/MULADD       |
-| 2                | vector accumulator MUL/MULADD or FIPR |
-| 3                | double/double ADD/SUB/MUL/MULADD      |
+| *Operation* value | Instruction | Notes            |
+| :---------------: | :---------: | :--------------: |
+| 0                 | ADD         | vp0 =  vp1 + vp2 |
+| 1                 | SUB         | vp0 =  vp1 - vp2 |
+| 2                 | MUL         | vp0 =  vp1 * vp2 |
+| 3                 | MULADD      | vp0 += vp1 * vp2 |
 
-Depending on the value of *Category* the decoding steps will differ.
-
-##### Float operations
-
-Each operation set, except vector accumulator MUL/MULADD, support addition, substraction, multiplication, and multiply-add 
-
-| *Operation* value | Instruction | Notes         |
-| :---------------: | :---------: | :-----------: |
-| 0                 | FADD        | v0 =  v1 + v2 |
-| 1                 | FSUB        | v0 =  v1 - v2 |
-| 2                 | FMUL        | v0 =  v1 * v2 |
-| 3                 | FMULADD     | v0 += v1 * v2 |
-
-##### II.5.1.1.1) vector/vector ADD/SUB/MUL/MULADD
+#### II.5.1.1) Posit PADD/PSUB/PMUL/PMULADD
 
 These operations are applied using the following pattern: 
 * `x0 = x1 OP x2`
@@ -753,156 +718,228 @@ These operations are applied using the following pattern:
 * `z0 = z1 OP z2`
 * `w0 = w1 OP w2`
 
-| 31 - 27       | 26 - 22    | 21 - 17    | 16 - 12 | 11 - 10     | 9 - 8 | 7 - 6  | 5 - 4 | 3 - 2 | 1 - 0 |
-| :-----------: | :--------: | :--------: | :-----: | :---------: | :---: | :----: | :---: | :---: | :---: |
-| *Destination* | *Source 1* | *Source 2* | 0       | *Operation* | 0     | *Size* | 0     | 0     | 3     |
+| 31 - 25       | 24 - 18    | 17 - 11    | 10  | 9 - 8       | 7   | 6 - 5 |  4          | 3 - 2 | 1 - 0 |
+| :-----------: | :--------: | :--------: | :-: | :---------: | :-: | :---: | :---------: | :---: | :---: |
+| *Destination* | *Source 1* | *Source 2* | 0   | *Operation* | 0   | 0     | *Precision* | 0     | 3     |
 
-* *Size*: this operations affects the *Size* first components of both vectors. `0 = x | 1 = xy | 2 = xyz | 3 = xyzw`.
-* *Operation*: the arithmetic *Operation* to be done (see [Float operations](#float-operations)).
-* *Source 2*: the second operand, a vector register.
-* *Source 1*: the first operand, a vector register.
-* *Destination*: the destination, a vector register.
+* *Precision*: if 0 then the registers are half-precision (16-bits posit), if 1 then the registers are single-precision (32-bits posit).
+* *Operation*: the arithmetic operation to be done (see [Posit arithmetic operations](#posit-arithmetic-operations)).
+* *Source 2*: the second operand (right), a posit register. If *Precision* is 1, the most significant bit is ignored.
+* *Source 1*: the first operand (left), a posit register. If *Precision* is 1, the most significant bit is ignored.
+* *Destination*: the destination, a posit register. If *Precision* is 1, the most significant bit is ignored.
 
-##### II.5.1.1.2) vector/float ADD/SUB/MUL/MULADD
+#### II.5.1.2) Vector PADD/PSUB/PMUL/PMULADD
 
 These operations are applied using the following pattern: 
-* `x0 = x1 OP f2`
-* `y0 = y1 OP f2`
-* `z0 = z1 OP f2`
-* `w0 = w1 OP f2`
+* `x0 = x1 OP x2`
+* `y0 = y1 OP y2`
+* `z0 = z1 OP z2`
+* `w0 = w1 OP w2`
 
-| 31 - 27       | 26 - 22    | 21 - 15    | 14 - 12 | 11 - 10     | 9 - 8 | 7 - 6  | 5 - 4 | 3 - 2 | 1 - 0 |
-| :-----------: | :--------: | :--------: | :-----: | :---------: | :---: | :----: | :---: | :---: | :---: |
-| *Destination* | *Source 1* | *Source 2* | 0       | *Operation* | 1     | *Size* | 0     | 0     | 3     |
+| 31 - 27       | 26 - 22    | 21 - 17    | 16 - 12  | 11 - 10 | 9 - 8       | 7   | 6 - 5 |  4          | 3 - 2 | 1 - 0 |
+| :-----------: | :--------: | :--------: | :------: | :-----: | :---------: | :-: | :---: | :---------: | :---: | :---: |
+| *Destination* | *Source 1* | *Source 2* | 0        | *Size*  | *Operation* | 0   | 1     | *Precision* | 0     | 3     |
 
-* *Size*: this operations affects the *Size* first components of *Source 1* vector. `0 = x | 1 = xy | 2 = xyz | 3 = xyzw`.
-* *Operation*: the arithmetic *Operation* to be done (see [Float operations](#float-operations)).
-* *Source 2*: the second operand, a float register.
-* *Source 1*: the first operand, a vector register.
-* *Destination*: the destination, a vector register.
+* *Precision*: if 0 then the registers are half-precision (16-bits posit), if 1 then the registers are single-precision (32-bits posit).
+* *Operation*: the arithmetic operation to be done (see [Posit arithmetic operations](#posit-arithmetic-operations)).
+* *Size*: this operations affects the *Size* first components of the vectors. `0 = x | 1 = xy | 2 = xyz | 3 = xyzw`.
+* *Source 2*: the second operand (right), a vector register. If *Precision* is 1, the most significant bit is ignored.
+* *Source 1*: the first operand (left), a vector register. If *Precision* is 1, the most significant bit is ignored.
+* *Destination*: the destination, a vector register. If *Precision* is 1, the most significant bit is ignored.
 
-##### II.5.1.1.3) vector accumulator MUL/MULADD and FIPR
+#### II.5.1.3) Vector/posit PADD/PSUB/PMUL/PMULADD
 
-The 4 following operations does **not** follow the [Float operations](#float-operations).
+These operations are applied using the following pattern: 
+* `x0 = x1 OP p`
+* `y0 = y1 OP p`
+* `z0 = z1 OP p`
+* `w0 = w1 OP p`
 
-| 31 - 27    | 26 - 22    | 21 - 15 | 14 - 12 | 11 - 10      | 9 - 8 | 7 - 6  | 5 - 4 | 3 - 2 | 1 - 0 |
-| :--------: | :--------: | :-----: | :-----: | :----------: | :---: | :----: | :---: | :---: | :---: |
-| *Vector 2* | *Vector 1* | *Float* | 0       | *Operation2* | 2     | *Size* | 0     | 0     | 3     |
+| 31 - 27       | 26 - 22    | 21 - 15    | 16 - 12  | 11 - 10 | 9 - 8       | 7   | 6 - 5 |  4          | 3 - 2 | 1 - 0 |
+| :-----------: | :--------: | :--------: | :------: | :-----: | :---------: | :-: | :---: | :---------: | :---: | :---: |
+| *Destination* | *Source 1* | *Source 2* | 0        | *Size*  | *Operation* | 0   | 2     | *Precision* | 0     | 3     |
 
+* *Precision*: if 0 then the registers are half-precision (16-bits posit), if 1 then the registers are single-precision (32-bits posit).
+* *Operation*: the arithmetic operation to be done (see [Posit arithmetic operations](#posit-arithmetic-operations)).
+* *Size*: this operations affects the *Size* first components of the vectors. `0 = x | 1 = xy | 2 = xyz | 3 = xyzw`.
+* *Source 2*: the second operand (right), a 16-bits posit register. If *Precision* is 1, the most significant bit is ignored.
+* *Source 1*: the first operand (left), a vector register. If *Precision* is 1, the most significant bit is ignored.
+* *Destination*: the destination, a vector register. If *Precision* is 1, the most significant bit is ignored.
+
+##### II.5.1.4) Vector accumulator PMUL/PMULADD and PIPR
+
+The 4 following operations does **not** follow the [posit arithmetic operations](#posit-arithmetic-operations).
+
+| 31 - 27    | 26 - 22    | 21 - 15 | 14 - 10 | 9 - 8         | 7  | 6 - 5 |  4          | 3 - 2 | 1 - 0 |
+| :--------: | :--------: | :-----: | :-----: | :-----------: | :-:| :---: | :---------: | :---: | :---: |
+| *Vector 2* | *Vector 1* | *Posit* | 0       | *Operation 2* | 0  | 3     | *Precision* | 0     | 3     |
+
+* *Precision*: if 0 then the registers are half-precision (16-bits posit), if 1 then the registers are single-precision (32-bits posit).
+* *Operation 2*: the operation to perform. See table below.
 * *Size*: this operations affects the *Size* first components of vectors. `0 = x | 1 = xy | 2 = xyz | 3 = xyzw`.
-* *Float*: a float register.
-* *Vector 1*: a vector register.
-* *Vector 2*: a vector register.
+* *Posit*: a posit register. If *Precision* is 1, the most significant bit is ignored.
+* *Vector 1*: a vector register. If *Precision* is 1, the most significant bit is ignored.
+* *Vector 2*: a vector register. If *Precision* is 1, the most significant bit is ignored.
 
 | *Operation2* value | Instruction  | Expression                                         | *Destination* |
 | :----------------: | :----------: | :------------------------------------------------: | :-----------: |
-| 0                  | FMULVA       | *Accumulator* = *Vector 1* \* *Float*              | *Accumulator* |
-| 1                  | FMULADDVA    | *Accumulator* += *Vector 1* \* *Float*             | *Accumulator* |
-| 2                  | FMULADDVAO   | *Vector 2* = *Accumulator* + *Vector 1* \* *Float* | *Vector 2*    |
-| 3                  | FIPR         | *Float* =  *Vector 1* · *Vector 2*                 | *Float*       |
+| 0                  | PMULVA       | *Accumulator* = *Vector 1* \* *Posit*              | *Accumulator* |
+| 1                  | PMULADDVA    | *Accumulator* += *Vector 1* \* *Posit*             | *Accumulator* |
+| 2                  | PMULADDVAO   | *Vector 2* = *Accumulator* + *Vector 1* \* *Posit* | *Vector 2*    |
+| 3                  | PIPR         | *Posit* =  *Vector 1* · *Vector 2*                 | *Posit*       |
 
-##### II.5.1.1.4) double/double ADD/SUB/MUL/MULADD
+### II.5.2) Moves and conversions
 
-These operations are applied using the following pattern: 
-* `d0 = d1 OP d2`
+| 31 - 6    | 5 - 4     | 3 - 2 | 1 - 0 |
+| :-------: | :-------: | :---: | :---: |
+| Dependent | *Subtype* | 1     | 3     |
 
-| 31 - 26       | 25 - 20    | 19 - 14    | 13 - 10 | 9 - 8 | 7 - 6       | 5 - 4 | 3 - 2 | 1 - 0 |
-| :-----------: | :--------: | :--------: | :-----: | :---: | :---------: | :---: | :---: | :---: |
-| *Destination* | *Source 1* | *Source 2* | 0       | 3     | *Operation* | 0     | 0     | 3     |
+| *Subtype* value | Instruction     |
+| :-------------: | :-------------: |
+| 0               | PMOVE or PMOVER |
+| 1               | PMOVEI          |
+| 2               | Conversions     |
+| 3               | Illegal         |
 
-* *Operation*: the arithmetic *Operation* to be done (see [Float operations](#float-operations)).
-* *Source 2*: the second operand, a double register.
-* *Source 1*: the first operand, a double register.
-* *Destination*: the destination, a double register.
+Depending on the value of *Subtype* the decoding steps will differ.
 
-#### II.5.1.2) Moves
+#### II.5.2.1) PMOVE or PMOVER
 
-To be determined.
+| 31 - 7    | 6           | 5 - 4 | 3 - 2 | 1 - 0 |
+| :-------: | :---------: | :---: | :---: | :---: |
+| Dependent | *Operation* | 0     | 1     | 3     |
 
-#### II.5.1.3) Float conversion
-
-| 31 - 26  | 25 - 19 | 18 - 7 | 6           | 5 - 4 | 3 - 2 | 1 - 0 |
-| :------: | :-----: | :----: | :---------: | :---: | :---: | :---: |
-| *Double* | *Float* | 0      | *Direction* | 2     | 0     | 3     |
-
-* *Direction*: if 0, convert *Float* to *Double*, if 1, convert *Double* to *Float*.
-* *Float*: the float register.
-* *Double*: the double register.
-
-#### II.5.1.4) Float/Int conversion or VDIV
-
-| 31 - 10   | 9 - 8       | 7 - 6     | 5 - 4 | 3 - 2 | 1 - 0 |
-| :-------: | :---------: | :-------: | :---: | :---: | :---: |
-| Dependent | *Operation* | Dependent | 3     | 0     | 3     |
-
-| *Operation* value | Instruction                           |
-| :---------------: | :-----------------------------------: |
-| 0                 | Fixed-point conversion                |
-| 1                 | Float/int conversion                  |
-| 2                 | Double/int conversion                 |
-| 3                 | Float/Double division and square-root |
+| *Operation* value | Instruction        |
+| :---------------: | :----------------: |
+| 0                 | PMOVE              |
+| 1                 | PMOVERI or PMOVERO |
 
 Depending on the value of *Operation* the decoding steps will differ.
 
-##### II.5.1.4.1) Fixed-point conversion
+##### II.5.2.1.1) PMOVE
 
-Fixed-point values from/to floating-point values.
+Copies a block of 16-bits posit registers.
 
-| 31 - 26    | 25 - 21  | 20 - 15 | 14 - 12       | 11 - 10 | 9 - 8  | 7 - 6  | 5 - 4 | 3 - 2 | 1 - 0 |
-| :--------: | :------: | :-----: | :-----------: | :-----: | :----: | :----: | :---: | :---: | :---: |
-| *Register* | *Vector* | 0       | *Instruction* | 0       | 0      | *Size* | 3     | 0     | 3     |
+| 31 - 25       | 24 - 18  | 17 - 10 | 9 - 8  | 7   | 6   | 5 - 4 | 3 - 2 | 1 - 0 |
+| :-----------: | :------: | :-----: | :----: | :-: | :-: | :---: | :---: | :---: |
+| *Destination* | *Source* | 0       | *Size* | 0   | 0   | 0     | 1     | 3     |
 
-| *Instruction* value | Instruction | Notes                                              |
-| :-----------------: | :---------: | :------------------------------------------------: |
-| 0                   | ITOF0       | Convert 16.0 fixed-point to 32-bits floating-point |
-| 1                   | ITOF4       | Convert 12.4 fixed-point to 32-bits floating-point |
-| 2                   | ITOF8       | Convert 8.8 fixed-point to 32-bits floating-point  |
-| 3                   | ITOF15      | Convert 1.15 fixed-point to 32-bits floating-point |
-| 4                   | FTOI0       | Convert 32-bits floating-point to 16.0 fixed-point |
-| 5                   | FTOI4       | Convert 32-bits floating-point to 12.4 fixed-point |
-| 6                   | FTOI8       | Convert 32-bits floating-point to 8.8 fixed-point  |
-| 7                   | FTOI15      | Convert 32-bits floating-point to 1.15 fixed-point |
+* *Size*: the number of concecutive register.
+* *Source*: the first 16-bits posit register to copy from.
+* *Destination*: the first 16-bits posit register to copy to.
 
-* *Size*: this operations affects the *Size* first components of *Vector*. `0 = x | 1 = xy | 2 = xyz | 3 = xyzw`.
-* *Vector*: the floating-point values, as a vector register.
-* *Register*: the fixed-point values, as a register.
+##### II.5.2.1.2) PMOVERI or PMOVERO
 
-##### II.5.1.4.2) Float/int conversion
+Copies a block of 16-bits posit registers.
 
-Convert floating-point to integer, or integer to floating-point.
+| 31 - 25 | 24 - 19    | 18 - 10 | 9 - 8  | 7           | 6   | 5 - 4 | 3 - 2 | 1 - 0 |
+| :-----: | :--------: | :-----: | :----: | :---------: | :-: | :---: | :---: | :---: |
+| *Posit* | *Register* | 0       | *Size* | *Direction* | 1   | 0     | 1     | 3     |
 
-| 31 - 26    | 25 - 19 | 18 - 11 | 10          | 9 - 8 | 7 - 6  | 5 - 4 | 3 - 2 | 1 - 0 |
-| :--------: | :-----: | :-----: | :---------: | :---: | :----: | :---: | :---: | :---: |
-| *Register* | *Float* | 0       | *Direction* | 1     | *Size* | 3     | 0     | 3     |
+* *Direction*: if 0, then copy from *Posit* to *Register*, if 1, then copy from *Register* to *Posit*.
+* *Size*: the number of concecutive 16-bits posit register.
+* *Register*: the integer register.
+* *Posit*: the first 16-bits posit register.
 
-* *Size*: if 0, then the operation is done on 1 byte, if 1, then the operation is done on 2 byte, if 2 then the operation is done on 4 byte, if 3, then the operation is done on 8 byte.
-* *Direction*: if 0, then convert *Register* to *Float*, if 1, then convert *Float* to *Register*.
-* *Float*: a float register.
-* *Register*: a register.
+#### II.5.2.2) PMOVEI
 
-##### II.5.1.4.3) Double/int conversion
+| 31 - 8    | 7 - 6       | 5 - 4 | 3 - 2 | 1 - 0 |
+| :-------: | :---------: | :---: | :---: | :---: |
+| Dependent | *Operation* | 1     | 1     | 3     |
 
-Convert floating-point to integer, or integer to floating-point.
-
-| 31 - 26    | 25 - 20  | 19 - 11 | 10          | 9 - 8 | 7 - 6  | 5 - 4 | 3 - 2 | 1 - 0 |
-| :--------: | :------: | :-----: | :---------: | :---: | :----: | :---: | :---: | :---: |
-| *Register* | *Double* | 0       | *Direction* | 2     | *Size* | 3     | 0     | 3     |
-
-* *Size*: if 0, then the operation is done on 1 byte, if 1, then the operation is done on 2 byte, if 2 then the operation is done on 4 byte, if 3, then the operation is done on 8 byte.
-* *Direction*: if 0, then convert *Register* to *Double*, if 1, then convert *Double* to *Register*.
-* *Double*: a double register.
-* *Register*: a register.
-
-##### II.5.1.4.4) Float division and square-root
-
-| 31 - 10   | 9 - 8 | 7      | 6             | 5 - 4 | 3 - 2 | 1 - 0 |
-| :-------: | :---: | :----: | :-----------: | :---: | :---: | :---: |
-| Dependent | 3     | *Size* | *Instruction* | 3     | 0     | 3     |
-
-* *Instruction*: if 0, then it is FDIV or DDIV, if 1, it is FSQRT or DSQRT.
-* *Size*: if 0 does either FDIV or FSQRT, if 1, does either DDIV or DSQRT.
+| *Operation* value | Instruction     |
+| :---------------: | :-------------: |
+| 0                 | PMOVEI (half)   |
+| 1                 | PMOVEI (vector) |
+| 2                 | PMOVEI (single) |
+| 3                 | Illegal         |
 
 Depending on the value of *Operation* the decoding steps will differ.
+
+##### II.5.2.2.1) PMOVEI (half)
+
+Write an immediate value to a posit register.
+
+| 31 - 25       | 24  | 23 - 8      | 7 - 6 | 5 - 4 | 3 - 2 | 1 - 0 |
+| :-----------: | :-: | :---------: | :---: | :---: | :---: | :---: |
+| *Destination* | 0   | *Immediate* | 0     | 1     | 1     | 3     |
+
+* *Immediate*: the value to store in *Destination*, a 16-bits posit.
+* *Destination*: a 16-bits posit register.
+
+##### II.5.2.2.2) PMOVEI (vector)
+
+Write an immediate value to a posit register.
+
+| 31 - 27       | 26  | 25 - 24 | 23 - 8      | 7 - 6 | 5 - 4 | 3 - 2 | 1 - 0 |
+| :-----------: | :-: | :-----: | :---------: | :---: | :---: | :---: | :---: |
+| *Destination* | 0   | *Size*  | *Immediate* | 1     | 1     | 1     | 3     |
+
+* *Immediate*: the value to store in each *Destination* register, a 16-bits posit.
+* *Size*: the number of concecutive 16-bits posit register.
+* *Destination*: the first 16-bits posit register.
+
+##### II.5.2.2.1) PMOVEI (single)
+
+Write an immediate value to a posit register.
+
+| 31 - 26       | 25 - 8      | 7 - 6 | 5 - 4 | 3 - 2 | 1 - 0 |
+| :-----------: | :---------: | :---: | :---: | :---: | :---: |
+| *Destination* | *Immediate* | 2     | 1     | 1     | 3     |
+
+* *Immediate*: the value to store in *Destination* (22-bits), a 32-bits posit with the lowest fraction bits truncated.
+* *Destination*: a 32-bits posit register.
+
+#### II.5.2.3) Conversions
+
+| 31 - 6    | 7 - 6       | 5 - 4 | 3 - 2 | 1 - 0 |
+| :-------: | :---------: | :---: | :---: | :---: |
+| Dependent | *Operation* | 2     | 1     | 3     |
+
+| *Operation* value | Instruction            |
+| :---------------: | :--------------------: |
+| 0                 | PCONVERT (half/single) |
+| 1                 | PCONVERT (half/int)    |
+| 2                 | PCONVERT (single/int)  |
+| 3                 | Illegal                |
+
+##### II.5.2.3.1) PCONVERT (half/single)
+
+Perform a convertion between half (16-bits) and single (32-bits) precision posits.
+
+| 31 - 25 | 24 - 19  | 18 - 10 | 9           | 8   | 7 - 6 | 5 - 4 | 3 - 2 | 1 - 0 |
+| :-----: | :------: | :-----: | :---------: | :-: | :---: | :---: | :---: | :---: |
+| *Half*  | *Single* | 0       | *Direction* | 0   | 0     | 2     | 1     | 3     |
+
+* *Direction*: if 0, then convert from *Half* to *Single*, if 1, then convert from *Single* to *Half*.
+* *Single*: the 32-bits posit register.
+* *Half*: the 16-bits posit register.
+
+##### II.5.2.3.2) PCONVERT (half/int)
+
+Perform a convertion between half precision posits (16-bits) and signed integers of 8, 16, 32 or 64 bits.
+
+| 31 - 25 | 24 - 19    | 18 - 12 | 11 - 10 | 9           | 8   | 7 - 6 | 5 - 4 | 3 - 2 | 1 - 0 |
+| :-----: | :--------: | :-----: | :-----: | :---------: | :-: | :---: | :---: | :---: | :---: |
+| *Half*  | *Register* | 0       | *Size*  | *Direction* | 0   | 1     | 2     | 1     | 3     |
+
+* *Direction*: if 0, then convert from *Half* to *Register*, if 1, then convert from *Register* to *Half*.
+* *Size*: if 0, then *Register* is a 8-bits signed integer, if 1, then *Register* 16-bits signed integer, if 2, then *Register* 32-bits signed integer, if 3, then *Register* 64-bits signed integer.
+* *Register*: the integer register.
+* *Half*: the 16-bits posit register.
+
+##### II.5.2.3.3) PCONVERT (single/int)
+
+Perform a convertion between single precision posits (32-bits) and signed integers of 8, 16, 32 or 64 bits.
+
+| 31 - 26  | 25 - 20    | 19 - 12 | 11 - 10 | 9           | 8   | 7 - 6 | 5 - 4 | 3 - 2 | 1 - 0 |
+| :------: | :--------: | :-----: | :-----: | :---------: | :-: | :---: | :---: | :---: | :---: |
+| *Single* | *Register* | 0       | *Size*  | *Direction* | 0   | 1     | 2     | 1     | 3     |
+
+* *Direction*: if 0, then convert from *Single* to *Register*, if 1, then convert from *Register* to *Single*.
+* *Size*: if 0, then *Register* is a 8-bits signed integer, if 1, then *Register* 16-bits signed integer, if 2, then *Register* 32-bits signed integer, if 3, then *Register* 64-bits signed integer.
+* *Register*: the integer register.
+* *Single*: the 32-bits posit register.
 
 ###### FDIV or FSQRT
 
@@ -926,71 +963,50 @@ Depending on the value of *Operation* the decoding steps will differ.
 * *Source 2*: a double register, the right operand.
 * *Destination*: a double register, where the result of the operation is gonne be written.
 
-### II.5.2) MOVEFI
+### II.5.3) Division
 
-Write an immediate value to a float register, useful for common values such as 0, 1...
+VDIV
+ii01 jl00 000p pppp
+pppp pppp pppp pppp
 
-| 31 - 25       | 24 - 4      | 3 - 2 | 1 - 0 |
-| :-----------: | :---------: | :---: | :---: |
-| *Destination* | *Immediate* | 1     | 3     |
+pdiv.h ph0,ph0,ph1
+psqrt.h ph0,ph0,ph1
 
-* *Immediate*: the value to be written in *Destination*, 1 bit of sign, 8 bits of exponent, 12 bits of mantissa.
-* *Destination*: a float register.
+pdiv.s ps0,ps0,ps1
+psqrt.s ps0,ps0,ps1
 
-*Immediate* has a non-standard IEEE-754 format:
+| 31 - 6    | 5           | 4           | 3 - 2 | 1 - 0 |
+| :-------: | :---------: | :---------: | :---: | :---: |
+| Dependent | *Operation* | *Precision* | 2     | 3     |
 
-| 20     | 19 - 12    | 11 - 0     |
-| :----: | :--------: | :--------: |
-| *Sign* | *Exponent* | *Mantissa* |
+| *Operation* value | Instruction |
+| :---------------: | :---------: |
+| 0                 | PDIV        |
+| 1                 | PSQRT       |
 
-*Mantissa*: 12-bits mantissa
-*Exponent*: 8-bits exponent 
-*Sign*: 0 is positive, 1 is negative
+Depending on the value of *Operation* the decoding steps will differ.
 
-To make a full single-precision ieee-754 floating point value the *Immediate* value simply need to be copied in the higher bits of the floating point value.
+#### II.5.3.1) PDIV
 
-### II.5.3) MOVEDI
+Compute the division of 2 posits.
 
-Write an immediate value to a double register, useful for common values such as 0, 1...
+| 31 - 25       | 24 - 18    | 17 - 11    | 10 - 6 | 5   | 4           | 3 - 2 | 1 - 0 |
+| :-----------: | :--------: | :--------: | :----: | :-: | :---------: | :---: | :---: |
+| *Destination* | *Source 1* | *Source 2* | 0      | 0   | *Precision* | 2     | 3     |
 
-| 31 - 26       | 25 - 4      | 3 - 2 | 1 - 0 |
-| :-----------: | :---------: | :---: | :---: |
-| *Destination* | *Immediate* | 2     | 3     |
+* *Precision*: if 0 then the registers are half-precision (16-bits posit), if 1 then the registers are single-precision (32-bits posit).
+* *Source 2*: the second operand (right), a posit register. If *Precision* is 1, the most significant bit is ignored.
+* *Source 1*: the first operand (left), a posit register. If *Precision* is 1, the most significant bit is ignored.
+* *Destination*: the destination, a posit register. If *Precision* is 1, the most significant bit is ignored.
 
-* *Immediate*: the value to be written in *Destination*, 1 bit of sign, 11 bits of exponent, 10 bits of mantissa.
-* *Destination*: a double register.
+#### II.5.3.2) PSQRT
 
-*Immediate* has a non-standard IEEE-754 format:
+Compute the square-root of a posit.
 
-| 21     | 20 - 10    | 9 - 0      |
-| :----: | :--------: | :--------: |
-| *Sign* | *Exponent* | *Mantissa* |
+| 31 - 25       | 24 - 18  | 17 - 6  | 5   | 4           | 3 - 2 | 1 - 0 |
+| :-----------: | :------: | :-----: | :-: | :---------: | :---: | :---: |
+| *Destination* | *Source* | 0       | 1   | *Precision* | 2     | 3     |
 
-*Mantissa*: 10-bits mantissa
-*Exponent*: 11-bits exponent 
-*Sign*: 0 is positive, 1 is negative
-
-To make a full double-precision ieee-754 floating point value the *Immediate* value simply need to be copied in the higher bits of the floating point value.
-
-### II.5.4) MOVEVI
-
-Write an immediate value to a vector register, useful for common values such as 0, 1...
-
-| 31 - 27       | 26 - 4      | 3 - 2 | 1 - 0 |
-| :-----------: | :---------: | :---: | :---: |
-| *Destination* | *Immediate* | 3     | 3     |
-
-* *Immediate*: the value to be written in each component of *Destination*, 1 bit of sign, 8 bits of exponent, 14 bits of mantissa.
-* *Destination*: a vector register.
-
-*Immediate* has a non-standard IEEE-754 format:
-
-| 22     | 21 - 14    | 13 - 0     |
-| :----: | :--------: | :--------: |
-| *Sign* | *Exponent* | *Mantissa* |
-
-*Mantissa*: 14-bits mantissa
-*Exponent*: 8-bits exponent 
-*Sign*: 0 is positive, 1 is negative
-
-To make a full single-precision ieee-754 floating point value the *Immediate* value simply need to be copied in the higher bits of the floating point value.
+* *Precision*: if 0 then the registers are half-precision (16-bits posit), if 1 then the registers are single-precision (32-bits posit).
+* *Source*: the operand, a posit register. If *Precision* is 1, the most significant bit is ignored.
+* *Destination*: the destination, a posit register. If *Precision* is 1, the most significant bit is ignored.
