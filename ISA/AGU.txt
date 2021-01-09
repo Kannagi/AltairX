@@ -62,12 +62,11 @@ dst  8byte
 ii10 l010 mmmm mmmm
 mmmm 0000 00rr rrrr
 prefetch $FFF(r0)
-clearc
-m = adr*32
+m = adr
 
-ii10 1111 0000 0000
+ii10 111l 0000 0000
 0000 0000 0000 0000
-
+clearc
 wait
 
 

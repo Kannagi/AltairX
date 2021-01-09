@@ -23,12 +23,12 @@ pcmp.s ps0,ps1
 ;posit16
 ii01 mmmm mmmm mmmm
 mmmm 0000 0ppp pppp
-phcmpi ph0,imm
+pcmpi.h ph0,imm
 
 ;posit32 copy upper bit
 ii11 mmmm mmmm mmmm
 mmmm mmmm mmpp pppp
-pscmpi ps0,imm
+pcmpi.s ps0,imm
 
 ;branch-----------------
 ii00 1100 llll mmmm

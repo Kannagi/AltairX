@@ -44,13 +44,13 @@ stmv v0,2(r58+)
 ii11 0cl+ aaaa aaaa
 aaaa aaar rfff ffff
 
-ldmf v0,2(r58+)
-stmf v0,2(r58+)
+ldmp.h v0,2(r58+)
+stmp.h v0,2(r58+)
 
 ii11 1cl+ aaaa aaaa
 aaaa aaaa rrdd dddd
-ldmd v0,2(r62+)
-stmd v0,2(r62+)
+ldmp.s v0,2(r62+)
+stmp.s v0,2(r62+)
 
 
 
