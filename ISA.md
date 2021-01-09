@@ -703,20 +703,17 @@ Depending on the value of *Subtype* the decoding steps will differ.
 
 Each operation set, except vector accumulator MUL/MULADD or FIPR, support addition, substraction, multiplication, and multiply-add.
 
-| *Operation* value | Instruction | Notes            |
-| :---------------: | :---------: | :--------------: |
-| 0                 | ADD         | vp0 =  vp1 + vp2 |
-| 1                 | SUB         | vp0 =  vp1 - vp2 |
-| 2                 | MUL         | vp0 =  vp1 * vp2 |
-| 3                 | MULADD      | vp0 += vp1 * vp2 |
+| *Operation* value | Instruction | Notes         |
+| :---------------: | :---------: | :-----------: |
+| 0                 | ADD         | p0 =  p1 + p2 |
+| 1                 | SUB         | p0 =  p1 - p2 |
+| 2                 | MUL         | p0 =  p1 * p2 |
+| 3                 | MULADD      | p0 += p1 * p2 |
 
 #### II.5.1.1) Posit PADD/PSUB/PMUL/PMULADD
 
 These operations are applied using the following pattern: 
-* `x0 = x1 OP x2`
-* `y0 = y1 OP y2`
-* `z0 = z1 OP z2`
-* `w0 = w1 OP w2`
+* `p0 = p1 OP p2`
 
 | 31 - 25       | 24 - 18    | 17 - 11    | 10  | 9 - 8       | 7   | 6 - 5 |  4          | 3 - 2 | 1 - 0 |
 | :-----------: | :--------: | :--------: | :-: | :---------: | :-: | :---: | :---------: | :---: | :---: |
