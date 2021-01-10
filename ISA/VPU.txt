@@ -11,10 +11,10 @@ D = double
 [14-31] register
 -------------------------
 VPU
-
----------Vector--------
 j:0 = half
 j:1 = single
+---------Vector--------
+
 
 opcode : 0x03 (+0x180)
 ii00 000l ljss ssvv
@@ -48,7 +48,7 @@ pipr, //x = x1*x2 + y1*y2 + z1*z2 + w1*w2
 
 pmulvah.xy vp0,vp0x
 pmuladdvaoh.xyzw vp1,vp0,vp0z
-pipr.xyz vp0z,vp0,vp1
+pipr.xyz vp0,vp0,vp1
 
 
 ---------Copy--------
