@@ -14,6 +14,7 @@ git add MemoryMap.txt
 git add VLIW_Unit.txt
 git add ISA.txt
 git add ISA.md
+git add GPU.md
 git add die.png
 git add README.md
 git add vasm
