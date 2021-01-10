@@ -17,8 +17,8 @@ all reg/imm-reg/reg 3 cycle (rr,exe,wb)
 mul 4 cycle (rr,exe,exe,wb)
 div 5 cycle (rr,div,div,div,wb)
 
-float 5 cycle (rr,fexe,fexe,fexe,wb)
-fdiv 8 cycles (rr,fdiv,fdiv,fdiv,fdiv,fdiv,fdiv,wb)
+float 5 cycle (rr,pexe,pexe,pexe,wb)
+fdiv 8 cycles (rr,pdiv,pdiv,pdiv,pdiv,pdiv,pdiv,wb)
 
 
 Example pipeline :

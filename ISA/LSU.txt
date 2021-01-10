@@ -32,7 +32,7 @@ outi.w 2,$40
 
 ;opcode 0x25
 ii10 01ls saaa aaaa
-aaaa aaaa arrr rrrr
+aaaa aaaa aarr rrrr
 ldmx.b r0,$3FFF(r60)
 stmx.w r0,$3FFF(r60)
 
