@@ -1,56 +1,49 @@
 ----------------
 LSU
-
-ii00 +lss aaaa aaaa
+;opcode 0x01
+ii00 lss+ aaaa aaaa
 aaaa rrrr rrrr rrrr
 
 ldm.b r0,2(r60)
 stm.w r0,2(r60)
 
-ii01 +lss aaaa aaaa
+;opcode 0x09
+ii01 lss+ aaaa aaaa
 aaaa rrrr rrrr rrrr
 ldc.b r0,2(r60+)
 stc.w r0,2(r60)
 
 
 ;----------------
-ii10 00ls saaa aaaa
-aaaa aaaa arrr rrrr
-ldmx.b r0,$3FFF(r60)
-stmx.w r0,$3FFF(r60)
 
 ;-----adr/registre
-ii10 10ls s000 0000
+;opcode 0x05
+ii10 00ls s000 0000
 aaaa aaaa 00rr rrrr
 in.b 0,r0
 out.w 2,r2
 
 ;-----adr/imm
-ii10 010s mmmm mmmm
+;opcode 0x15
+ii10 100s mmmm mmmm
 mmmm mmmm aaaa aaaa
 
 outi.w 2,$40
 
-
-ii10 11lc +aaa aaaa
-aaaa aaaa rrrv vvvv
-
-ldmv v0,2(r58+)
-stmv v0,2(r58+)
-;----------------------
+;opcode 0x25
+ii10 01ls saaa aaaa
+aaaa aaaa arrr rrrr
+ldmx.b r0,$3FFF(r60)
+stmx.w r0,$3FFF(r60)
 
 
-;-----adr/registre float
-ii11 0cl+ aaaa aaaa
-aaaa aaar rfff ffff
+;-----adr/registre vector
+;opcode 0x0E
+ii11 0cl+ ssaa aaaa
+aaaa aaaa rrvv vvvv
 
-ldmp.h v0,2(r58+)
-stmp.h v0,2(r58+)
-
-ii11 1cl+ aaaa aaaa
-aaaa aaaa rrdd dddd
-ldmp.s v0,2(r62+)
-stmp.s v0,2(r62+)
+ldmv.xy vp0,2(r58+)
+stmv.x  vp0,2(r58+)
 
 
 

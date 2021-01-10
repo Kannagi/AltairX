@@ -1,36 +1,44 @@
 -------------------------
-BRU
+CMP
+;opcode 0x00
 ;compare reg/reg
-ii00 0000 ss00 0000
+ii00 00ss 0000 0000
 0000 rrrr rrrr rrrr
 cmp.w r0,r1
 
+;opcode 0x10
+ii00 10ss ss00 0000
+0000 vvvv vvvv vvvv
+pcmp.h vp0x,vp0y
+
+;opcode 0x20
+ii00 0100 0000 0000
+0000 vvvv vvvv vvvv
+pcmp.s vp0,vp01
+
+------IMM---------------
+
+;opcode 0x04
 ;compare reg/imm
 ii10 ssmm mmmm mmmm
 mmmm mmmm mmrr rrrr
 cmpi.w r0,imm
 
---------
-ii00 1l00 0000 0000
-00ff ffff ffff ffff
-pcmp.h ph0,ph1
-
-ii00 1l00 0000 0000
-000d dddd d0dd dddd
-pcmp.s ps0,ps1
-
-------
+;opcode 0x08
 ;posit16
-ii01 mmmm mmmm mmmm
-mmmm 0000 0ppp pppp
-pcmpi.h ph0,imm
+ii01 ss00 00mm mmmm
+mmmm mmmm mmvv vvvv
+pcmpi.h vp0x,imm
 
+;opcode 0x0C
 ;posit32 copy upper bit
 ii11 mmmm mmmm mmmm
-mmmm mmmm mmpp pppp
+mmmm mmmm mmvv vvvv
 pcmpi.s ps0,imm
 
 ;branch-----------------
+BRU
+;opcode 0x30
 ii00 1100 llll mmmm
 mmmm mmmm mm00 0000
 bcc label (*8)

@@ -2,6 +2,7 @@
 ALU
 
 ;--------calcul reg/reg
+;opcode 0x02
 ii00 0000 llll ssrr
 rrrr rrrr rrrr rrrr
 
@@ -10,7 +11,7 @@ asl r0,r1,r0
 
 
 ;------calcul registre/imm
-
+;opcode 0xl6
 ii10 llll ssmm mmmm
 mmmm rrrr rrrr rrrr
 
@@ -21,7 +22,7 @@ ii10 llll ssmm mmmm
 
 asl r0,r2,imm
 ;------calcul registre/imm
-
+;opcode 0xlA
 ii01 llll ssmm mmmm
 mmmm mmmm mmrr rrrr
 
@@ -32,6 +33,7 @@ ii01 llll ssmm mmmm
 asl r0,imm
 
 ;-----mov reg/imm
+;opcode 0x0F
 ii11 mmmm mmmm mmmm
 mmmm mmmm mmrr rrrr
 
@@ -41,14 +43,15 @@ move r0,imm
 
 
 ;------nop 
-ii00 011x 0000 0000
+;opcode 0x22
+ii00 01x0 0000 0000
 0000 0000 0000 0000
 
 nop
 nop.e
 
-
-ii00 100c 0000 0000
+;opcode 0x12
+ii00 10x0 0000 0000
 0000 0000 0000 0000
 
 switch 0
