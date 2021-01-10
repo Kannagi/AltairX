@@ -1,0 +1,113 @@
+B = Byte
+H = half
+S = single
+D = double
+
+-------------------------
+VPU
+
+---------Vector--------
+j:0 = half
+j:1 = single
+
+ii00 000l lj0p pppp
+pppp pppp pppp pppp
+
+padd,psub,pmul,pmuladd
+padd.h ph0,ph0,ph0
+
+ii00 100l l0ss 0000
+0000 00vv vvvv vvvv
+
+padd,psub,pmul,pmuladd  //xyzw = xyzw + xyzw
+padd.xyzw vp0,vp0,vp1
+
+ii00 010l l0ss 000p
+pppp ppvv vvvv vvvv
+
+paddvh,pmulvh,psubvh,pmuladdvh //xyzw = xyzw + x
+paddv.xyz vp0,vp0,ph5
+
+ii00 110l l0ss 000p
+pppp ppvv vvvv vvvv
+
+pmulvah //ACC = xyzw * x
+pmuladdvah //ACC += xyzw * y
+pmuladdvaoh //xyzw = ACC + xyzw * w
+pipr, //x = x1*x2 + y1*y2 + z1*z2 + w1*w2
+
+pmulvah vp0,ph4
+pmuladdvaoh vp1,vp0,ph4
+pipr.xyz ph0,v0,vp1
+
+
+---------Copy--------
+
+ii10 0000 ss00 0000
+00pp pppp pppp pppp
+
+pmove.x ph0,ph4
+
+ii10 001l ss00 0000
+000r rrrr rppp pppp
+
+pmovero.x r0,ph4
+pmoveri.x ph0,r4
+
+;imm
+;posit16
+ii10 1000 mmmm mmmm
+mmmm mmmm 0ppp pppp
+
+pmovei.h ph0,imm
+
+;posit32 copy upper bit
+ii10 1010 mmmm mmmm
+mmmm mmmm mmpp pppp
+
+pmovei.s ps0,imm
+
+;posit 16 bits
+ii10 1001 mmmm mmmm
+mmmm mmmm ss0v vvvv
+
+vpmovei.xy vp0,imm
+
+
+---------Convert--------
+
+;convert posit half/single
+ii10 0100 0l00 0000
+000s ssss shhh hhhh
+
+pconvertsh ps0,ph1
+pconverths ph0,ps1
+
+;Convert posit half/int
+ii10 0110 0lss 0000
+000r rrrr rppp pppp
+
+pconverthi.w ph0,r0
+pconvertih.b r0,ph1
+
+;Convert posit single/int
+ii10 0101 0lss 0000
+0000 rrrr rrpp pppp
+
+pconvertsi.w ps0,r0
+pconvertis.b r0,ps1
+
+
+
+-------------------------
+VDIV
+ii01 jl00 000p pppp
+pppp pppp pppp pppp
+
+pdiv.h ph0,ph0,ph1
+psqrt.h ph0,ph0
+
+pdiv.s ps0,ps0,ps1
+psqrt.s ps0,ps0
+
+
