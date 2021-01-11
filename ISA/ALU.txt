@@ -18,7 +18,7 @@ mmmm rrrr rrrr rrrr
 add r0,r2,imm
 
 ii10 llll ssmm mmmm
-0000 rrrr rrrr rrrr
+mmmm rrrr rrrr rrrr
 
 asl r0,r2,imm
 ;------calcul registre/imm
@@ -34,7 +34,7 @@ asl r0,imm
 
 ;-----mov reg/imm
 ;opcode 0x0F
-ii11 mmmm mmmm mmmm
+ii11 ssmm mmmm mmmm
 mmmm mmmm mmrr rrrr
 
 move r0,imm

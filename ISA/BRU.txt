@@ -38,9 +38,9 @@ pcmpi.s ps0,imm
 
 ;branch-----------------
 BRU
-;opcode 0x30
-ii00 1100 llll mmmm
-mmmm mmmm mm00 0000
+;opcode 0x33
+ii00 1100 llll 0000
+00mm mmmm mmmm mmmm
 bcc label (*8)
 ==
 !=

@@ -1,14 +1,14 @@
 ----------------
 LSU
 ;opcode 0x01
-ii00 lss+ aaaa aaaa
+ii00 l+ss aaaa aaaa
 aaaa rrrr rrrr rrrr
 
 ldm.b r0,2(r60)
 stm.w r0,2(r60)
 
 ;opcode 0x09
-ii01 lss+ aaaa aaaa
+ii01 l+ss aaaa aaaa
 aaaa rrrr rrrr rrrr
 ldc.b r0,2(r60+)
 stc.w r0,2(r60)
@@ -18,8 +18,8 @@ stc.w r0,2(r60)
 
 ;-----adr/registre
 ;opcode 0x05
-ii10 00ls s000 0000
-aaaa aaaa 00rr rrrr
+ii10 000l ss00 0000
+00aa aaaa aarr rrrr
 in.b 0,r0
 out.w 2,r2
 
@@ -31,7 +31,7 @@ mmmm mmmm aaaa aaaa
 outi.w 2,$40
 
 ;opcode 0x25
-ii10 01ls saaa aaaa
+ii10 010l ssaa aaaa
 aaaa aaaa aarr rrrr
 ldmx.b r0,$3FFF(r60)
 stmx.w r0,$3FFF(r60)
@@ -40,7 +40,7 @@ stmx.w r0,$3FFF(r60)
 ;-----adr/registre vector
 ;opcode 0x0E
 ii11 0cl+ ssaa aaaa
-aaaa aaaa rrvv vvvv
+aaaa aaar rrvv vvvv
 
 ldmv.xy vp0,2(r58+)
 stmv.x  vp0,2(r58+)
