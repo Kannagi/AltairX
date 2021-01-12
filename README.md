@@ -26,9 +26,10 @@ The L1 I/O SRAM, is not made to read / write hardware, but to control another CP
 The configuration thought is that the main processor can indicate I/O for the other cores, while keeping a security (for the OS).  
 The main core also has an I/O SRAM, if you want, for example, to have 2 processors on a machine. 
 
+For floating point numbers Altair does not use the float / double type (IEEE 754), it uses the posits instead: https://posithub.org/khub_widget  
 
 For the calculation unit it has:  
-4ALU 2VFPU 2LSU FDIV DIV BRU AGU
+4ALU 2VPU 2LSU PDIV DIV BRU AGU CMP
 
 The advantage of this processor is that it has a simple design, and requires little transistor for "high performance" and therefore consume / cost less than RISC Out Of Order processors.
 
