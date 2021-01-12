@@ -25,6 +25,7 @@ git add dieGPU.png
 git add dieGPU2.png
 git add dieGPU3.png
 git add PipelineGPU.png
+git add PCB.png
 
 git commit -m "$message"
 #git remote add origin https://github.com/Kannagi/Altair.git/ 
