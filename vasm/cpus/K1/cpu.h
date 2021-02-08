@@ -39,14 +39,8 @@ typedef struct {
 #define K1            0x01
 
 #define OP_VOID            0
-
-#define OP_VF              1
-#define OP_VD              2
-#define OP_REG             3
-#define OP_VT              4
-
-#define OP_SP1             5
-#define OP_SP2             6
+#define OP_REG             1
+#define OP_VP              2
 
 #define OP_IMM             7
 #define OP_IM1             8
@@ -54,9 +48,7 @@ typedef struct {
 #define OP_IM3             10
 #define OP_IM4             11
 
-
 #define OP_IMR             20
-
 
 #define OP_DATA            100
 

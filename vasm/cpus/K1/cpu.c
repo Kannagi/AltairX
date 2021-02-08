@@ -122,101 +122,31 @@ int parse_operand(char *p,int len,operand *op,int requires)
         return 1;
     }
     
-    //Register F0-F127
-    if(requires == OP_VF )
+    //Register VP0-VP63
+    if(requires == OP_VP )
     {
         
-        if( (len < 2) || (len > 4) ) return 0;
-        if( !(p[0] == 'f' || p[0] == 'F') )
+        if( (len < 2) || (len > 3) ) return 0;
+        if( !(p[0] == 'p' || p[0] == 'P') )
             return 0;
 
         
+        arg[0] = p[1];
         arg[0] = p[1];
         if(len == 2)
         {
             arg[1] = 0;
         }
         {
-            if(len == 3)
-            {
-                arg[1] = p[2];
-                arg[2] = 0;
-            }else
-            {
-                arg[1] = p[2];
-                arg[2] = p[3];
-                arg[3] = 0;
-            }
+            arg[1] = p[2];
+            arg[2] = 0;
         }
-        op->val = atoi(arg);
-        if(op->val > 127) return 0;
+        op->reg = atoi(arg);
+        if(op->reg > 63) return 0;
 
         return 1;
     }
 
-    //Register D0-D63
-    if(requires == OP_VD )
-    {
-        
-        if( (len < 2) || (len > 4) ) return 0;
-        if( !(p[0] == 'd' || p[0] == 'D') )
-            return 0;
-
-        
-        arg[0] = p[1];
-        if(len == 2)
-        {
-            arg[1] = 0;
-        }
-        {
-            if(len == 3)
-            {
-                arg[1] = p[2];
-                arg[2] = 0;
-            }else
-            {
-                arg[1] = p[2];
-                arg[2] = p[3];
-                arg[3] = 0;
-            }
-        }
-        op->val = atoi(arg);
-        if(op->val > 63) return 0;
-
-        return 1;
-    }
-
-    //Register V0-V31
-    if(requires == OP_VT )
-    {
-        
-        if( (len < 2) || (len > 4) ) return 0;
-        if( !(p[0] == 'v' || p[0] == 'V') )
-            return 0;
-
-        
-        arg[0] = p[1];
-        if(len == 2)
-        {
-            arg[1] = 0;
-        }
-        {
-            if(len == 3)
-            {
-                arg[1] = p[2];
-                arg[2] = 0;
-            }else
-            {
-                arg[1] = p[2];
-                arg[2] = p[3];
-                arg[3] = 0;
-            }
-        }
-        op->val = atoi(arg);
-        if(op->val > 31) return 0;
-
-        return 1;
-    }
 
     //Register R0-R63
     if(requires == OP_REG )
@@ -258,6 +188,34 @@ int parse_operand(char *p,int len,operand *op,int requires)
     return 0;
 }
 
+char *outbin(unsigned int n)
+{
+    static char buffer [1+sizeof (unsigned int)*8] = { 0 };
+    unsigned int bit = 0 ;
+    int i;
+    for (i = 0 ; i < sizeof (unsigned int)*8; i++)
+    {
+        bit = n&1;
+        buffer[i] = bit+'0';
+        n = n>>1;
+    }
+    buffer[i] = '\0';
+
+    return buffer;
+}
+
+void printbin(unsigned int n)
+{
+    unsigned int bit = 0 ;
+    for (int i = 0 ; i < sizeof(unsigned int)*8 ; i++)
+    {
+        bit = n&1;
+        printf("%d", bit) ;
+        if(((i+1)&7) == 0) printf(" ") ;
+        n = n>>1;
+    }
+    printf("\n");
+}
 
 /* Convert an instruction into a DATA atom including relocations,
    if necessary. */
@@ -291,6 +249,7 @@ dblock *eval_instruction(instruction *p,section *sec,taddr pc)
         if(ext[0] == '1') k1ext = 1;
         if(ext[0] == '2') k1ext = 2;
         if(ext[0] == '3') k1ext = 3;
+
 
         if(ext[0] == 'b') k1ext = 0;
         if(ext[0] == 'w') k1ext = 1;
@@ -396,8 +355,8 @@ dblock *eval_instruction(instruction *p,section *sec,taddr pc)
         
     }
 
-    //VF,IMR
-    if(operand1.type == OP_VF && operand2.type == OP_IMR && operand3.type == OP_VOID)
+    //VP,IMR
+    if(operand1.type == OP_VP && operand2.type == OP_IMR && operand3.type == OP_VOID)
     {
         eval_expr(operand2.value,&val,sec,pc);
         operand2.val = val&0xFFFF;
@@ -420,7 +379,7 @@ dblock *eval_instruction(instruction *p,section *sec,taddr pc)
     //REG,REG (CMP)
     if(operand1.type == OP_REG && operand2.type == OP_REG && operand3.type == OP_VOID)
     {
-    	opcode |= (operand1.reg<<26) + (operand2.reg<<20) + ( (k1ext&3)<<8);
+    	opcode |= (operand1.reg<<26) + (operand2.reg<<20) + ( (k1ext&3)<<6);
     }
 
     //REG,REG,REG (ALU)
@@ -498,7 +457,7 @@ dblock *eval_instruction(instruction *p,section *sec,taddr pc)
             type = (opcode>>2)&0x3;
             if(type == 2)
             {
-                operand2.val = val&0xFFFF;
+                operand2.val = val&0x3FF;
                 type = (opcode>>2)&0xF;
                 if(type > 9)
         			operand2.val = val&0x3F;
@@ -506,10 +465,10 @@ dblock *eval_instruction(instruction *p,section *sec,taddr pc)
         		opcode |= (operand1.reg<<26) + (operand2.val<<10) + ( (k1ext&3)<<8);
             }else
             {
-            	if(type == 3) //move
+            	if(type == 3) //movei
             	{
-        			operand2.val = val&0x3FFFFF;
-                	opcode |= (operand1.reg<<26) + (operand2.val<<4);
+        			operand2.val = val&0xFFFFF;
+                	opcode |= (operand1.reg<<26) + (operand2.val<<6)+ ( (k1ext&3)<<4);
             	}
                 
             } 
@@ -517,15 +476,15 @@ dblock *eval_instruction(instruction *p,section *sec,taddr pc)
 
         if(inst == 0) //BRU
         {
-
+            //cmpi
             operand2.val = val&0xFFFFF;
             opcode |= (operand1.reg<<26) + (operand2.val<<6)+ ( (k1ext&3)<<4);
 
         }
     }
 
-    //VF,IMM
-    if(operand1.type == OP_VF && operand2.type == OP_IMM && operand3.type == OP_VOID)
+    //VP,IMM
+    if(operand1.type == OP_VP && operand2.type == OP_IMM && operand3.type == OP_VOID)
     {
         float fval;
         eval_expr(operand2.value,&val,sec,pc);
@@ -547,14 +506,14 @@ dblock *eval_instruction(instruction *p,section *sec,taddr pc)
     }
 
 
-    //VT,VT,VT
-    if(operand1.type == OP_VT && operand2.type == OP_VT && operand3.type == OP_VT)
+    //VP,VP,VP
+    if(operand1.type == OP_VP && operand2.type == OP_VP && operand3.type == OP_VP)
     {
         opcode |= (operand1.val<<25) + (operand2.val<<19) + (k1ext&3);
     }
 
-    //VF,VF
-    if(operand1.type == OP_VF && operand2.type == OP_VF && operand3.type == OP_VOID)
+    //VP,VP
+    if(operand1.type == OP_VP && operand2.type == OP_VP && operand3.type == OP_VOID)
     {
         opcode |= (operand1.val<<25) + (operand2.val<<19) + (k1ext&3);
     }
@@ -569,17 +528,17 @@ dblock *eval_instruction(instruction *p,section *sec,taddr pc)
     {
         eval_expr(operand1.value,&val,sec,pc);
 
-        type = opcode>>6;
+        type = (opcode>>6)&3;
         if(type == 0) //Bcc
         {
         	val = (val-pc-4-1)>>3;
 	        operand1.val = val&0x3FFF;
 
-	        opcode |= (operand1.val<<12);
+	        opcode |= (operand1.val<<18);
         }else //jump/call
         {
 	        operand1.val = val&0x3FFF;
-	        opcode |= (operand1.val<<12);
+	        opcode |= (operand1.val<<18);
         }
         
     }
@@ -598,37 +557,12 @@ dblock *eval_instruction(instruction *p,section *sec,taddr pc)
 
 //printf("%d\n",k1ext&3);
 
-char *outbin(unsigned int n)
-{
-    static char buffer [1+sizeof (unsigned int)*8] = { 0 };
-    unsigned int bit = 0 ;
-    int i;
-    for (i = 0 ; i < sizeof (unsigned int)*8; i++)
-    {
-        bit = n&1;
-        buffer[i] = bit+'0';
-        n = n>>1;
-    }
-    buffer[i] = '\0';
 
-    return buffer;
-}
 
-void printbin(unsigned int n)
-{
-    unsigned int bit = 0 ;
-    for (int i = 0 ; i < sizeof(unsigned int)*8 ; i++)
-    {
-        bit = n&1;
-        printf("%d", bit) ;
-        if(((i+1)&7) == 0) printf(" ") ;
-        n = n>>1;
-    }
-    printf("\n");
-}
-    printbin(opcode);
+
 
     //printf("%s\n",outbin(opcode));
+    printbin(opcode);
     
 
     val = opcode;
