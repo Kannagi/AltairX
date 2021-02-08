@@ -38,7 +38,7 @@
 	bne test ;wb /if
 	nop
 
-	nop
+	movei r4,666
 	nop
 
 	nop         ;-- /id-exe
