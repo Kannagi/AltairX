@@ -4,10 +4,10 @@
 #include <stdlib.h>
 #include "vasm.h"
 
-char *cpu_copyright="vasm KutaragiV1 cpu backend 0.1 (c) 2020 Samy Meguenoun";
+char *cpu_copyright="vasm Altair K1 cpu backend 0.1 (c) 2020 Samy Meguenoun";
 
 
-char *cpuname="KutaragiV1";
+char *cpuname="AltairK1";
 int bitsperbyte=8;
 int bytespertaddr=4;
 int k1ext = 0x0;
@@ -70,7 +70,7 @@ int parse_operand(char *p,int len,operand *op,int requires)
 {
     op->type = requires;
     op->value = NULL;
-    char arg[400];
+    char arg[32];
     int i;
 
     //imm[rxx]
@@ -126,21 +126,36 @@ int parse_operand(char *p,int len,operand *op,int requires)
     if(requires == OP_VP )
     {
         
-        if( (len < 2) || (len > 3) ) return 0;
-        if( !(p[0] == 'p' || p[0] == 'P') )
+        if( (len < 3) || (len > 5) ) return 0;
+        if( !(p[0] == 'v' || p[0] == 'V') )
+            return 0;
+
+        if( !(p[1] == 'p' || p[1] == 'P') )
             return 0;
 
         
-        arg[0] = p[1];
-        arg[0] = p[1];
-        if(len == 2)
+        arg[0] = p[2];
+        if(len == 3)
         {
             arg[1] = 0;
         }
         {
-            arg[1] = p[2];
+        	if( (p[3] >= '0') && (p[3] <= '9') )
+            	arg[1] = p[3];
+            else
+            {
+            	op->val = 'x'-p[3]+1;
+            	arg[1] = 0;
+            }
+
             arg[2] = 0;
+
+            if(!( (p[4] >= '0') && (p[4] <= '9') ))
+            {
+            	op->val = 'x'-p[3]+1;            	
+            }
         }
+
         op->reg = atoi(arg);
         if(op->reg > 63) return 0;
 
@@ -255,6 +270,9 @@ dblock *eval_instruction(instruction *p,section *sec,taddr pc)
         if(ext[0] == 'w') k1ext = 1;
         if(ext[0] == 'l') k1ext = 2;
         if(ext[0] == 'q') k1ext = 3;
+
+        if(ext[0] == 'h') k1ext = 0;
+        if(ext[0] == 's') k1ext = 1;
         
         if(ext[0] == 'x') k1ext = 0;
         if( (n == 2) && (ext[1] == 'y') ) k1ext = 1;
@@ -317,36 +335,25 @@ dblock *eval_instruction(instruction *p,section *sec,taddr pc)
         {
         	if(type == 0) //LDM/STM
 	        {
-	            operand2.val &= 0xFFF;
-	            opcode |= (plus<<4) + ( (k1ext&3)<<6);
+	            operand2.val &= 0x7FFF;
+	            opcode |= (plus<<5) + ( (k1ext&3)<<6);
 	            opcode |= (operand1.reg<<26) + (operand2.reg<<20) + (operand2.val<<8);
 	        }else
 	        {
-	            if(type == 1)
-	            {
-	                type = (opcode>>4)&0x3;
+	
+                if(type == 1)//LDC/STC
+                {
+                    operand2.val &= 0x7FFF;
+                    opcode |= (plus<<4) + ( (k1ext&3)<<6);
+                    opcode |= (operand1.reg<<26) + (operand2.reg<<20) + (operand2.val<<8);
+                }else //LDMV/STMV ,LDCV/STCV
+                {
+                	operand2.val &= 0x1FFF;
+                    opcode |= (plus<<6) + ( (k1ext&3)<<8);
+                    opcode |= (operand1.reg<<26) + (operand2.reg<<20) + (operand2.val<<10);
 
-	                if(type == 0) //LDMX/STMX
-	                {
-	                    operand2.val &= 0xFFFF;
-	                    operand2.reg -= 62;
-	                    operand2.reg &= 1;
-	                    opcode |= ( (k1ext&3)<<7);
-	                    opcode |= (operand1.reg<<26) + (operand2.val<<9);
-	                }
-
-	            }else
-	            {
-	                if(type == 2)//LDC/STC
-	                {
-	                    operand2.val &= 0xFFF;
-	                    opcode |= (plus<<4) + ( (k1ext&3)<<6);
-	                    opcode |= (operand1.reg<<26) + (operand2.reg<<20) + (operand2.val<<8);
-	                }else //LDMF/STMF ,LDCD/STCD
-	                {
-
-	                }
-	            }
+                }
+	            
 	        }
 
         }
@@ -424,27 +431,28 @@ dblock *eval_instruction(instruction *p,section *sec,taddr pc)
         if(type == 5)
         {
             operand1.val = val&0xFF;
-            opcode |= ( (k1ext&3)<<7);
-            opcode |= (operand1.val<<16) + (operand2.reg<<26);
+            opcode |= ( (k1ext&3)<<8);
+            opcode |= (operand1.val<<18) + (operand2.reg<<26);
         }
 
     }
 
-    //IMM,IMM (INI/OUTI)
+    //IMM,IMM 
     if(operand1.type == OP_IMM && operand2.type == OP_IMM && operand3.type == OP_VOID)
     {
-        eval_expr(operand1.value,&val,sec,pc);
-        operand1.val = val&0xFFFF;
+    	if(inst == 1) //(OUTI)
+    	{
+    		eval_expr(operand1.value,&val,sec,pc);
+	        operand1.val = val&0xFF;
 
-        eval_expr(operand2.value,&val,sec,pc);
-        operand2.val = val&0xFF;
+	        eval_expr(operand2.value,&val,sec,pc);
+	        operand2.val = val&0xFFFF;
 
-        type = (opcode>>2)&0xF;
-        if(type == 9)
-        {
-            opcode |= ( (k1ext&1)<<7);
-            opcode |= (operand1.val<<24) + (operand2.val<<8);
-        }
+	        opcode |= ( (k1ext&1)<<4);
+	        opcode |= (operand1.val<<24) + (operand2.val<<8);
+    	}
+        
+        
 
     }
 
@@ -472,6 +480,35 @@ dblock *eval_instruction(instruction *p,section *sec,taddr pc)
             	}
                 
             } 
+        }
+
+        type = (opcode>>2)&0x3;
+
+        if(inst == 1) //LSU
+        {
+        	if(type == 0) //LDM/STM
+	        {
+	            operand2.val &= 0x7FFF;
+	            opcode |= ( (k1ext&3)<<6);
+	            opcode |= (operand1.reg<<26) + (operand2.reg<<20) + (operand2.val<<8);
+	        }else
+	        {
+	
+                if(type == 1)//LDC/STC
+                {
+                    operand2.val &= 0x7FFF;
+                    opcode |= ( (k1ext&3)<<6);
+                    opcode |= (operand1.reg<<26) + (operand2.reg<<20) + (operand2.val<<8);
+                }else //LDMV/STMV ,LDCV/STCV
+                {
+                	operand2.val &= 0x1FFF;
+                    opcode |= ( (k1ext&3)<<8);
+                    opcode |= (operand1.reg<<26) + (operand2.reg<<20) + (operand2.val<<10);
+
+                }
+	            
+	        }
+
         }
 
         if(inst == 0) //BRU
@@ -515,7 +552,20 @@ dblock *eval_instruction(instruction *p,section *sec,taddr pc)
     //VP,VP
     if(operand1.type == OP_VP && operand2.type == OP_VP && operand3.type == OP_VOID)
     {
-        opcode |= (operand1.val<<25) + (operand2.val<<19) + (k1ext&3);
+    	if(inst == 0)
+        {
+        	int tmp = 1<<4;
+        	if(k1ext == 1)
+            	tmp = 1<<5;
+            
+            opcode |= (operand1.reg<<26) + (operand2.reg<<20) + tmp;
+        }
+        else
+        {
+
+
+        }
+        
     }
 
     //REG
@@ -535,13 +585,23 @@ dblock *eval_instruction(instruction *p,section *sec,taddr pc)
 	        operand1.val = val&0x3FFF;
 
 	        opcode |= (operand1.val<<18);
-        }else //jump/call
+        }else 
         {
-	        operand1.val = val&0x3FFF;
+        	type = (opcode>>8)&7;
+        	if(type == 6) //swt
+        	{
+        		operand1.val = val&0x1;
+	        	opcode |= (operand1.val<<8);
+        	}else //jump/call
+        	{
+        		operand1.val = val&0x3FFF;
 	        opcode |= (operand1.val<<18);
+        	}
+
+	        
         }
         
-    }
+    } 
 /*
     //REG,REG,IMM
     if(operand1.type == OP_REG && operand2.type == OP_REG && operand3.type == OP_IMM)

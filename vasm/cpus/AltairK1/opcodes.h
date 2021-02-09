@@ -1,21 +1,23 @@
 
   //AGU
-  "lddma",   {OP_IMR,OP_IMR,      },{K1,(0x0)+(0x00<<2)},
-  "stdma",   {OP_IMR,OP_IMR,      },{K1,(0x0)+(0x02<<2)},
+  "lddma",   {OP_IMR,OP_IMR,      },{K1,(0b0000)},
+  "stdma",   {OP_IMR,OP_IMR,      },{K1,(0b1000)},
 
 
-  "lddmar",  {OP_REG,OP_REG,OP_IMM},{K1,(0x0)+(0x01<<2)},
-  "stdmar",  {OP_REG,OP_REG,OP_IMM},{K1,(0x0)+(0x03<<2)},
+  "lddmar",  {OP_REG,OP_REG,OP_IMM},{K1,(0b00000100)},
+  "stdmar",  {OP_REG,OP_REG,OP_IMM},{K1,(0b00010100)},
 
-  "dmair",   {OP_REG,OP_REG,OP_IMM},{K1,(0x4)+(0x01<<4)},
+  "dmair",   {OP_REG,OP_REG,OP_IMM},{K1,(0b00100100)},
 
-  "lddmal",  {OP_REG,OP_IMM,      },{K1,(0x4)+(0x02<<4)},
-  "stdmal",  {OP_REG,OP_IMM,      },{K1,(0x4)+(0x03<<4)},
+  "lddmal",  {OP_REG,OP_IMM,      },{K1,(0b00110100)},
+  "stdmal",  {OP_REG,OP_IMM,      },{K1,(0b01110100)},
 
-  "prefetch",{OP_IMR,             },{K1,(0x4)+(0x04<<4)},
-  "clearc",  {                    },{K1,(0x4)+(0x05<<4)},
+  "prefetch",{OP_IMR,             },{K1,(0b10000100)},
+  "clearca", {OP_IMR,             },{K1,(0b10010100)},
 
-  "wait",    {                    },{K1,(0x4)+(0x0F<<4)},
+
+  "clearc",  {                    },{K1,(0b10100100)},
+  "wait",    {                    },{K1,(0b10110100)},
 
 
   //LSU
@@ -50,8 +52,9 @@
 
   //ALU
   "nop",    {                    },{K1,(0b00010010)},
-
-  "move",   {OP_REG,OP_REG,      },{K1,(0b000000000110)},
+  
+  "movelr", {OP_REG,      ,      },{K1,(0b00100010)},
+  "move",   {OP_REG,OP_REG,      },{K1,(0b00000110)},
   "movei",  {OP_REG,OP_IMM,      },{K1,(0b1110)},
 
   "add",    {OP_REG,OP_REG,OP_REG},{K1,(0b000000000010)},
@@ -129,15 +132,38 @@
   "jmpr",   {OP_IMM,             },{K1,(0b000110110000)},
   "callr",  {OP_IMM,             },{K1,(0b001110110000)},
 
-  "nend",    {                    },{K1,(0b010010110000)},
+  "endp",   {                    },{K1,(0b010010110000)},
   "swt",    {OP_IMM,             },{K1,(0b011010110000)},
   "ret",    {                    },{K1,(0b000011110000)},
 
   //CMP
   "cmp",    {OP_REG,OP_REG,      },{K1,(0b000000)},
-  "cmpi",   {OP_REG,OP_IMM,      },{K1,(0b000100)},
-
   "pcmp",   {OP_VP ,OP_VP ,      },{K1,(0b000000)}, //0b100000 or 0b010000
-  "pcmpi",  {OP_VP ,OP_IMM,      },{K1,(0b001000)}, //+1
+
+  "cmpi",   {OP_REG,OP_IMM,      },{K1,(0b0100)},
+  "pcmpi",  {OP_VP ,OP_IMM,      },{K1,(0b1000)}, //+0b100
 
   //VPU
+  "padd",   {OP_VP ,OP_VP ,OP_VP },{K1,(0b0000000011)},
+  "psub",   {OP_VP ,OP_VP ,OP_VP },{K1,(0b0010000011)},
+  "pmul",   {OP_VP ,OP_VP ,OP_VP },{K1,(0b0100000011)},
+  "pmadd",  {OP_VP ,OP_VP ,OP_VP },{K1,(0b0110000011)},
+
+  "padds",  {OP_VP ,OP_VP ,OP_VP },{K1,(0b0000100011)},
+  "psubs",  {OP_VP ,OP_VP ,OP_VP },{K1,(0b0010100011)},
+  "pmuls",  {OP_VP ,OP_VP ,OP_VP },{K1,(0b0100100011)},
+  "pmadds", {OP_VP ,OP_VP ,OP_VP },{K1,(0b0110100011)},
+
+  "pipr",   {OP_VP ,OP_VP ,OP_VP },{K1,(0b0110110011)},
+
+  "pmove",  {OP_VP ,OP_VP ,      },{K1,(0b0000000111)},
+  "vpmove", {OP_VP ,OP_VP ,      },{K1,(0b0000010111)},
+
+  "pmovei", {OP_VP ,OP_IMM,      },{K1,(0b01000111)},
+  "vpmovei",{OP_VP ,OP_IMM,      },{K1,(0b01100111)},
+
+  "pmovero",{OP_VP ,OP_REG,      },{K1,(0b0000100111)},
+  "pmoveri",{OP_VP ,OP_REG,      },{K1,(0b0000110111)},
+
+  "pdiv",   {OP_VP ,OP_VP ,OP_VP },{K1,(0b0000001011)},
+  "psqrt",  {OP_VP ,OP_VP ,      },{K1,(0b0000101011)},

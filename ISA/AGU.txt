@@ -10,12 +10,11 @@ AGU
 
 
 ;Memory intern <=> Memory RAM
-opcode : 0x00 /0x10 
-ii00 lrrR aaaa aaaa
+ii0l Rrrr raaa aaaa
 aaaa mmmm mmmm mmmm
 
-lddma 0xFFF(R58),2(r60) (Load RAM adress SP 32 bytes -> 0xFFF*32) 32bytes
-stdma 0xFFF(R59),2(r61) (Load RAM adress SP 32 bytes -> 0xFFF*32)
+lddma 0x7FF(R0),2(r60) (Load RAM adress SP 32 bytes -> 0xFFF*32) 32bytes
+stdma 0x7FF(R1),2(r61) (Load RAM adress SP 32 bytes -> 0xFFF*32)
 
 ;Memory List
 opcode : 0x04/0x14
@@ -23,11 +22,14 @@ ii10 l000 mmmm mmmm
 mmmm rrrr rrrr rrrr
 
 lddmar r0,r1,imm
-stdmar r0,r1,imm
 arg1 = dst DSRAM
 arg2 = src RAM
 imm = size *32
 
+stdmar r0,r1,imm
+arg1 = src DSRAM
+arg2 = dst RAM
+imm = size *32
 
 opcode : 0x24 
 ii10 0100 mmmm mmmm
@@ -40,22 +42,22 @@ imm = size *32
 
 opcode : 0x34 / 0x74 
 ii10 11l0 mmmm mmmm
-mmmm 0000 00rr rrrr
+mmmm rrrr rrrr rrrr
 
-lddmacdl r0,imm
+lddmal r0,imm
 arg1 = src DSRAM
-imm = size *32
+imm = size *16
 
-adr 8byte 
 size 4byte
 dst  4byte
+adr 8byte 
 
-stdmacdl r0,imm
+stdmal r0,imm
 arg1 = src DSRAM
-imm = size *32
+imm = size *16
 
-adr 4byte 
 size 4byte
+adr 4byte 
 dst  8byte
 
 opcode : 0x84  
@@ -65,7 +67,7 @@ prefetch $FFF(r0)
 m = adr
 
 opcode : 0xE4 / 0xF4
-ii10 1111 0000 0000
+ii10 111x 0000 0000
 0000 0000 0000 0000
 clearc
 wait

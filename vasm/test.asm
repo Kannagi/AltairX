@@ -48,8 +48,11 @@ test:
 	nop
 
 
-	nend
+	endp
 	nop
+
+	pcmp VP3,VP1
+	pcmp.s VP63,VP11
 
 
 
