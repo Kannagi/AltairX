@@ -18,10 +18,7 @@ static ArResult executeInstruction(ArProcessor restrict processor, uint32_t inde
     static const uint32_t ZSUClearMask  = ~(Z_MASK | S_MASK | U_MASK);
 
     uint64_t* restrict const ireg = processor->ireg;
-
-    float*    const freg = (float*)processor->freg;
-    double*   const dreg = (double*)processor->freg;
-    Vector4f* const vreg = (Vector4f*)processor->freg;
+    uint64_t* restrict const vreg = processor->vreg;
 
     const ArOperation* restrict const op = &processor->operations[index];
     const uint32_t*    restrict const operands = op->operands;
@@ -62,7 +59,7 @@ static ArResult executeInstruction(ArProcessor restrict processor, uint32_t inde
             memcpy(&processor->cache[operands[0] + ireg[operands[1]]], &ireg[operands[2]], 1u << op->size);
             ireg[operands[1]] += op->data; //incr
             break;
-
+/*
         case AR_OPCODE_LDMX: //copy data from dsram to register
             memcpy(&ireg[operands[2]], &processor->dsram[operands[0] + ireg[operands[1]]], 1u << op->size);
             ireg[operands[1]] += op->data; //incr
@@ -72,7 +69,7 @@ static ArResult executeInstruction(ArProcessor restrict processor, uint32_t inde
             memcpy(&processor->dsram[operands[0] + ireg[operands[1]]], &ireg[operands[2]], 1u << op->size);
             ireg[operands[1]] += op->data; //incr
             break;
-
+*/
         case AR_OPCODE_IN: //copy data from iosram to register
             memcpy(&ireg[operands[2]], &processor->iosram[operands[0]], 1u << op->size);
             break;
@@ -122,26 +119,6 @@ static ArResult executeInstruction(ArProcessor restrict processor, uint32_t inde
 
         case AR_OPCODE_STCF: //copy data from float register to cache
             memcpy(&processor->cache[operands[0] + ireg[operands[1]]], &freg[operands[2]], 4);
-            ireg[operands[1]] += op->data; //incr
-            break;
-
-        case AR_OPCODE_LDMD: //copy data from dsram to double register
-            memcpy(&dreg[operands[2]], &processor->dsram[operands[0] + ireg[operands[1]]], 8);
-            ireg[operands[1]] += op->data; //incr
-            break;
-
-        case AR_OPCODE_STMD: //copy data from double register to dsram
-            memcpy(&processor->dsram[operands[0] + ireg[operands[1]]], &dreg[operands[2]], 8);
-            ireg[operands[1]] += op->data; //incr
-            break;
-
-        case AR_OPCODE_LDCD: //copy data from cache to double register
-            memcpy(&dreg[operands[2]], &processor->cache[operands[0] + ireg[operands[1]]], 8);
-            ireg[operands[1]] += op->data; //incr
-            break;
-
-        case AR_OPCODE_STCD: //copy data from double register to cache
-            memcpy(&processor->cache[operands[0] + ireg[operands[1]]], &dreg[operands[2]], 8);
             ireg[operands[1]] += op->data; //incr
             break;
 

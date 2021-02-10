@@ -30,9 +30,10 @@ typedef struct ArProcessor_T
     uint8_t iosram[AR_PROCESSOR_IOSRAM_SIZE];
 
     uint64_t ireg[AR_PROCESSOR_IREG_COUNT];
-    uint64_t freg[AR_PROCESSOR_FREG_COUNT / 2u];
+    uint64_t vreg[AR_PROCESSOR_VREG_COUNT];
 
     uint32_t pc; //program-counter
+    uint32_t lr; //link-register
     uint32_t opcodes[AR_PROCESSOR_MAX_OPERATIONS];
 
     /// \brief CPU Flags register
@@ -51,15 +52,6 @@ typedef struct ArProcessor_T
     ArOperation dmaOperation;
 
 } ArProcessor_T;
-
-typedef struct Vector4f
-{
-    float x;
-    float y;
-    float z;
-    float w;
-
-} Vector4f;
 
 typedef struct ArPhysicalMemory_T
 {

@@ -42,15 +42,22 @@ typedef enum ArOpcode
     AR_OPCODE_LDDMAR,
     AR_OPCODE_STDMAR,
     AR_OPCODE_DMAIR,
+    AR_OPCODE_LDDMAL,
+    AR_OPCODE_STDMAL,
+    AR_OPCODE_CLEARC,
     AR_OPCODE_WAIT,
 
     //LSU
     AR_OPCODE_LDM,
+    AR_OPCODE_LDMI,
     AR_OPCODE_STM,
+    AR_OPCODE_STMI,
     AR_OPCODE_LDC,
+    AR_OPCODE_LDCI,
     AR_OPCODE_STC,
-    AR_OPCODE_LDMX,
-    AR_OPCODE_STMX,
+    AR_OPCODE_STCI,
+    //AR_OPCODE_LDMX,
+    //AR_OPCODE_STMX,
     AR_OPCODE_IN,
     AR_OPCODE_OUT,
     AR_OPCODE_OUTI,
@@ -58,19 +65,15 @@ typedef enum ArOpcode
     AR_OPCODE_STMV,
     AR_OPCODE_LDCV,
     AR_OPCODE_STCV,
-    AR_OPCODE_LDMF,
-    AR_OPCODE_STMF,
-    AR_OPCODE_LDCF,
-    AR_OPCODE_STCF,
-    AR_OPCODE_LDMD,
-    AR_OPCODE_STMD,
-    AR_OPCODE_LDCD,
-    AR_OPCODE_STCD,
+    AR_OPCODE_LDMVI,
+    AR_OPCODE_STMVI,
+    AR_OPCODE_LDCVI,
+    AR_OPCODE_STCVI,
 
     //ALU
     AR_OPCODE_NOP,
-    AR_OPCODE_XCHG,
     AR_OPCODE_MOVEI,
+    AR_OPCODE_MOVELR,
     AR_OPCODE_ADD,
     AR_OPCODE_ADDI,
     AR_OPCODE_ADDQ,
@@ -111,6 +114,12 @@ typedef enum ArOpcode
     AR_OPCODE_LSRI,
     AR_OPCODE_LSRQ,
 
+    //CMP
+    AR_OPCODE_CMP,
+    AR_OPCODE_CMPI,
+    AR_OPCODE_PCMP,
+    AR_OPCODE_PCMPI,
+
     //BRU
     AR_OPCODE_BNE,
     AR_OPCODE_BEQ,
@@ -122,17 +131,20 @@ typedef enum ArOpcode
     AR_OPCODE_BLES,
     AR_OPCODE_BGS,
     AR_OPCODE_BGES,
-    AR_OPCODE_CMP,
-    AR_OPCODE_CMPI,
-    AR_OPCODE_FCMP,
-    AR_OPCODE_FCMPI,
-    AR_OPCODE_DCMP,
-    AR_OPCODE_DCMPI,
+    AR_OPCODE_BRA,
     AR_OPCODE_JMP,
     AR_OPCODE_CALL,
     AR_OPCODE_JMPR,
     AR_OPCODE_CALLR,
+    AR_OPCODE_SWT,
+    AR_OPCODE_END,
     AR_OPCODE_RET,
+
+    //VPU
+    //AR_OPCODE_PADD,
+    //AR_OPCODE_PSUB,
+    //AR_OPCODE_PMUL,
+    //AR_OPCODE_PMULADD,
 
     //Fake instructions
     AR_OPCODE_MOVE,
@@ -175,17 +187,17 @@ typedef struct ArOperation
 #define AR_PROCESSOR_CACHE_SIZE     (32u * 1024u)
 #define AR_PROCESSOR_IOSRAM_SIZE    (256u)
 #define AR_PROCESSOR_IREG_COUNT     (64u)
-#define AR_PROCESSOR_FREG_COUNT     (128u)
+#define AR_PROCESSOR_VREG_COUNT     (64u)
 #define AR_PROCESSOR_MAX_OPERATIONS (4u)
 
 typedef struct ArProcessorMemoryInfo
 {
-    const uint8_t* dsram;
-    const uint8_t* isram;
-    const uint8_t* cache;
-    const uint8_t* iosram;
+    const uint8_t*  dsram;
+    const uint8_t*  isram;
+    const uint8_t*  cache;
+    const uint8_t*  iosram;
     const uint64_t* ireg;
-    const uint64_t* freg;
+    const uint64_t* vreg;
 } ArProcessorMemoryInfo;
 
 #ifndef AR_NO_PROTOTYPES

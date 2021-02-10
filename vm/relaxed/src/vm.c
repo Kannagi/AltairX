@@ -120,7 +120,7 @@ void arGetProcessorMemoryInfo(ArProcessor processor, ArProcessorMemoryInfo* pOut
     pOutput->cache  = processor->cache;
     pOutput->iosram = processor->iosram;
     pOutput->ireg   = processor->ireg;
-    pOutput->freg   = processor->freg;
+    pOutput->vreg   = processor->vreg;
 }
 
 void arDestroyVirtualMachine(ArVirtualMachine virtualMachine)

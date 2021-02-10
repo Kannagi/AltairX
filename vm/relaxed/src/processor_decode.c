@@ -16,6 +16,11 @@ static int32_t extendSign(uint32_t value, uint32_t bits)
     }
 }
 
+static uint32_t readbits(uint32_t buffer, uint32_t index, uint32_t size)
+{
+    return (buffer >> index) & ((1u << size) - 1);
+}
+
 static const ArOpcode BRUComparators[16] =
 {
     AR_OPCODE_BNE,
@@ -28,7 +33,7 @@ static const ArOpcode BRUComparators[16] =
     AR_OPCODE_BLES,
     AR_OPCODE_BGS,
     AR_OPCODE_BGES,
-    AR_OPCODE_UNKNOWN,
+    AR_OPCODE_BRA,
     AR_OPCODE_UNKNOWN,
     AR_OPCODE_UNKNOWN,
     AR_OPCODE_UNKNOWN,
@@ -44,54 +49,58 @@ static const ArOpcode BRUJumpsCalls[4] =
     AR_OPCODE_JMPR
 };
 
-static int decodeBRU(uint32_t pc, uint32_t opcode, ArOperation* restrict output)
+static int decodeBRU(uint32_t lr, uint32_t opcode, ArOperation* restrict output)
 {
-    const uint32_t type = (opcode >> 2u) & 0x03u;
+    const uint32_t type = readbits(opcode, 2, 2);
 
     if(type == 0) //REG-REG comparison or Branch
     {
-        const uint32_t instruction = (opcode >> 4u) & 0x03u;
+        const uint32_t instruction = readbits(opcode, 4, 2);
 
         if(instruction == 0) //CMP
         {
-            const uint32_t size  = (opcode >> 8u ) & 0x03;
-            const uint32_t right = (opcode >> 20u) & 0x3F;
-            const uint32_t left  = (opcode >> 26u) & 0x3F;
+            const uint32_t size  = readbits(opcode, 8,  2);
+            const uint32_t right = readbits(opcode, 20, 6);
+            const uint32_t left  = readbits(opcode, 26, 6);
 
             output->op = AR_OPCODE_CMP;
             output->size = size;
             output->operands[0] = right;
             output->operands[1] = left;
         }
-        else if(instruction == 1) //FCMP
+        else if(instruction == 1) //PCMP.H
         {
-            const uint32_t right = (opcode >> 18u) & 0x7F;
-            const uint32_t left  = (opcode >> 25u) & 0x7F;
+            const uint32_t roff  = readbits(opcode, 6,  2);
+            const uint32_t loff  = readbits(opcode, 8,  2);
+            const uint32_t right = readbits(opcode, 20, 6);
+            const uint32_t left  = readbits(opcode, 26, 6);
 
-            output->op = AR_OPCODE_FCMP;
-            output->operands[0] = right;
-            output->operands[1] = left;
+            output->op = AR_OPCODE_PCMP;
+            output->operands[0] = right * 4 + roff;
+            output->operands[1] = left  * 4 + loff;
+            output->size = 0;
         }
-        else if(instruction == 2) //DCMP
+        else if(instruction == 2) //PCMP.S
         {
-            const uint32_t right = (opcode >> 20u) & 0x3F;
-            const uint32_t left  = (opcode >> 26u) & 0x3F;
+            const uint32_t right = readbits(opcode, 20, 6);
+            const uint32_t left  = readbits(opcode, 26, 6);
 
-            output->op = AR_OPCODE_DCMP;
+            output->op = AR_OPCODE_PCMP;
             output->operands[0] = right;
             output->operands[1] = left;
+            output->size = 1;
         }
         else //Branching
         {
-            const uint32_t category = (opcode >> 6u) & 0x03u;
+            const uint32_t category = readbits(opcode, 6, 2);
 
-            if(category == 0) //Branch (BCC, BCCS, FBCC, DBCC)
+            if(category == 0) //Branch (BCC, BCCS, PBCC, BCA)
             {
-                const uint32_t comp  = (opcode >> 8u ) & 0x0Fu;
-                const uint32_t label = (opcode >> 12u) & 0x3FFFu;
+                const uint32_t comp  = readbits(opcode, 8,  4);
+                const uint32_t label = readbits(opcode, 18, 14);
 
                 output->op = BRUComparators[comp];
-                output->operands[0] = pc + extendSign(label, 14) * 2;
+                output->operands[0] = lr + extendSign(label, 14) * 2;
 
                 if(output->op == AR_OPCODE_UNKNOWN)
                 {
@@ -104,12 +113,28 @@ static int decodeBRU(uint32_t pc, uint32_t opcode, ArOperation* restrict output)
             }
             else if(category == 2) //Jumps or calls
             {
-                const uint32_t subtype = (opcode >> 8u ) & 0x03u;
-                const uint32_t label   = (opcode >> 12u) & 0x3FFFu;
+                const uint32_t subtype = readbits(opcode, 8,  4);
+                const uint32_t label   = readbits(opcode, 18, 14);
 
-                output->op = BRUJumpsCalls[subtype];
-                output->operands[0] = subtype > 1 ? pc + extendSign(label, 14) * 2 //relative
-                                                  : label * 2u; //absolute
+                if(subtype < 4)
+                {
+                    const uint32_t relative = readbits(opcode, 8, 1);
+
+                    output->op = BRUJumpsCalls[subtype];
+                    output->operands[0] = relative ? lr + extendSign(label, 14) * 2 //relative
+                                                   : label * 2u; //absolute
+                }
+                else if(subtype == 4)
+                {
+                    output->op = AR_OPCODE_END;
+                }
+                else if((subtype & 0x06u) != 0)
+                {
+                    const uint32_t count = readbits(opcode, 8, 1);
+
+                    output->op = AR_OPCODE_SWT;
+                    output->size = count;
+                }
             }
             else //Ret
             {
@@ -119,194 +144,141 @@ static int decodeBRU(uint32_t pc, uint32_t opcode, ArOperation* restrict output)
     }
     else if(type == 1) //CMPI
     {
-        const uint32_t size  = (opcode >> 4u ) & 0x000003;
-        const uint32_t value = (opcode >> 6u ) & 0x0FFFFF;
-        const uint32_t reg   = (opcode >> 26u) & 0x00003F;
+        const uint32_t size  = readbits(opcode, 4,  2);
+        const uint32_t value = readbits(opcode, 6,  20);
+        const uint32_t reg   = readbits(opcode, 26, 6);
 
         output->op = AR_OPCODE_CMPI;
         output->size = size;
         output->operands[0] = value;
         output->operands[1] = reg;
     }
-    else if(type == 2) //FCMPI
+    else if(type == 2) //PCMPI.H
     {
-        const uint32_t value = (opcode >> 4u ) & 0x1FFFFF;
-        const uint32_t reg   = (opcode >> 25u) & 0x00007F;
+        const uint32_t loff  = readbits(opcode, 4,  2);
+        const uint32_t value = readbits(opcode, 10, 16);
+        const uint32_t left  = readbits(opcode, 26, 6);
 
-        output->op = AR_OPCODE_FCMPI;
+        output->op = AR_OPCODE_PCMPI;
         output->operands[0] = value;
-        output->operands[1] = reg;
+        output->operands[1] = left * 4 + loff;
+        output->size = 0;
     }
-    else //DCMPI
+    else //PCMPI.S
     {
-        const uint32_t value = (opcode >> 4u ) & 0x3FFFFF;
-        const uint32_t reg   = (opcode >> 26u) & 0x00003F;
+        const uint32_t value = readbits(opcode, 4,  22);
+        const uint32_t reg   = readbits(opcode, 26, 6);
 
-        output->op = AR_OPCODE_DCMPI;
+        output->op = AR_OPCODE_PCMPI;
         output->operands[0] = value;
         output->operands[1] = reg;
+        output->size = 1;
     }
 
     return 1;
 }
 
+//bit 0: load or store
+//bit 1: cache or sdram
+//bit 2: increment or not
+
+static const ArOpcode LSUREGLoadStore[8] =
+{
+    AR_OPCODE_LDM,
+    AR_OPCODE_STM,
+    AR_OPCODE_LDC,
+    AR_OPCODE_STC,
+    AR_OPCODE_LDMI,
+    AR_OPCODE_STMI,
+    AR_OPCODE_LDCI,
+    AR_OPCODE_STCI,
+};
+
+static const ArOpcode LSUPositLoadStore[8] =
+{
+    AR_OPCODE_LDMV,
+    AR_OPCODE_STMV,
+    AR_OPCODE_LDCV,
+    AR_OPCODE_STCV,
+    AR_OPCODE_LDMVI,
+    AR_OPCODE_STMVI,
+    AR_OPCODE_LDCVI,
+    AR_OPCODE_STCVI,
+};
+
 static int decodeLSU(uint32_t opcode, ArOperation* restrict output)
 {
-    const uint32_t type = (opcode >> 2u) & 0x03u;
+    const uint32_t type = readbits(opcode, 2, 2);
 
-    if(type == 0) //LDM/STM
+    if(type < 2) //REG Load/Store
     {
-        const uint32_t incr  = (opcode >> 4u ) & 0x0001u;
-        const uint32_t store = (opcode >> 5u ) & 0x0001u;
-        const uint32_t size  = (opcode >> 6u ) & 0x0003u;
-        const uint32_t value = (opcode >> 8u ) & 0x0FFFu;
-        const uint32_t src   = (opcode >> 20u) & 0x003Fu;
-        const uint32_t reg   = (opcode >> 26u) & 0x003Fu;
+        const uint32_t cache = readbits(opcode, 2,  1);
+        const uint32_t store = readbits(opcode, 4,  1);
+        const uint32_t incr  = readbits(opcode, 5,  1);
+        const uint32_t size  = readbits(opcode, 6,  2);
+        const uint32_t value = readbits(opcode, 8,  14);
+        const uint32_t src   = readbits(opcode, 23, 3);
+        const uint32_t reg   = readbits(opcode, 26, 6);
 
-        output->data = incr;
-        output->op   = store ? AR_OPCODE_STM : AR_OPCODE_LDM;
+        const size_t index = (incr << 2u) | (cache << 1u) | store;
+
+        output->op   = LSUREGLoadStore[index];
         output->size = size;
         output->operands[0] = value;
-        output->operands[1] = src;
+        output->operands[1] = 56 + src;
         output->operands[2] = reg;
     }
-    else if(type == 1) //Subtypes
+    else if(type == 2) //Input/output
     {
-        const uint32_t subtype = (opcode >> 4u) & 0x03u;
+        const uint32_t subtype = readbits(opcode, 4, 2);
 
-        if(subtype == 0) // LDMX/STMX
+        if(subtype == 0) //IN
         {
-            const uint32_t store = (opcode >> 6u ) & 0x0001u;
-            const uint32_t size  = (opcode >> 7u ) & 0x0003u;
-            const uint32_t value = (opcode >> 9u ) & 0xFFFFu;
-            const uint32_t src   = (opcode >> 25u) & 0x0001u;
-            const uint32_t dest  = (opcode >> 26u) & 0x003Fu;
+            const uint32_t size = readbits(opcode, 8,  2);
+            const uint32_t addr = readbits(opcode, 18, 8);
+            const uint32_t reg  = readbits(opcode, 26, 6);
 
-            output->op   = store ? AR_OPCODE_STMX : AR_OPCODE_LDMX;
+            output->op   = AR_OPCODE_IN;
             output->size = size;
-            output->operands[0] = value;
-            output->operands[1] = src + 62;
-            output->operands[2] = dest;
+            output->operands[0] = addr;
+            output->operands[2] = reg;
         }
-        else if(subtype == 1) //IN/OUT
+        else if(subtype == 1) //OUT
         {
-            const uint32_t store = (opcode >> 6u ) & 0x01u;
-            const uint32_t size  = (opcode >> 7u ) & 0x03u;
-            const uint32_t value = (opcode >> 16u) & 0xFFu;
-            const uint32_t dest  = (opcode >> 26u) & 0x3Fu;
+            const uint32_t size = readbits(opcode, 8,  2);
+            const uint32_t addr = readbits(opcode, 18, 8);
+            const uint32_t reg  = readbits(opcode, 26, 6);
 
-            output->op   = store ? AR_OPCODE_OUT : AR_OPCODE_IN;
+            output->op   = AR_OPCODE_IN;
             output->size = size;
-            output->operands[0] = value;
-            output->operands[2] = dest;
+            output->operands[0] = addr;
+            output->operands[2] = reg;
         }
-        else if(subtype == 2) //OUTI
+        else //OUTI
         {
-            const uint32_t size  = (opcode >> 7u ) & 0x0001u;
-            const uint32_t value = (opcode >> 16u) & 0xFFFFu;
-            const uint32_t dest  = (opcode >> 26u) & 0x00FFu;
+            const uint32_t size  = readbits(opcode, 4,  1);
+            const uint32_t value = readbits(opcode, 8,  16);
+            const uint32_t dest  = readbits(opcode, 24, 8);
 
             output->op   = AR_OPCODE_OUTI;
             output->size = size;
             output->operands[0] = value;
             output->operands[2] = dest;
         }
-        else //LDMV/STMV or LDCV/STCV
-        {
-            const uint32_t store = (opcode >> 6u ) & 0x0001u;
-            const uint32_t cache = (opcode >> 7u ) & 0x0001u;
-            const uint32_t incr  = (opcode >> 8u ) & 0x0001u;
-            const uint32_t value = (opcode >> 9u ) & 0x7FFFu;
-            const uint32_t src   = (opcode >> 25u) & 0x0007u;
-            const uint32_t dest  = (opcode >> 26u) & 0x003Fu;
-
-            if(cache)
-            {
-                output->data = incr;
-                output->op = store ? AR_OPCODE_STCV : AR_OPCODE_LDCV;
-                output->operands[0] = value;
-                output->operands[1] = src + 56;
-                output->operands[2] = dest;
-            }
-            else
-            {
-                output->data = incr;
-                output->op = store ? AR_OPCODE_STMV : AR_OPCODE_LDMV;
-                output->operands[0] = value;
-                output->operands[1] = src + 56;
-                output->operands[2] = dest;
-            }
-        }
     }
-    else if(type == 2) //LDC/STC
+    else //Posit Load/Store
     {
-        const uint32_t incr  = (opcode >> 4u ) & 0x0001u;
-        const uint32_t store = (opcode >> 5u ) & 0x0001u;
-        const uint32_t size  = (opcode >> 6u ) & 0x0003u;
-        const uint32_t value = (opcode >> 8u ) & 0x0FFFu;
-        const uint32_t src   = (opcode >> 20u) & 0x003Fu;
-        const uint32_t dest  = (opcode >> 26u) & 0x003Fu;
+        const uint32_t index = readbits(opcode, 4,  3);
+        const uint32_t size  = readbits(opcode, 8,  2);
+        const uint32_t value = readbits(opcode, 10, 14);
+        const uint32_t addr  = readbits(opcode, 23, 3);
+        const uint32_t reg   = readbits(opcode, 26, 6);
 
-        output->data = incr;
-        output->op   = store ? AR_OPCODE_STC : AR_OPCODE_LDC;
+        output->op   = LSUPositLoadStore[index];
         output->size = size;
-        output->operands[0] = value;
-        output->operands[1] = src;
-        output->operands[2] = dest;
-    }
-    else //LDMF/STMF or LDCF/STCF and LDMD/STMD or LDCD/STCD
-    {
-        const uint64_t size  = (opcode >> 4u) & 0x01u;
-        const uint32_t cache = (opcode >> 5u) & 0x01u;
-        const uint32_t store = (opcode >> 6u) & 0x01u;
-        const uint32_t incr  = (opcode >> 7u) & 0x01u;
-
-        if(size == 0) //LDMF/STMF or LDCF/STCF
-        {
-            const uint32_t value = (opcode >> 8u ) & 0x7FFFu;
-            const uint32_t src   = (opcode >> 23u) & 0x0003u;
-            const uint32_t dest  = (opcode >> 25u) & 0x007Fu;
-
-            if(cache)
-            {
-                output->data = incr;
-                output->op = store ? AR_OPCODE_STCF : AR_OPCODE_LDCF;
-                output->operands[0] = value;
-                output->operands[1] = src + 60;
-                output->operands[2] = dest;
-            }
-            else
-            {
-                output->data = incr;
-                output->op = store ? AR_OPCODE_STMF : AR_OPCODE_LDMF;
-                output->operands[0] = value;
-                output->operands[1] = src + 60;
-                output->operands[2] = dest;
-            }
-        }
-        else
-        {
-            const uint32_t value = (opcode >> 8u ) & 0xFFFFu;
-            const uint32_t src   = (opcode >> 24u) & 0x0003u;
-            const uint32_t dest  = (opcode >> 26u) & 0x003Fu;
-
-            if(cache)
-            {
-                output->data = incr;
-                output->op = store ? AR_OPCODE_STCD : AR_OPCODE_LDCD;
-                output->operands[0] = value;
-                output->operands[1] = src + 60;
-                output->operands[2] = dest;
-            }
-            else
-            {
-                output->data = incr;
-                output->op = store ? AR_OPCODE_STMD : AR_OPCODE_LDMD;
-                output->operands[0] = value;
-                output->operands[1] = src + 60;
-                output->operands[2] = dest;
-            }
-        }
+        output->operands[0] = value * 8;
+        output->operands[1] = 56 + addr;
+        output->operands[2] = reg;
     }
 
     return 1;
@@ -374,24 +346,24 @@ static const ArOpcode ALURegImmOpcodes[16] =
 
 static int decodeALU(uint32_t opcode, ArOperation* restrict output)
 {
-    const uint32_t category = (opcode >> 2u) & 0x03u;
+    const uint32_t category = readbits(opcode, 2, 2);
 
     if(category == 0)
     {
-        const uint32_t type = (opcode >> 4u) & 0x07u;
+        const uint32_t type = readbits(opcode, 4, 2);
 
         if(type == 0) // ALU REG-REG-REG (ADD, SUB, ...)
         {
-            const uint32_t op   = (opcode >> 8u ) & 0x0Fu;
-            const uint32_t size = (opcode >> 12u) & 0x03u;
-            const uint32_t src1 = (opcode >> 14u) & 0x3Fu;
-            const uint32_t src2 = (opcode >> 20u) & 0x3Fu;
-            const uint32_t dest = (opcode >> 26u) & 0x3Fu;
+            const uint32_t op    = readbits(opcode, 8,  4);
+            const uint32_t size  = readbits(opcode, 12, 2);
+            const uint32_t right = readbits(opcode, 14, 6);
+            const uint32_t left  = readbits(opcode, 20, 6);
+            const uint32_t dest  = readbits(opcode, 26, 6);
 
             output->op   = ALURegRegRegOpcodes[op];
             output->size = size;
-            output->operands[0] = src1;
-            output->operands[1] = src2;
+            output->operands[0] = right;
+            output->operands[1] = left;
             output->operands[2] = dest;
 
             if(output->op == AR_OPCODE_UNKNOWN)
@@ -399,16 +371,16 @@ static int decodeALU(uint32_t opcode, ArOperation* restrict output)
                 return 0;
             }
         }
-        else if(type == 2) // XCHG
+        else if(type == 1) // XCHG
         {
-            output->op = AR_OPCODE_XCHG;
+            output->op = AR_OPCODE_NOP;
         }
-        else if(type == 6) // NOP NOP.E
+        else if(type == 2) // NOP NOP.E
         {
-            const uint32_t end = (opcode >> 7u) & 0x01u;
+            const uint32_t dest = readbits(opcode, 26, 6);
 
-            output->data = end;
-            output->op   = AR_OPCODE_NOP;
+            output->op = AR_OPCODE_MOVELR;
+            output->operands[2] = dest;
         }
         else
         {
@@ -417,11 +389,11 @@ static int decodeALU(uint32_t opcode, ArOperation* restrict output)
     }
     else if(category == 1) // ALU REG-REG-IMM (ADDI, SUBI, ...)
     {
-        const uint32_t op    = (opcode >> 4u ) & 0x000Fu;
-        const uint32_t size  = (opcode >> 8u ) & 0x0003u;
-        const uint32_t value = (opcode >> 10u) & 0x03FFu;
-        const uint32_t src   = (opcode >> 20u) & 0x003Fu;
-        const uint32_t dest  = (opcode >> 26u) & 0x003Fu;
+        const uint32_t op    = readbits(opcode, 4,  4);
+        const uint32_t size  = readbits(opcode, 8,  2);
+        const uint32_t value = readbits(opcode, 10, 10);
+        const uint32_t src   = readbits(opcode, 20, 6);
+        const uint32_t dest  = readbits(opcode, 26, 6);
 
         output->op   = ALURegRegImmOpcodes[op];
         output->size = size;
@@ -436,10 +408,10 @@ static int decodeALU(uint32_t opcode, ArOperation* restrict output)
     }
     else if(category == 2) // ALU REG-IMM (ADDQ, SUBQ, ...)
     {
-        const uint32_t op    = (opcode >> 4u ) & 0x000Fu;
-        const uint32_t size  = (opcode >> 8u ) & 0x0003u;
-        const uint32_t value = (opcode >> 10u) & 0xFFFFu;
-        const uint32_t dest  = (opcode >> 26u) & 0x003Fu;
+        const uint32_t op    = readbits(opcode, 4,  4);
+        const uint32_t size  = readbits(opcode, 8,  2);
+        const uint32_t value = readbits(opcode, 10, 16);
+        const uint32_t dest  = readbits(opcode, 26, 6);
 
         output->op   = ALURegImmOpcodes[op];
         output->size = size;
@@ -453,10 +425,12 @@ static int decodeALU(uint32_t opcode, ArOperation* restrict output)
     }
     else // MOVEI
     {
-        const uint32_t value = (opcode >> 4u ) & 0x3FFFFFu;
-        const uint32_t dest  = (opcode >> 26u) & 0x00003Fu;
+        const uint32_t size  = readbits(opcode, 4,  2);
+        const uint32_t value = readbits(opcode, 6,  20);
+        const uint32_t dest  = readbits(opcode, 26, 6);
 
-        output->op = AR_OPCODE_MOVEI;
+        output->op   = AR_OPCODE_MOVEI;
+        output->size = size;
         output->operands[0] = value;
         output->operands[2] = dest;
     }
@@ -464,57 +438,65 @@ static int decodeALU(uint32_t opcode, ArOperation* restrict output)
     return 1;
 }
 
+static ArOpcode AGUOpcodes[16] =
+{
+    AR_OPCODE_LDDMAR,
+    AR_OPCODE_STDMAR,
+    AR_OPCODE_DMAIR,
+    AR_OPCODE_LDDMAL,
+    AR_OPCODE_UNKNOWN,
+    AR_OPCODE_UNKNOWN,
+    AR_OPCODE_UNKNOWN,
+    AR_OPCODE_STDMAL,
+    AR_OPCODE_UNKNOWN,
+    AR_OPCODE_UNKNOWN,
+    AR_OPCODE_CLEARC,
+    AR_OPCODE_WAIT,
+    AR_OPCODE_UNKNOWN,
+    AR_OPCODE_UNKNOWN,
+    AR_OPCODE_UNKNOWN,
+    AR_OPCODE_UNKNOWN,
+};
+
 static int decodeAGU(uint32_t opcode, ArOperation* restrict output)
 {
-    const uint32_t category = (opcode >> 2u) & 0x01u;
+    const uint32_t category = readbits(opcode, 2, 1);
 
     if(category == 0) //LDDMA/STDMA
     {
-        const uint32_t store = (opcode >> 3u ) & 0x0001u;
-        const uint32_t size  = (opcode >> 4u ) & 0x0001u;
-        const uint32_t sram  = (opcode >> 5u ) & 0x0003u;
-        const uint32_t ram   = (opcode >> 7u ) & 0x0001u;
-        const uint32_t sramb = (opcode >> 8u ) & 0x0FFFu;
-        const uint32_t ramb  = (opcode >> 20u) & 0x0FFFu;
+        const uint32_t store = readbits(opcode, 3,  1);
+        const uint32_t size  = readbits(opcode, 4,  1);
+        const uint32_t sram  = readbits(opcode, 5,  2);
+        const uint32_t ram   = readbits(opcode, 7,  1);
+        const uint32_t sramb = readbits(opcode, 8,  12);
+        const uint32_t ramb  = readbits(opcode, 20, 12);
 
-        output->op = store ? AR_OPCODE_STDMA : AR_OPCODE_LDDMA;
+        output->op   = store ? AR_OPCODE_STDMA : AR_OPCODE_LDDMA;
         output->size = size;
         output->operands[0] = sram + 60;
         output->operands[1] = ram + 58;
         output->data = (ramb << 12u) | sramb;
     }
-    else //Load/store list
+    else
     {
-        const uint32_t store = (opcode >> 3u ) & 0x01u;
-        const uint32_t type  = (opcode >> 4u ) & 0x0Fu;
+        const uint32_t type = readbits(opcode, 4, 4);
 
-        if(type == 0) //LDDMAR/STDMAR
+        output->op = AGUOpcodes[type];
+
+        if(type < 8) //LDDMAR/STDMAR/DMAIR/LDDMAL/STDMAL
         {
-            const uint32_t size = (opcode >> 8u ) & 0x0FFFu;
-            const uint32_t ram  = (opcode >> 8u ) & 0x003Fu;
-            const uint32_t sram = (opcode >> 20u) & 0x003Fu;
+            const uint32_t size  = (opcode >> 8u ) & 0x0FFFu;
+            const uint32_t value = (opcode >> 8u ) & 0x003Fu;
+            const uint32_t src   = (opcode >> 8u ) & 0x003Fu;
+            const uint32_t dest  = (opcode >> 20u) & 0x003Fu;
 
-            output->op = store ? AR_OPCODE_STDMAR : AR_OPCODE_LDDMAR;
             output->size = size;
-            output->operands[0] = ram;
-            output->operands[1] = sram;
+            output->operands[0] = value;
+            output->operands[1] = src;
+            output->operands[2] = dest;
         }
-        else if(type == 1) //DMAIR
-        {
-            const uint32_t size = (opcode >> 8u ) & 0x0FFFu;
-            const uint32_t ram  = (opcode >> 8u ) & 0x003Fu;
-            const uint32_t sram = (opcode >> 20u) & 0x003Fu;
 
-            output->op = AR_OPCODE_DMAIR;
-            output->size = size;
-            output->operands[0] = ram;
-            output->operands[1] = sram;
-        }
-        else if(type == 15) //WAIT
-        {
-            output->op = AR_OPCODE_WAIT;
-        }
-        else
+        if(output->op == AR_OPCODE_UNKNOWN)
         {
             return 0;
         }
@@ -523,7 +505,7 @@ static int decodeAGU(uint32_t opcode, ArOperation* restrict output)
     return 1;
 }
 
-static int decodeVFPU(uint32_t opcode, ArOperation* restrict output)
+static int decodeVPU(uint32_t opcode, ArOperation* restrict output)
 {
     (void)opcode;
     (void)output;
@@ -531,7 +513,7 @@ static int decodeVFPU(uint32_t opcode, ArOperation* restrict output)
     return 1;
 }
 
-static int decode(uint32_t index, uint32_t pc, uint32_t opcode, ArOperation* restrict output)
+static int decode(uint32_t index, uint32_t lr, uint32_t opcode, ArOperation* restrict output)
 {
     const uint32_t compute_unit = opcode & 0x03;
 
@@ -539,7 +521,7 @@ static int decode(uint32_t index, uint32_t pc, uint32_t opcode, ArOperation* res
     {
         if(compute_unit == 0) //BRU
         {
-            return decodeBRU(pc, opcode, output);
+            return decodeBRU(lr, opcode, output);
         }
         else if(compute_unit == 1) //LSU
         {
@@ -551,7 +533,7 @@ static int decode(uint32_t index, uint32_t pc, uint32_t opcode, ArOperation* res
         }
         else //VFPU/VDIV
         {
-            return decodeVFPU(opcode, output);
+            return decodeVPU(opcode, output);
         }
     }
     else if(index == 1)
@@ -570,7 +552,7 @@ static int decode(uint32_t index, uint32_t pc, uint32_t opcode, ArOperation* res
         }
         else //VFPU
         {
-            return decodeVFPU(opcode, output);
+            return decodeVPU(opcode, output);
         }
     }
     else //2 or 3
@@ -596,7 +578,7 @@ ArResult arDecodeInstruction(ArProcessor processor)
 
     for(uint32_t i = 0; i < size; ++i)
     {
-        if(!decode(i, processor->pc, processor->opcodes[i], &processor->operations[i]))
+        if(!decode(i, processor->lr, processor->opcodes[i], &processor->operations[i]))
         {
             return AR_ERROR_ILLEGAL_INSTRUCTION;
         }
