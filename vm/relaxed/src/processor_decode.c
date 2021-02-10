@@ -126,7 +126,7 @@ static int decodeBRU(uint32_t lr, uint32_t opcode, ArOperation* restrict output)
                 }
                 else if(subtype == 4)
                 {
-                    output->op = AR_OPCODE_END;
+                    output->op = AR_OPCODE_ENDP;
                 }
                 else if((subtype & 0x06u) != 0)
                 {
@@ -276,7 +276,7 @@ static int decodeLSU(uint32_t opcode, ArOperation* restrict output)
 
         output->op   = LSUPositLoadStore[index];
         output->size = size;
-        output->operands[0] = value * 8;
+        output->operands[0] = value;
         output->operands[1] = 56 + addr;
         output->operands[2] = reg;
     }
@@ -371,11 +371,11 @@ static int decodeALU(uint32_t opcode, ArOperation* restrict output)
                 return 0;
             }
         }
-        else if(type == 1) // XCHG
+        else if(type == 1) //NOP
         {
             output->op = AR_OPCODE_NOP;
         }
-        else if(type == 2) // NOP NOP.E
+        else if(type == 2) //MOVELR
         {
             const uint32_t dest = readbits(opcode, 26, 6);
 
@@ -485,12 +485,10 @@ static int decodeAGU(uint32_t opcode, ArOperation* restrict output)
 
         if(type < 8) //LDDMAR/STDMAR/DMAIR/LDDMAL/STDMAL
         {
-            const uint32_t size  = (opcode >> 8u ) & 0x0FFFu;
-            const uint32_t value = (opcode >> 8u ) & 0x003Fu;
-            const uint32_t src   = (opcode >> 8u ) & 0x003Fu;
-            const uint32_t dest  = (opcode >> 20u) & 0x003Fu;
+            const uint32_t value = readbits(opcode, 8,  12);
+            const uint32_t src   = readbits(opcode, 20, 6);
+            const uint32_t dest  = readbits(opcode, 26, 6);
 
-            output->size = size;
             output->operands[0] = value;
             output->operands[1] = src;
             output->operands[2] = dest;
@@ -515,7 +513,7 @@ static int decodeVPU(uint32_t opcode, ArOperation* restrict output)
 
 static int decode(uint32_t index, uint32_t lr, uint32_t opcode, ArOperation* restrict output)
 {
-    const uint32_t compute_unit = opcode & 0x03;
+    const uint32_t compute_unit = readbits(opcode, 0, 2);
 
     if(index == 0)
     {
