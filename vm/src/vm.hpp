@@ -7,7 +7,7 @@
 #include <utility>
 #include <memory>
 
-#include "shared_library.hpp"
+#include "nes/shared_library.hpp"
 
 namespace ar
 {

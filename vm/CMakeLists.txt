@@ -19,6 +19,11 @@ add_executable(altair_vm
     src/main.cpp)
 
 target_link_libraries(altair_vm PRIVATE altair_vm_base)
+
+if(UNIX)
+    target_link_libraries(altair_vm PRIVATE pthread dl)
+endif()
+
 target_compile_definitions(altair_vm PRIVATE AR_NO_PROTOTYPES FMT_HEADER_ONLY=1)
 
 install(TARGETS altair_vm
