@@ -124,16 +124,16 @@ static int decodeBRU(uint32_t lr, uint32_t opcode, ArOperation* restrict output)
                     output->operands[0] = relative ? lr + extendSign(label, 14) * 2 //relative
                                                    : label * 2u; //absolute
                 }
-                else if(subtype == 4)
+                else if(subtype == 4) //ENDP
                 {
                     output->op = AR_OPCODE_ENDP;
                 }
-                else if((subtype & 0x06u) != 0)
+                else if((subtype & 0x06u) != 0) //SWITCH
                 {
-                    const uint32_t count = readbits(opcode, 8, 1);
+                    const uint32_t value = readbits(opcode, 8, 1);
 
                     output->op = AR_OPCODE_SWT;
-                    output->size = count;
+                    output->operands[0] = value;
                 }
             }
             else //Ret
@@ -444,10 +444,10 @@ static ArOpcode AGUOpcodes[16] =
     AR_OPCODE_STDMAR,
     AR_OPCODE_DMAIR,
     AR_OPCODE_LDDMAL,
-    AR_OPCODE_UNKNOWN,
-    AR_OPCODE_UNKNOWN,
-    AR_OPCODE_UNKNOWN,
     AR_OPCODE_STDMAL,
+    AR_OPCODE_UNKNOWN,
+    AR_OPCODE_UNKNOWN,
+    AR_OPCODE_UNKNOWN,
     AR_OPCODE_UNKNOWN,
     AR_OPCODE_UNKNOWN,
     AR_OPCODE_CLEARC,
