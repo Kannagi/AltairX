@@ -12,6 +12,7 @@ add_subdirectory(pedantic)
 
 add_executable(altair_vm
     src/vm.hpp
+    src/io.hpp
     src/debug.hpp
     src/execution.hpp
 

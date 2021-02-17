@@ -30,7 +30,7 @@ static PFN_arDestroyVirtualMachine arDestroyVirtualMachine{};
 static PFN_arDestroyProcessor      arDestroyProcessor{};
 static PFN_arDestroyPhysicalMemory arDestroyPhysicalMemory{};
 
-static void load_functions(nes::shared_library& library)
+inline void load_functions(nes::shared_library& library)
 {
     arCreateVirtualMachine      = library.load<PFN_arCreateVirtualMachine>("arCreateVirtualMachine");
     arCreateProcessor           = library.load<PFN_arCreateProcessor>("arCreateProcessor");

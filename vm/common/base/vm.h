@@ -190,12 +190,12 @@ typedef struct ArOperation
 
 typedef struct ArProcessorMemoryInfo
 {
-    const uint8_t*  dsram;
-    const uint8_t*  isram;
-    const uint8_t*  cache;
-    const uint8_t*  iosram;
-    const uint64_t* ireg;
-    const uint64_t* vreg;
+    uint8_t*  dsram;
+    uint8_t*  isram;
+    uint8_t*  cache;
+    uint8_t*  iosram;
+    uint64_t* ireg;
+    uint64_t* vreg;
 } ArProcessorMemoryInfo;
 
 #ifndef AR_NO_PROTOTYPES

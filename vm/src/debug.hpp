@@ -4,6 +4,7 @@
 #include <iostream>
 
 #include "vm.hpp"
+#include "io.hpp"
 #include "fmt/format.h"
 
 namespace dbg
@@ -418,7 +419,7 @@ inline void output_op(const ar::processor::operation_set_t& operation_set)
 
 inline void run_debugger(ar::processor& processor)
 {
-    //const auto processor_memories{processor.get_memory_info()};
+    const auto memory_info{processor.get_memory_info()};
 
     while(true)
     {
@@ -439,6 +440,8 @@ inline void run_debugger(ar::processor& processor)
         }
 
         processor.direct_memory_access();
+
+        run_io(memory_info.iosram);
     }
 }
 
