@@ -1,0 +1,63 @@
+type (1octet)
+param (4 octet)
+narg(1 octet)
+arg
+
+type:
+0: source_filename
+1: target (0:Altair K1)
+
+//déclaration
+2: struct
+3: var global
+4: function
+
+//instruction
+
+16 : load
+17 : store
+18 : add
+19 : sub
+20 : mul
+21 : div
+
+: zext
+: icmp
+: trunc
+
+
+param:
+0x0001 : dso_local
+0x0002 : local_unnamed_addr
+0x0004 : unnamed_addr
+0x0008 : global
+
+0x0010 : constant
+0x0020 : external
+0x0040 : internal
+0x0080 : common
+
+0x0100 : private
+0x0200 : zeroinitializer
+0x0400 : tail
+
+getelementptr,inbounds,noalias,nocapture,sideeffect
+
+
+const char ctype[0x100][32] = {
+"ModuleID","source_filename","target","define","declare","Function","Attrs","attributes","LLVM_OPCODE",
+"datalayout","triple",
+"dso_local","align","external","common","constant","global","struct","label","type",
+"private","unnamed_addr","getelementptr","inbounds","noinline","nounwind","optnone","uwtable",
+"void","i8","i16","i32","i64","u8","u16","u32","u64",
+"alloca","load","store","call","ret","mul","add","sub","udiv","br","sext","trunc",
+"icmp","x","float","double","c","zeroinitializer",
+"switch","indirectbr","invoke","callbr","resume",
+"fadd","fsub","fmul","sdiv","fdiv","urem","srem","frem",
+"shl","lshl","ashr","and","or","xor","fence",
+"tail","musttail","notail","signext","nsw","sret","asm","sideeffect","nocapture","noalias","local_unnamed_addr","null",
+"to","zext","eq","slt","writeonly","readonly","immarg","internal","false","true",
+"i1","f16","f32","f64","f128","v64","v128","S0",
+
+};
+
