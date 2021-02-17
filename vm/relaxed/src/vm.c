@@ -92,9 +92,35 @@ ArResult arCreatePhysicalMemory(ArVirtualMachine virtualMachine, const ArPhysica
     output->memory = pInfo->pMemory;
     output->size = pInfo->size;
 
+    virtualMachine->memory = output;
     *pMemory = output;
 
     return AR_SUCCESS;
+}
+
+void arGetProcessorOperations(ArProcessor processor, ArOperation* pOutput, size_t* pCount)
+{
+    assert(processor);
+    assert(pOutput);
+    assert(pCount);
+
+    const uint32_t count = opcodeSetSize(processor);
+
+    memcpy(pOutput, processor->operations, sizeof(ArOperation) * count);
+    *pCount = count;
+}
+
+void arGetProcessorMemoryInfo(ArProcessor processor, ArProcessorMemoryInfo* pOutput)
+{
+    assert(processor);
+    assert(pOutput);
+
+    pOutput->dsram  = processor->dsram;
+    pOutput->isram  = processor->isram;
+    pOutput->cache  = processor->cache;
+    pOutput->iosram = processor->iosram;
+    pOutput->ireg   = processor->ireg;
+    pOutput->vreg   = processor->vreg;
 }
 
 void arDestroyVirtualMachine(ArVirtualMachine virtualMachine)
@@ -136,20 +162,22 @@ void arDestroyPhysicalMemory(ArVirtualMachine virtualMachine, ArPhysicalMemory m
     assert(virtualMachine->memory);
     assert(memory);
 
-    if(virtualMachine->memory == memory)
+    virtualMachine->memory = NULL;
+    free(memory);
+}
+
+uint32_t opcodeSetSize(ArProcessor restrict processor)
+{
+    uint32_t size;
+    if(processor->flags & 0x01)
     {
-        virtualMachine->memory = memory->next;
+        const uint32_t available = processor->pc - (AR_PROCESSOR_ISRAM_SIZE / 4u); //we may overflow otherwise
+        size = MIN(available, 4u);
     }
     else
     {
-        ArPhysicalMemory previous = virtualMachine->memory;
-        while(previous->next && previous->next != memory)
-        {
-            previous = previous->next;
-        }
-
-        previous->next = memory->next;
+        size = 2;
     }
 
-    free(memory);
+    return size;
 }

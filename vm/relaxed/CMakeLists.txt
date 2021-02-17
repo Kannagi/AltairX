@@ -8,7 +8,8 @@ add_library(altair_vm_relaxed SHARED
             src/vm.h
 
             src/vm.c
-            src/processor.c)
+            src/processor_decode.c
+            src/processor_execution.c)
 
 set_target_properties(altair_vm_relaxed PROPERTIES PREFIX "")
 target_link_libraries(altair_vm_relaxed PRIVATE altair_vm_base)

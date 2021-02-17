@@ -32,6 +32,122 @@ typedef enum ArStructureType
     AR_STRUCTURE_TYPE_PHYSICAL_MEMORY_CREATE_INFO = 2,
 } ArStructureType;
 
+typedef enum ArOpcode
+{
+    AR_OPCODE_UNKNOWN,
+
+    //AGU
+    AR_OPCODE_LDDMA,
+    AR_OPCODE_STDMA,
+    AR_OPCODE_LDDMAR,
+    AR_OPCODE_STDMAR,
+    AR_OPCODE_DMAIR,
+    AR_OPCODE_LDDMAL,
+    AR_OPCODE_STDMAL,
+    AR_OPCODE_CLEARC,
+    AR_OPCODE_WAIT,
+
+    //LSU
+    AR_OPCODE_LDM,
+    AR_OPCODE_LDMI,
+    AR_OPCODE_STM,
+    AR_OPCODE_STMI,
+    AR_OPCODE_LDC,
+    AR_OPCODE_LDCI,
+    AR_OPCODE_STC,
+    AR_OPCODE_STCI,
+    AR_OPCODE_IN,
+    AR_OPCODE_OUT,
+    AR_OPCODE_OUTI,
+    AR_OPCODE_LDMV,
+    AR_OPCODE_LDMVI,
+    AR_OPCODE_LDCV,
+    AR_OPCODE_LDCVI,
+    AR_OPCODE_STMV,
+    AR_OPCODE_STMVI,
+    AR_OPCODE_STCV,
+    AR_OPCODE_STCVI,
+
+    //ALU
+    AR_OPCODE_NOP,
+    AR_OPCODE_MOVEI,
+    AR_OPCODE_MOVELR,
+    AR_OPCODE_ADD,
+    AR_OPCODE_ADDI,
+    AR_OPCODE_ADDQ,
+    AR_OPCODE_SUB,
+    AR_OPCODE_SUBI,
+    AR_OPCODE_SUBQ,
+    AR_OPCODE_MULS,
+    AR_OPCODE_MULSI,
+    AR_OPCODE_MULSQ,
+    AR_OPCODE_MULU,
+    AR_OPCODE_MULUI,
+    AR_OPCODE_MULUQ,
+    AR_OPCODE_DIVS,
+    AR_OPCODE_DIVSI,
+    AR_OPCODE_DIVSQ,
+    AR_OPCODE_DIVU,
+    AR_OPCODE_DIVUI,
+    AR_OPCODE_DIVUQ,
+    AR_OPCODE_AND,
+    AR_OPCODE_ANDI,
+    AR_OPCODE_ANDQ,
+    AR_OPCODE_OR,
+    AR_OPCODE_ORI,
+    AR_OPCODE_ORQ,
+    AR_OPCODE_XOR,
+    AR_OPCODE_XORI,
+    AR_OPCODE_XORQ,
+    AR_OPCODE_ASL,
+    AR_OPCODE_ASLI,
+    AR_OPCODE_ASLQ,
+    AR_OPCODE_LSL,
+    AR_OPCODE_LSLI,
+    AR_OPCODE_LSLQ,
+    AR_OPCODE_ASR,
+    AR_OPCODE_ASRI,
+    AR_OPCODE_ASRQ,
+    AR_OPCODE_LSR,
+    AR_OPCODE_LSRI,
+    AR_OPCODE_LSRQ,
+
+    //CMP
+    AR_OPCODE_CMP,
+    AR_OPCODE_CMPI,
+    AR_OPCODE_PCMP,
+    AR_OPCODE_PCMPI,
+
+    //BRU
+    AR_OPCODE_BNE,
+    AR_OPCODE_BEQ,
+    AR_OPCODE_BL,
+    AR_OPCODE_BLE,
+    AR_OPCODE_BG,
+    AR_OPCODE_BGE,
+    AR_OPCODE_BLS,
+    AR_OPCODE_BLES,
+    AR_OPCODE_BGS,
+    AR_OPCODE_BGES,
+    AR_OPCODE_BRA,
+    AR_OPCODE_JMP,
+    AR_OPCODE_CALL,
+    AR_OPCODE_JMPR,
+    AR_OPCODE_CALLR,
+    AR_OPCODE_SWT,
+    AR_OPCODE_ENDP,
+    AR_OPCODE_RET,
+
+    //VPU
+    //AR_OPCODE_PADD,
+    //AR_OPCODE_PSUB,
+    //AR_OPCODE_PMUL,
+    //AR_OPCODE_PMULADD,
+
+    //Fake instructions
+    AR_OPCODE_MOVE,
+} ArOpcode;
+
 typedef struct ArVirtualMachineCreateInfo
 {
     ArStructureType sType; //< The type of this structure
@@ -53,6 +169,34 @@ typedef struct ArPhysicalMemoryCreateInfo
     void* pMemory;         //< A pointer to the memory beginning
     uint64_t size;         //< The number of bytes of the memory
 } ArPhysicalMemoryCreateInfo;
+
+#define AR_OPERATION_MAX_OPERANDS 3
+
+typedef struct ArOperation
+{
+    ArOpcode op; //< The opcode
+    uint32_t operands[AR_OPERATION_MAX_OPERANDS]; //< Either register or immediate values
+    uint32_t size; //< The size parameter, real meaning depend on instruction
+    uint32_t data; //< Additionnal data, real meaning depend on instruction
+} ArOperation;
+
+#define AR_PROCESSOR_DSRAM_SIZE     (128u * 1024u)
+#define AR_PROCESSOR_ISRAM_SIZE     (128u * 1024u)
+#define AR_PROCESSOR_CACHE_SIZE     (32u * 1024u)
+#define AR_PROCESSOR_IOSRAM_SIZE    (256u)
+#define AR_PROCESSOR_IREG_COUNT     (64u)
+#define AR_PROCESSOR_VREG_COUNT     (64u)
+#define AR_PROCESSOR_MAX_OPERATIONS (4u)
+
+typedef struct ArProcessorMemoryInfo
+{
+    uint8_t*  dsram;
+    uint8_t*  isram;
+    uint8_t*  cache;
+    uint8_t*  iosram;
+    uint64_t* ireg;
+    uint64_t* vreg;
+} ArProcessorMemoryInfo;
 
 #ifndef AR_NO_PROTOTYPES
 
@@ -123,6 +267,21 @@ ArResult arExecuteInstruction(ArProcessor processor);
 */
 ArResult arExecuteDirectMemoryAccess(ArProcessor processor);
 
+/** \brief Get a copy of current processor fetch operations.
+
+    \param processor A ArProcessor handle
+    \param pOutput A pointer to a ArOperation structure array to be filled. The array's size must be of at least AR_PROCESSOR_MAX_OPERATIONS.
+    \param pCount A pointer to a size_t, the value is updated with the current amount of decoded instructions.
+*/
+void arGetProcessorOperations(ArProcessor processor, ArOperation* pOutput, size_t* pCount);
+
+/** \brief Get a pointer on internal memories of the processor.
+
+    \param processor A ArProcessor handle
+    \param pOutput A pointer to a ArProcessorMemoryInfo structure to be filled. The pointers returned by this fonction never expire until the destruction of the processor.
+*/
+void arGetProcessorMemoryInfo(ArProcessor processor, ArProcessorMemoryInfo* pOutput);
+
 /** \brief Destroy a virtual machine
 
     All subobjects must have been freed
@@ -158,6 +317,9 @@ typedef ArResult (*PFN_arCreatePhysicalMemory)(ArVirtualMachine virtualMachine, 
 typedef ArResult (*PFN_arDecodeInstruction)(ArProcessor processor);
 typedef ArResult (*PFN_arExecuteInstruction)(ArProcessor processor);
 typedef ArResult (*PFN_arExecuteDirectMemoryAccess)(ArProcessor processor);
+
+typedef void (*PFN_arGetProcessorOperations)(ArProcessor processor, ArOperation* pOutput, size_t* pCount);
+typedef void (*PFN_arGetProcessorMemoryInfo)(ArProcessor processor, ArProcessorMemoryInfo* pOutput);
 
 typedef void (*PFN_arDestroyVirtualMachine)(ArVirtualMachine virtualMachine);
 typedef void (*PFN_arDestroyProcessor)(ArVirtualMachine virtualMachine, ArProcessor processor);
