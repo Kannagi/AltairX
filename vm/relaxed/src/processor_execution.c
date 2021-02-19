@@ -88,7 +88,7 @@ static ArResult executeInstruction(ArProcessor restrict processor, uint32_t inde
             break;
 
         case AR_OPCODE_OUTI: //write data to iosram
-            memcpy(processor->iosram + operands[0], &ireg[operands[2]], 1u << op->size);
+            memcpy(processor->iosram + operands[0], &operands[2], 1u << op->size);
             break;
 
         case AR_OPCODE_LDMV: //copy data from dsram to vector register

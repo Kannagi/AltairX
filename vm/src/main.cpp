@@ -3,7 +3,6 @@
 #include <filesystem>
 #include <fstream>
 
-#include "shared_library.hpp"
 #include "vm.hpp"
 #include "execution.hpp"
 #include "debug.hpp"
