@@ -377,10 +377,10 @@ static int decodeALU(uint32_t opcode, ArOperation* restrict output)
         }
         else if(type == 2) //MOVELR
         {
-            const uint32_t dest = readbits(opcode, 26, 6);
+            const uint32_t src = readbits(opcode, 26, 6);
 
             output->op = AR_OPCODE_MOVELR;
-            output->operands[2] = dest;
+            output->operands[0] = src;
         }
         else
         {

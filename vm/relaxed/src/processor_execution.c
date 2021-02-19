@@ -135,8 +135,8 @@ static ArResult executeInstruction(ArProcessor restrict processor, uint32_t inde
             ireg[operands[2]] = operands[0];
             break;
 
-        case AR_OPCODE_MOVELR: //Write LR value to a register
-            ireg[operands[2]] = processor->lr;
+        case AR_OPCODE_MOVELR: //Write a value to LR
+            processor->lr = ireg[operands[0]];
             break;
 
         case AR_OPCODE_ADD: //REG = REG + REG
