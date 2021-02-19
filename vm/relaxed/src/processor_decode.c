@@ -258,12 +258,12 @@ static int decodeLSU(uint32_t opcode, ArOperation* restrict output)
         {
             const uint32_t size  = readbits(opcode, 4,  1);
             const uint32_t value = readbits(opcode, 8,  16);
-            const uint32_t dest  = readbits(opcode, 24, 8);
+            const uint32_t addr  = readbits(opcode, 24, 8);
 
             output->op   = AR_OPCODE_OUTI;
             output->size = size;
-            output->operands[0] = value;
-            output->operands[2] = dest;
+            output->operands[0] = addr;
+            output->operands[2] = value;
         }
     }
     else //Posit Load/Store
