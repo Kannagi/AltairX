@@ -249,7 +249,7 @@ static int decodeLSU(uint32_t opcode, ArOperation* restrict output)
             const uint32_t addr = readbits(opcode, 18, 8);
             const uint32_t reg  = readbits(opcode, 26, 6);
 
-            output->op   = AR_OPCODE_IN;
+            output->op   = AR_OPCODE_OUT;
             output->size = size;
             output->operands[0] = addr;
             output->operands[2] = reg;
