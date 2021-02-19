@@ -80,7 +80,7 @@ static ArResult executeInstruction(ArProcessor restrict processor, uint32_t inde
             break;
 
         case AR_OPCODE_IN: //copy data from iosram to register
-            memcpy(&ireg[operands[2]], &processor->iosram[operands[0]], 1u << op->size);
+            memcpy(&ireg[operands[2]], processor->iosram + operands[0], 1u << op->size);
             break;
 
         case AR_OPCODE_OUT: //copy data from register to iosram
