@@ -135,8 +135,16 @@ static ArResult executeInstruction(ArProcessor restrict processor, uint32_t inde
             ireg[operands[2]] = operands[0];
             break;
 
-        case AR_OPCODE_MOVELR: //Write LR value to a register
-            ireg[operands[2]] = processor->lr;
+        case AR_OPCODE_MOVELRL: //Write LR value to a registre
+            ireg[operands[0]] = processor->lr;
+            break;
+
+        case AR_OPCODE_MOVELRS: //Write a value to LR
+            processor->lr = ireg[operands[0]];
+            break;
+
+        case AR_OPCODE_MOVEBR: //Write a value to BR
+            processor->br = ireg[operands[0]];
             break;
 
         case AR_OPCODE_ADD: //REG = REG + REG
@@ -384,11 +392,13 @@ static ArResult executeInstruction(ArProcessor restrict processor, uint32_t inde
         case AR_OPCODE_JMPR:  //fallthrough
         case AR_OPCODE_CALLR: //fallthrough
         case AR_OPCODE_RET:   //fallthrough
-        case AR_OPCODE_SWT:   //fallthrough
-        case AR_OPCODE_ENDP:
+        case AR_OPCODE_SWT:
             processor->delayedBits |= (1u << index);
             processor->delayed[index] = *op;
             break;
+
+        case AR_OPCODE_ENDP:
+            return AR_END_OF_CODE;
 
         case AR_OPCODE_MOVE: //Should never happens
             return AR_ERROR_ILLEGAL_INSTRUCTION;
@@ -400,7 +410,6 @@ static ArResult executeInstruction(ArProcessor restrict processor, uint32_t inde
 static ArResult executeDelayedInstruction(ArProcessor restrict processor, uint32_t index)
 {
     static const uint32_t ZSUClearMask = ~(Z_MASK | S_MASK | U_MASK);
-    static const uint32_t retClearMask = ~R_MASK;
 
     const ArOperation* restrict op = &processor->delayed[index];
     const uint32_t*    restrict const operands = op->operands;
@@ -509,9 +518,8 @@ static ArResult executeDelayedInstruction(ArProcessor restrict processor, uint32
             break;
 
         case AR_OPCODE_CALL:
-            processor->flags &= retClearMask;
-            processor->flags |= (processor->pc << 4u);
             processor->pc = operands[0];
+            processor->lr = operands[1];
             break;
 
         case AR_OPCODE_JMPR:
@@ -519,21 +527,17 @@ static ArResult executeDelayedInstruction(ArProcessor restrict processor, uint32
             break;
 
         case AR_OPCODE_CALLR:
-            processor->flags &= retClearMask;
-            processor->flags |= (processor->pc << 4u);
             processor->pc = operands[0];
+            processor->lr = operands[1];
             break;
 
         case AR_OPCODE_RET:
-            processor->pc = (processor->flags & R_MASK) >> 4u;
+            processor->pc = processor->lr;
             break;
 
         case AR_OPCODE_SWT: //Flip XCHG bit
             processor->flags = (processor->flags & 0xFFFFFFFEu) | operands[0];
             break;
-
-        case AR_OPCODE_ENDP:
-            return AR_END_OF_CODE;
     }
 
     return AR_SUCCESS;

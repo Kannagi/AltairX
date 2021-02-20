@@ -3,7 +3,7 @@
 
 #include "vm.hpp"
 
-#include <cstdio>
+#include <iostream>
 
 enum class io_operation : std::uint8_t
 {
@@ -18,7 +18,7 @@ inline void run_io(std::uint8_t* iosram)
         switch(static_cast<io_operation>(iosram[1]))
         {
             case io_operation::fputc:
-                std::fputc(iosram[32], stdout);
+                std::cout.put(iosram[32]);
                 break;
 
             default:
