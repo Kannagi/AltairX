@@ -226,7 +226,7 @@ static int decodeLSU(uint32_t opcode, ArOperation* restrict output)
         output->op   = LSUREGLoadStore[index];
         output->size = size;
         output->operands[0] = value;
-        output->operands[1] = 56 + src;
+        output->operands[1] = src;
         output->operands[2] = reg;
     }
     else if(type == 2) //Input/output
@@ -278,7 +278,7 @@ static int decodeLSU(uint32_t opcode, ArOperation* restrict output)
         output->op   = LSUPositLoadStore[index];
         output->size = size;
         output->operands[0] = value;
-        output->operands[1] = 56 + addr;
+        output->operands[1] = addr;
         output->operands[2] = reg;
     }
 
