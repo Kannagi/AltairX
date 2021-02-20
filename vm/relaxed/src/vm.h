@@ -18,6 +18,8 @@ typedef struct ArVirtualMachine_T
 #define S_MASK (0x04u)
 #define U_MASK (0x08u)
 
+#define MEMORY_MAP_RAM_BEGIN (0x8000000000)
+
 typedef struct ArProcessor_T
 {
     ArProcessor next;

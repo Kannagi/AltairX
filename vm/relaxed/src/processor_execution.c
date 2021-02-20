@@ -630,13 +630,20 @@ static ArResult executeDMA(ArProcessor restrict processor, int store)
         return AR_ERROR_MEMORY_OUT_OF_RANGE;
     }
 
-    if(store)
+    if(ram > MEMORY_MAP_RAM_BEGIN)
     {
-        return copyToRAM(processor, ram, processor->dsram + sram, size);
+        if(store)
+        {
+            return copyToRAM(processor, ram - MEMORY_MAP_RAM_BEGIN, processor->dsram + sram, size);
+        }
+        else
+        {
+            return copyFromRAM(processor, ram - MEMORY_MAP_RAM_BEGIN, processor->dsram + sram, size);
+        }
     }
     else
     {
-        return copyFromRAM(processor, ram, processor->dsram + sram, size);
+        return AR_ERROR_ILLEGAL_INSTRUCTION;
     }
 }
 
@@ -657,13 +664,20 @@ static ArResult executeDMAR(ArProcessor restrict processor, int store)
         return AR_ERROR_MEMORY_OUT_OF_RANGE;
     }
 
-    if(store)
+    if(ram > MEMORY_MAP_RAM_BEGIN)
     {
-        return copyToRAM(processor, ram, processor->dsram + sram, size);
+        if(store)
+        {
+            return copyToRAM(processor, ram - MEMORY_MAP_RAM_BEGIN, processor->dsram + sram, size);
+        }
+        else
+        {
+            return copyFromRAM(processor, ram - MEMORY_MAP_RAM_BEGIN, processor->dsram + sram, size);
+        }
     }
     else
     {
-        return copyFromRAM(processor, ram, processor->dsram + sram, size);
+        return AR_ERROR_ILLEGAL_INSTRUCTION;
     }
 }
 
@@ -684,7 +698,14 @@ static ArResult executeDMAIR(ArProcessor restrict processor)
         return AR_ERROR_MEMORY_OUT_OF_RANGE;
     }
 
-    return copyFromRAM(processor, ram, processor->isram + sram, size);
+    if(ram > MEMORY_MAP_RAM_BEGIN)
+    {
+        return copyFromRAM(processor, ram, processor->isram + sram, size);
+    }
+    else
+    {
+        return AR_ERROR_ILLEGAL_INSTRUCTION;
+    }
 }
 
 static ArResult executeDMAL(ArProcessor restrict processor, int store)
@@ -755,6 +776,7 @@ ArResult arExecuteDirectMemoryAccess(ArProcessor processor)
             case AR_OPCODE_STDMAL:
                 return executeDMAL(processor, 1);
 
+            case AR_OPCODE_CLEARC: //fallthrough
             case AR_OPCODE_WAIT:
                 //We don't have anything to wait since we emulate it based on C memory model, all transfers are direcly coherent
                 break;
