@@ -17,7 +17,6 @@ typedef struct ArVirtualMachine_T
 #define Z_MASK (0x02u)
 #define S_MASK (0x04u)
 #define U_MASK (0x08u)
-#define R_MASK (0x03FFF0u)
 
 typedef struct ArProcessor_T
 {
@@ -33,6 +32,7 @@ typedef struct ArProcessor_T
     uint64_t vreg[AR_PROCESSOR_VREG_COUNT];
 
     uint32_t pc; //program-counter
+    uint32_t br; //buffer-register
     uint32_t lr; //link-register
     uint32_t opcodes[AR_PROCESSOR_MAX_OPERATIONS];
 
@@ -42,7 +42,6 @@ typedef struct ArProcessor_T
     /// Bit 1: Z flag, 1 if not equal, 0 if equal
     /// Bit 2: S flag, 1 if lesser, 0 if greater (signed comparison)
     /// Bit 3: U flag, 1 if lesser, 0 if greater (unsigned comparison)
-    /// Bit 4-17: R value, the PC address of the last call
     uint32_t flags;
 
     ArOperation operations[AR_PROCESSOR_MAX_OPERATIONS];

@@ -49,7 +49,7 @@ static const ArOpcode BRUJumpsCalls[4] =
     AR_OPCODE_JMPR
 };
 
-static int decodeBRU(uint32_t lr, uint32_t opcode, ArOperation* restrict output)
+static int decodeBRU(uint32_t br, uint32_t pc, uint32_t opcode, ArOperation* restrict output)
 {
     const uint32_t type = readbits(opcode, 2, 2);
 
@@ -100,7 +100,7 @@ static int decodeBRU(uint32_t lr, uint32_t opcode, ArOperation* restrict output)
                 const uint32_t label = readbits(opcode, 18, 14);
 
                 output->op = BRUComparators[comp];
-                output->operands[0] = lr + extendSign(label, 14) * 2;
+                output->operands[0] = pc + extendSign(label, 14) * 2;
 
                 if(output->op == AR_OPCODE_UNKNOWN)
                 {
@@ -121,8 +121,9 @@ static int decodeBRU(uint32_t lr, uint32_t opcode, ArOperation* restrict output)
                     const uint32_t relative = readbits(opcode, 8, 1);
 
                     output->op = BRUJumpsCalls[subtype];
-                    output->operands[0] = relative ? lr + extendSign(label, 14) * 2 //relative
+                    output->operands[0] = relative ? br + extendSign(label, 14) * 2 //relative
                                                    : label * 2u; //absolute
+                    output->operands[1] = pc + 2;
                 }
                 else if(subtype == 4) //ENDP
                 {
@@ -350,7 +351,7 @@ static int decodeALU(uint32_t opcode, ArOperation* restrict output)
 
     if(category == 0)
     {
-        const uint32_t type = readbits(opcode, 4, 2);
+        const uint32_t type = readbits(opcode, 4, 4);
 
         if(type == 0) // ALU REG-REG-REG (ADD, SUB, ...)
         {
@@ -375,11 +376,25 @@ static int decodeALU(uint32_t opcode, ArOperation* restrict output)
         {
             output->op = AR_OPCODE_NOP;
         }
-        else if(type == 2) //MOVELR
+        else if(type == 2) //MOVELRL
+        {
+            const uint32_t dest = readbits(opcode, 26, 6);
+
+            output->op = AR_OPCODE_MOVELRL;
+            output->operands[0] = dest;
+        }
+        else if(type == 3) //MOVELRS
         {
             const uint32_t src = readbits(opcode, 26, 6);
 
-            output->op = AR_OPCODE_MOVELR;
+            output->op = AR_OPCODE_MOVELRS;
+            output->operands[0] = src;
+        }
+        else if(type == 4) //MOVEBR
+        {
+            const uint32_t src = readbits(opcode, 26, 6);
+
+            output->op = AR_OPCODE_MOVEBR;
             output->operands[0] = src;
         }
         else
@@ -511,7 +526,7 @@ static int decodeVPU(uint32_t opcode, ArOperation* restrict output)
     return 1;
 }
 
-static int decode(uint32_t index, uint32_t lr, uint32_t opcode, ArOperation* restrict output)
+static int decode(uint32_t index, uint32_t br, uint32_t pc, uint32_t opcode, ArOperation* restrict output)
 {
     const uint32_t compute_unit = readbits(opcode, 0, 2);
 
@@ -519,7 +534,7 @@ static int decode(uint32_t index, uint32_t lr, uint32_t opcode, ArOperation* res
     {
         if(compute_unit == 0) //BRU
         {
-            return decodeBRU(lr, opcode, output);
+            return decodeBRU(br, pc, opcode, output);
         }
         else if(compute_unit == 1) //LSU
         {
@@ -576,7 +591,7 @@ ArResult arDecodeInstruction(ArProcessor processor)
 
     for(uint32_t i = 0; i < size; ++i)
     {
-        if(!decode(i, processor->lr, processor->opcodes[i], &processor->operations[i]))
+        if(!decode(i, processor->br, processor->pc, processor->opcodes[i], &processor->operations[i]))
         {
             return AR_ERROR_ILLEGAL_INSTRUCTION;
         }
