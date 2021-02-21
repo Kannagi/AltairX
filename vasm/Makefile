@@ -3,9 +3,9 @@
 TARGET =
 TARGETEXTENSION = 
 
-CC = gcc
+CC = gcc -s
 CCOUT = -o 
-COPTS = -c -O2 
+COPTS = -c -O3 
 
 LD = $(CC)
 LDOUT = $(CCOUT)

@@ -362,27 +362,6 @@ dblock *eval_instruction(instruction *p,section *sec,taddr pc)
         
     }
 
-    //VP,IMR
-    if(operand1.type == OP_VP && operand2.type == OP_IMR && operand3.type == OP_VOID)
-    {
-        eval_expr(operand2.value,&val,sec,pc);
-        operand2.val = val&0xFFFF;
-
-        type = (opcode>>2)&0xF;
-
-        if(type == 0)
-        {
-            //operand2.reg -= 58;
-            //operand2.reg &= 1;
-
-            opcode |= (operand1.val<<8) + (operand2.reg<<15) + (operand2.val<<16) + (k1ext&3);
-        }else
-        {
-            operand2.val = val&0x7FF;
-            opcode |= (operand1.val<<25) + (operand2.reg<<19) + (operand2.val<<8) + (k1ext&3) + (plus<<7);
-        }
-    }
-
     //REG,REG (CMP)
     if(operand1.type == OP_REG && operand2.type == OP_REG && operand3.type == OP_VOID)
     {
@@ -427,12 +406,14 @@ dblock *eval_instruction(instruction *p,section *sec,taddr pc)
     {
         eval_expr(operand1.value,&val,sec,pc);
 
-        type = (opcode>>2)&0xF;
-        if(type == 5)
+        //type = (opcode>>2)&0x3;
+        //printf("ok %d\n",type);
+        if(inst == 1)
         {
             operand1.val = val&0xFF;
             opcode |= ( (k1ext&3)<<8);
             opcode |= (operand1.val<<18) + (operand2.reg<<26);
+
         }
 
     }
@@ -511,7 +492,7 @@ dblock *eval_instruction(instruction *p,section *sec,taddr pc)
 
         }
 
-        if(inst == 0) //BRU
+        if(inst == 0) //CMP
         {
             //cmpi
             operand2.val = val&0xFFFFF;
@@ -520,6 +501,7 @@ dblock *eval_instruction(instruction *p,section *sec,taddr pc)
         }
     }
 
+    //--------------------------------------------------------------
     //VP,IMM
     if(operand1.type == OP_VP && operand2.type == OP_IMM && operand3.type == OP_VOID)
     {
@@ -527,7 +509,7 @@ dblock *eval_instruction(instruction *p,section *sec,taddr pc)
         eval_expr(operand2.value,&val,sec,pc);
 
         
-        printf("%f\n",operand2.fval);
+        //printf("%f\n",operand2.fval);
         if(inst == 0) //VF
         {
             
@@ -535,10 +517,31 @@ dblock *eval_instruction(instruction *p,section *sec,taddr pc)
 
         if(inst == 3) //BRU
         {
-
+        	printf("%d\n",val);
             operand2.val = val&0xFFFF;
             opcode |= (operand1.val<<25) + (operand2.val<<9) + (k1ext&3);
 
+        }
+    }
+
+    //VP,IMR
+    if(operand1.type == OP_VP && operand2.type == OP_IMR && operand3.type == OP_VOID)
+    {
+        eval_expr(operand2.value,&val,sec,pc);
+        operand2.val = val&0xFFFF;
+
+        type = (opcode>>2)&0xF;
+
+        if(type == 0)
+        {
+            //operand2.reg -= 58;
+            //operand2.reg &= 1;
+
+            opcode |= (operand1.val<<8) + (operand2.reg<<15) + (operand2.val<<16) + (k1ext&3);
+        }else
+        {
+            operand2.val = val&0x7FF;
+            opcode |= (operand1.val<<25) + (operand2.reg<<19) + (operand2.val<<8) + (k1ext&3) + (plus<<7);
         }
     }
 
@@ -567,7 +570,7 @@ dblock *eval_instruction(instruction *p,section *sec,taddr pc)
         }
         
     }
-
+    //--------------------------------------------------------------
     //REG
     if(operand1.type == OP_REG && operand2.type == OP_VOID && operand3.type == OP_VOID)
     {
@@ -578,29 +581,36 @@ dblock *eval_instruction(instruction *p,section *sec,taddr pc)
     {
         eval_expr(operand1.value,&val,sec,pc);
 
-        type = (opcode>>6)&3;
-        if(type == 0) //Bcc
+        if(inst == 2) //movelr /movebr
         {
-        	val = (val-pc-4-1)>>3;
-	        operand1.val = val&0x3FFF;
-
-	        opcode |= (operand1.val<<18);
-        }else 
+        	operand1.val = val&0x3FFF;
+		    opcode |= (operand1.val<<26);
+        }else
         {
-        	type = (opcode>>8)&7;
-        	if(type == 6) //swt
-        	{
-        		operand1.val = val&0x1;
-	        	opcode |= (operand1.val<<8);
-        	}else //jump/call
-        	{
-        		operand1.val = val&0x3FFF;
-	        opcode |= (operand1.val<<18);
-        	}
-
-	        
+        	type = (opcode>>6)&3;
+	        if(type == 0) //Bcc
+	        {
+	        	val = (val-pc-4-1)>>3;
+	        	if(val < 0) val++;
+		        operand1.val = val&0x3FFF;
+		        //printf("%d %x\n",operand1.val,operand1.val);
+		        //printf("%d %x\n",val,val);
+		        //printf("%d\n",val);
+		        opcode |= (operand1.val<<18);
+	        }else 
+	        {
+	        	type = (opcode>>8)&7;
+	        	if(type == 6) //swt
+	        	{
+	        		operand1.val = val&0x1;
+		        	opcode |= (operand1.val<<8);
+	        	}else //jump/call
+	        	{
+	        		operand1.val = val&0x3FFF;
+		        	opcode |= (operand1.val<<18);
+	        	}
+	        }
         }
-        
     } 
 /*
     //REG,REG,IMM
@@ -622,7 +632,7 @@ dblock *eval_instruction(instruction *p,section *sec,taddr pc)
 
 
     //printf("%s\n",outbin(opcode));
-    printbin(opcode);
+    //printbin(opcode);
     
 
     val = opcode;
@@ -653,6 +663,8 @@ dblock *eval_data(operand *op,taddr bitsize,section *sec,taddr pc)
 
     db->size = 4;
     d = db->data = mymalloc(db->size);
+
+    
 
     *d++ = (val)&0xFF;
 	*d++ = (val>>8)&0xFF;

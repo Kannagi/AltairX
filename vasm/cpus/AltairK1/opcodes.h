@@ -10,7 +10,7 @@
   "dmair",   {OP_REG,OP_REG,OP_IMM},{K1,(0b00100100)},
 
   "lddmal",  {OP_REG,OP_IMM,      },{K1,(0b00110100)},
-  "stdmal",  {OP_REG,OP_IMM,      },{K1,(0b01110100)},
+  "stdmal",  {OP_REG,OP_IMM,      },{K1,(0b01000100)},
 
   "prefetch",{OP_IMR,             },{K1,(0b10000100)},
   "clearca", {OP_IMR,             },{K1,(0b10010100)},
@@ -52,8 +52,11 @@
 
   //ALU
   "nop",    {                    },{K1,(0b00010010)},
-  
-  "movelr", {OP_REG,      ,      },{K1,(0b00100010)},
+
+  "movelrl",{OP_REG,             },{K1,(0b00100010)},
+  "movelrs",{OP_REG,             },{K1,(0b00110010)},
+  "movebr", {OP_REG,             },{K1,(0b01000010)},
+
   "move",   {OP_REG,OP_REG,      },{K1,(0b00000110)},
   "movei",  {OP_REG,OP_IMM,      },{K1,(0b1110)},
 

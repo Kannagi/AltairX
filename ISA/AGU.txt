@@ -1,20 +1,15 @@
 
-
------------------
-r60-r63 LS adr SRAM
-r58-r59 LS adr cache
-r42-r57 LS size
 -------------------------
 AGU
 
 
 
 ;Memory intern <=> Memory RAM
-ii0l Rrrr raaa aaaa
-aaaa mmmm mmmm mmmm
+ii00 Rrrr raaa aaaa
+aaaa ammm mmmm mmmm
 
-lddma 0x7FF(R0),2(r60) (Load RAM adress SP 32 bytes -> 0xFFF*32) 32bytes
-stdma 0x7FF(R1),2(r61) (Load RAM adress SP 32 bytes -> 0xFFF*32)
+lddma 0xFFF(R0),2(r15) (Load RAM adress SP 32 bytes -> 0xFFF*32) 32bytes
+stdma 0xFFF(R1),2(r14) (Load RAM adress SP 32 bytes -> 0xFFF*32)
 
 ;Memory List
 opcode : 0x04/0x14

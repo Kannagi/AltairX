@@ -1,70 +1,69 @@
+send	macro		
+	movei.b r1,\1
+	movei.b r2,\2
+	
+	stm.b r1,$0[r0]
+	movei.b r3,\3
+	
+	stm.b r2,$1[r0]
+	nop
+	
+	stm.b r3,$2[r0]
+	addq r56,3
+endm
 
-
-
-	movei r1,$0FFFF
-	movei r2,42
-
-	add r1,r1,r2
+	lddmar r1,r3,$FF
 	nop
 
-	addi r1,r1,5
+	send 'H','e','l'
+	send 'l','o',' '
+	send 'W','o','r'
+	send 'l','d',0
+
+	movei.q r56,0
+	nop
+	
+
+	;--------------------
+
+Loop:
+	ldm.b r1,$0[r0]
 	nop
 
-	addq r1,5
+	cmpi r1,0
 	nop
 
-	sub r1,r1,r2
+	beq Label
+	addq r56,1
+	
+	outi.b 1,1 ;fputc = 1
 	nop
-
-	subi r1,r1,5
+	
+	out.b 32,r1 ; data = r0
 	nop
-
-	subq r1,5
+	
+	outi.b 0,1 ;control = 1
 	nop
-
-	cmp r1,r1   ;if
+	
+	bra Loop
 	nop
-
-
-	nop         ;id
-	movei r3,42
-
-	nop         ;rr
+	
 	nop
-
-	nop         ;exe
 	nop
-
-	bne test ;wb /if
+Label:	
+	
+	;-------------------------------
+	outi.b 32,$A
 	nop
-
-	movei r4,666 ;-- /id-exe
-	nop
-
-	movei r5,123         
-	nop
-test:
-	movei r3,4200
+	
+	outi.b 0,1
 	nop
 
 
 	endp
 	nop
-
-	pcmp VP3,VP1
-	pcmp.s VP63,VP11
-
-
-
-
-
 	
-
-
-
-
-
-
-
+	nop
+	nop
 
 

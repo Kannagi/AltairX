@@ -50,7 +50,7 @@ typedef struct {
 
 #define OP_IMR             20
 
-#define OP_DATA            100
+#define OP_DATA            0x3e
 
 
 
