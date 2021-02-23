@@ -151,6 +151,12 @@ typedef enum ArOpcode
     AR_OPCODE_MOVE,
 } ArOpcode;
 
+typedef enum ArPhysicalMemoryRole
+{
+    AR_PHYSICAL_MEMORY_ROLE_ROM,
+    AR_PHYSICAL_MEMORY_ROLE_RAM,
+} ArPhysicalMemoryRole;
+
 typedef struct ArVirtualMachineCreateInfo
 {
     ArStructureType sType; //< The type of this structure
@@ -171,6 +177,7 @@ typedef struct ArPhysicalMemoryCreateInfo
     void* pNext;           //< A pointer to the next structure
     void* pMemory;         //< A pointer to the memory beginning
     uint64_t size;         //< The number of bytes of the memory
+    ArPhysicalMemoryRole role;
 } ArPhysicalMemoryCreateInfo;
 
 #define AR_OPERATION_MAX_OPERANDS 3

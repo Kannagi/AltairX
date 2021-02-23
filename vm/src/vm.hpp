@@ -217,15 +217,16 @@ public:
     static constexpr std::size_t default_size{8 * 1024 * 1024};
 
 public:
-    explicit physical_memory(virtual_machine& machine, std::size_t size = default_size)
+    explicit physical_memory(virtual_machine& machine, ArPhysicalMemoryRole role, std::size_t size = default_size)
     :m_virtual_machine{machine.handle()}
     ,m_memory{std::make_unique<std::uint8_t[]>(size)}
     {
         ArPhysicalMemoryCreateInfo info;
-        info.sType = AR_STRUCTURE_TYPE_PHYSICAL_MEMORY_CREATE_INFO;
-        info.pNext = nullptr;
+        info.sType   = AR_STRUCTURE_TYPE_PHYSICAL_MEMORY_CREATE_INFO;
+        info.pNext   = nullptr;
         info.pMemory = m_memory.get();
-        info.size = size;
+        info.size    = size;
+        info.role    = role;
 
         const auto result{arCreatePhysicalMemory(m_virtual_machine, &info, &m_physical_memory)};
         if(result != AR_SUCCESS)

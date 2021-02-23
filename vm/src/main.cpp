@@ -96,8 +96,10 @@ static void run(const machine_options& options)
     ar::functions::load_functions(implementation);
 
     ar::virtual_machine machine{};
+    ar::physical_memory rom{machine, AR_PHYSICAL_MEMORY_ROLE_ROM, 1024 * 1024};
+    ar::physical_memory ram{machine, AR_PHYSICAL_MEMORY_ROLE_RAM};
+
     ar::processor processor{machine, std::data(boot_code), std::size(boot_code)};
-    ar::physical_memory memory{machine};
 
     if(static_cast<bool>(options.flags & machine_options::debugger))
     {

@@ -575,44 +575,32 @@ ArResult arExecuteInstruction(ArProcessor processor)
     return AR_SUCCESS;
 }
 
-static ArResult copyFromRAM(ArProcessor restrict processor, uint64_t ramAddress, uint8_t* restrict output, size_t size)
+static ArResult copyFromRAM(ArPhysicalMemory memory, uint64_t memoryAddress, uint8_t* restrict output, size_t size)
 {
-    ArPhysicalMemory memory = processor->parent->memory; //First memory
-    if(!memory)
-    {
-        return AR_ERROR_ILLEGAL_INSTRUCTION;
-    }
-
-    if(ramAddress + size > memory->size)
+    if(memoryAddress + size > memory->size)
     {
         return AR_ERROR_PHYSICAL_MEMORY_OUT_OF_RANGE;
     }
 
-    memcpy(output, memory->memory + ramAddress, size);
+    memcpy(output, memory->memory + memoryAddress, size);
 
     return AR_SUCCESS;
 }
 
-static ArResult copyToRAM(ArProcessor restrict processor, uint64_t ramAddress, const uint8_t* restrict input, size_t size)
+static ArResult copyToRAM(ArPhysicalMemory memory, uint64_t memoryAddress, const uint8_t* restrict input, size_t size)
 {
-    ArPhysicalMemory memory = processor->parent->memory; //First memory
-    if(!memory)
-    {
-        return AR_ERROR_ILLEGAL_INSTRUCTION;
-    }
-
-    if(ramAddress + size > memory->size)
+    if(memoryAddress + size > memory->size)
     {
         return AR_ERROR_PHYSICAL_MEMORY_OUT_OF_RANGE;
     }
 
-    memcpy(memory->memory + ramAddress, input, size);
+    memcpy(memory->memory + memoryAddress, input, size);
 
     return AR_SUCCESS;
 }
 
 static ArResult executeDMA(ArProcessor restrict processor, int store)
-{
+{/*
     //RAM -> SDRAM
     uint64_t* restrict const ireg = processor->ireg;
 
@@ -634,7 +622,7 @@ static ArResult executeDMA(ArProcessor restrict processor, int store)
     {
         if(store)
         {
-            return copyToRAM(processor, ram - MEMORY_MAP_RAM_BEGIN, processor->dsram + sram, size);
+            return copyToRAM(, ram - MEMORY_MAP_RAM_BEGIN, processor->dsram + sram, size);
         }
         else
         {
@@ -644,7 +632,12 @@ static ArResult executeDMA(ArProcessor restrict processor, int store)
     else
     {
         return AR_ERROR_ILLEGAL_INSTRUCTION;
-    }
+    }*/
+
+    (void)processor;
+    (void)store;
+
+    return AR_ERROR_ILLEGAL_INSTRUCTION;
 }
 
 static ArResult executeDMAR(ArProcessor restrict processor, int store)
@@ -666,23 +659,44 @@ static ArResult executeDMAR(ArProcessor restrict processor, int store)
 
     if(ram > MEMORY_MAP_RAM_BEGIN)
     {
+        ArPhysicalMemory* memory = getMemoryByRole(processor->parent, AR_PHYSICAL_MEMORY_ROLE_RAM);
+
+        if(!*memory)
+        {
+            return AR_ERROR_PHYSICAL_MEMORY_OUT_OF_RANGE;
+        }
+
         if(store)
         {
-            return copyToRAM(processor, ram - MEMORY_MAP_RAM_BEGIN, processor->dsram + sram, size);
+            return copyToRAM(*memory, ram - MEMORY_MAP_RAM_BEGIN, processor->dsram + sram, size);
         }
         else
         {
-            return copyFromRAM(processor, ram - MEMORY_MAP_RAM_BEGIN, processor->dsram + sram, size);
+            return copyFromRAM(*memory, ram - MEMORY_MAP_RAM_BEGIN, processor->dsram + sram, size);
         }
     }
     else
     {
-        return AR_ERROR_ILLEGAL_INSTRUCTION;
+        ArPhysicalMemory* memory = getMemoryByRole(processor->parent, AR_PHYSICAL_MEMORY_ROLE_ROM);
+
+        if(!*memory)
+        {
+            return AR_ERROR_PHYSICAL_MEMORY_OUT_OF_RANGE;
+        }
+
+        if(store)
+        {
+            return copyToRAM(*memory, ram - MEMORY_MAP_ROM_BEGIN, processor->dsram + sram, size);
+        }
+        else
+        {
+            return copyFromRAM(*memory, ram - MEMORY_MAP_ROM_BEGIN, processor->dsram + sram, size);
+        }
     }
 }
 
 static ArResult executeDMAIR(ArProcessor restrict processor)
-{
+{/*
     //RAM -> SDRAM
     uint64_t* restrict const ireg = processor->ireg;
 
@@ -705,7 +719,11 @@ static ArResult executeDMAIR(ArProcessor restrict processor)
     else
     {
         return AR_ERROR_ILLEGAL_INSTRUCTION;
-    }
+    }*/
+
+    (void)processor;
+
+    return AR_ERROR_ILLEGAL_INSTRUCTION;
 }
 
 static ArResult executeDMAL(ArProcessor restrict processor, int store)
@@ -739,7 +757,7 @@ static ArResult executeDMAL(ArProcessor restrict processor, int store)
     (void)processor;
     (void)store;
 
-    return AR_END_OF_CODE;
+    return AR_ERROR_ILLEGAL_INSTRUCTION;
 }
 
 ArResult arExecuteDirectMemoryAccess(ArProcessor processor)
