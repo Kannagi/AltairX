@@ -501,12 +501,12 @@ static int decodeAGU(uint32_t opcode, ArOperation* restrict output)
         if(type < 8) //LDDMAR/STDMAR/DMAIR/LDDMAL/STDMAL
         {
             const uint32_t value = readbits(opcode, 8,  12);
-            const uint32_t src   = readbits(opcode, 20, 6);
-            const uint32_t dest  = readbits(opcode, 26, 6);
+            const uint32_t ram   = readbits(opcode, 20, 6);
+            const uint32_t sram  = readbits(opcode, 26, 6);
 
             output->operands[0] = value;
-            output->operands[1] = src;
-            output->operands[2] = dest;
+            output->operands[1] = ram;
+            output->operands[2] = sram;
         }
 
         if(output->op == AR_OPCODE_UNKNOWN)
