@@ -9,15 +9,19 @@
 typedef struct ArVirtualMachine_T
 {
     ArProcessor processor;
-    ArPhysicalMemory memory;
+    ArPhysicalMemory ram;
+    ArPhysicalMemory rom;
 
 } ArVirtualMachine_T;
+
+ArPhysicalMemory* getMemoryByRole(ArVirtualMachine virtualMachine, ArPhysicalMemoryRole role);
 
 #define XCHG_MASK (0x01u)
 #define Z_MASK (0x02u)
 #define S_MASK (0x04u)
 #define U_MASK (0x08u)
 
+#define MEMORY_MAP_ROM_BEGIN (0x0000000000)
 #define MEMORY_MAP_RAM_BEGIN (0x8000000000)
 
 typedef struct ArProcessor_T
@@ -60,6 +64,7 @@ typedef struct ArPhysicalMemory_T
 
     uint8_t* memory;
     size_t size;
+    ArPhysicalMemoryRole role;
 
 } ArPhysicalMemory_T;
 

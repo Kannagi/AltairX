@@ -45,10 +45,13 @@ static void insertProcessor(ArVirtualMachine virtualMachine, ArProcessor process
 ArResult arCreateProcessor(ArVirtualMachine virtualMachine, const ArProcessorCreateInfo* pInfo, ArProcessor* pProcessor)
 {
     assert(virtualMachine);
+    assert(virtualMachine->rom);
+    assert(virtualMachine->rom->size >= pInfo->bootCodeSize * sizeof(uint32_t));
     assert(pInfo);
     assert(pInfo->sType == AR_STRUCTURE_TYPE_PROCESSOR_CREATE_INFO);
     assert(pInfo->pBootCode);
     assert(pInfo->bootCodeSize % 2 == 0); //if not true then input is obviously truncated
+    assert(AR_PROCESSOR_ISRAM_SIZE >= pInfo->bootCodeSize * sizeof(uint32_t));
     assert(pProcessor);
 
     const ArProcessor output = malloc(sizeof(ArProcessor_T));
@@ -60,12 +63,23 @@ ArResult arCreateProcessor(ArVirtualMachine virtualMachine, const ArProcessorCre
     memset(output, 0, sizeof(ArProcessor_T));
 
     output->parent = virtualMachine;
-    memcpy(output->isram, pInfo->pBootCode, pInfo->bootCodeSize * sizeof(uint32_t));
+    memcpy(output->isram,               pInfo->pBootCode, pInfo->bootCodeSize * sizeof(uint32_t));
+    memcpy(virtualMachine->rom->memory, pInfo->pBootCode, pInfo->bootCodeSize * sizeof(uint32_t));
 
     insertProcessor(virtualMachine, output);
     *pProcessor = output;
 
     return AR_SUCCESS;
+}
+
+ArPhysicalMemory* getMemoryByRole(ArVirtualMachine virtualMachine, ArPhysicalMemoryRole role)
+{
+    switch(role)
+    {
+        case AR_PHYSICAL_MEMORY_ROLE_ROM: return &virtualMachine->rom;
+        case AR_PHYSICAL_MEMORY_ROLE_RAM: return &virtualMachine->ram;
+        default: return NULL;
+    }
 }
 
 ArResult arCreatePhysicalMemory(ArVirtualMachine virtualMachine, const ArPhysicalMemoryCreateInfo* pInfo, ArPhysicalMemory* pMemory)
@@ -77,7 +91,9 @@ ArResult arCreatePhysicalMemory(ArVirtualMachine virtualMachine, const ArPhysica
     assert(pInfo->pMemory);
     assert(pMemory);
 
-    if(virtualMachine->memory)
+    ArPhysicalMemory* memory = getMemoryByRole(virtualMachine, pInfo->role);
+
+    if(*memory)
     {
         return AR_ERROR_TOO_MANY_OBJECTS;
     }
@@ -90,9 +106,10 @@ ArResult arCreatePhysicalMemory(ArVirtualMachine virtualMachine, const ArPhysica
 
     output->parent = virtualMachine;
     output->memory = pInfo->pMemory;
-    output->size = pInfo->size;
+    output->size   = pInfo->size;
+    output->role   = pInfo->role;
 
-    virtualMachine->memory = output;
+    *memory  = output;
     *pMemory = output;
 
     return AR_SUCCESS;
@@ -126,7 +143,8 @@ void arGetProcessorMemoryInfo(ArProcessor processor, ArProcessorMemoryInfo* pOut
 void arDestroyVirtualMachine(ArVirtualMachine virtualMachine)
 {
     assert(virtualMachine);
-    assert(!virtualMachine->memory);
+    assert(!virtualMachine->rom);
+    assert(!virtualMachine->ram);
     assert(!virtualMachine->processor);
 
     free(virtualMachine);
@@ -159,10 +177,13 @@ void arDestroyProcessor(ArVirtualMachine virtualMachine, ArProcessor processor)
 void arDestroyPhysicalMemory(ArVirtualMachine virtualMachine, ArPhysicalMemory memory)
 {
     assert(virtualMachine);
-    assert(virtualMachine->memory);
+
+    ArPhysicalMemory* machineMemory = getMemoryByRole(virtualMachine, memory->role);
+
+    assert(*machineMemory);
     assert(memory);
 
-    virtualMachine->memory = NULL;
+    *machineMemory = NULL;
     free(memory);
 }
 
