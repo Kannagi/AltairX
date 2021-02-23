@@ -41,6 +41,8 @@ typedef struct {
 #define OP_VOID            0
 #define OP_REG             1
 #define OP_VP              2
+#define OP_RLR             3
+#define OP_RBR             4
 
 #define OP_IMM             7
 #define OP_IM1             8

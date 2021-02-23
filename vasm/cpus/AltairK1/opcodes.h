@@ -53,9 +53,9 @@
   //ALU
   "nop",    {                    },{K1,(0b00010010)},
 
-  "movelrl",{OP_REG,             },{K1,(0b00100010)},
-  "movelrs",{OP_REG,             },{K1,(0b00110010)},
-  "movebr", {OP_REG,             },{K1,(0b01000010)},
+  "move",   {OP_RLR,OP_REG,      },{K1,(0b00100010)},
+  "move",   {OP_REG,OP_RLR,      },{K1,(0b00110010)},
+  "move",   {OP_RBR,OP_REG,      },{K1,(0b01000010)},
 
   "move",   {OP_REG,OP_REG,      },{K1,(0b00000110)},
   "movei",  {OP_REG,OP_IMM,      },{K1,(0b1110)},

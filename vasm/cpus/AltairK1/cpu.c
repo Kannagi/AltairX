@@ -185,6 +185,31 @@ int parse_operand(char *p,int len,operand *op,int requires)
         return 1;
     }
 
+    //Register LR
+    if(requires == OP_RLR )
+    {
+        if(len != 2) return 0;
+        if( !(p[0] == 'l' || p[0] == 'L') )
+            return 0;
+
+        if( !(p[1] == 'r' || p[1] == 'R') )
+            return 0;
+        
+        return 1;
+    }
+
+    //Register BR
+    if(requires == OP_RBR )
+    {
+        if(len != 2) return 0;
+        if( !(p[0] == 'b' || p[0] == 'B') )
+            return 0;
+
+        if( !(p[1] == 'r' || p[1] == 'R') )
+            return 0;
+        
+        return 1;
+    }
 
    
     //Immediate
@@ -362,11 +387,31 @@ dblock *eval_instruction(instruction *p,section *sec,taddr pc)
         
     }
 
-    //REG,REG (CMP)
+
+    //REG,RLR (Move LRL)
+    if(operand1.type == OP_REG && operand2.type == OP_RLR && operand3.type == OP_VOID)
+    {
+        opcode |= (operand1.reg<<26);
+    }
+
+    //RLR,REG (Move SRL)
+    if(operand1.type == OP_RLR && operand2.type == OP_REG && operand3.type == OP_VOID)
+    {
+        opcode |= (operand1.reg<<26);
+    }
+
+    //BLR,REG (Move SRL)
+    if(operand1.type == OP_RBR && operand2.type == OP_REG && operand3.type == OP_VOID)
+    {
+        opcode |= (operand1.reg<<26);
+    }
+
+    //REG,REG (CMP/MOVE)
     if(operand1.type == OP_REG && operand2.type == OP_REG && operand3.type == OP_VOID)
     {
     	opcode |= (operand1.reg<<26) + (operand2.reg<<20) + ( (k1ext&3)<<6);
     }
+
 
     //REG,REG,REG (ALU)
     if(operand1.type == OP_REG && operand2.type == OP_REG && operand3.type == OP_REG)
@@ -581,17 +626,14 @@ dblock *eval_instruction(instruction *p,section *sec,taddr pc)
     {
         eval_expr(operand1.value,&val,sec,pc);
 
-        if(inst == 2) //movelr /movebr
-        {
-        	operand1.val = val&0x3FFF;
-		    opcode |= (operand1.val<<26);
-        }else
+
+        if(inst == 0) //Delay instruction
         {
         	type = (opcode>>6)&3;
 	        if(type == 0) //Bcc
 	        {
 	        	val = (val-pc-4-1)>>3;
-	        	if(val < 0) val++;
+	        	val++;
 		        operand1.val = val&0x3FFF;
 		        //printf("%d %x\n",operand1.val,operand1.val);
 		        //printf("%d %x\n",val,val);
@@ -606,7 +648,18 @@ dblock *eval_instruction(instruction *p,section *sec,taddr pc)
 		        	opcode |= (operand1.val<<8);
 	        	}else //jump/call
 	        	{
-	        		operand1.val = val&0x3FFF;
+                    //printf("%d\n",val);
+                    if(val == 0)
+                    {
+                        operand1.val = 0;
+                    }else
+                    {
+                        val = (val-4-1)>>3;
+                        val++;
+                        operand1.val = val&0x3FFF;
+                    }
+                    
+                    //printf("%d\n",operand1.val);
 		        	opcode |= (operand1.val<<18);
 	        	}
 	        }
