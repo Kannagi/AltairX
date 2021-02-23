@@ -1,32 +1,12 @@
 
-
-send	macro		
-	movei.b r1,\1
-	movei.b r2,\2
+	movei.q r0,$00
+	movei.q r1,$20
 	
-	stm.b r1,$0[r0]
-	movei.b r3,\3
-	
-	stm.b r2,$1[r0]
 	nop
-	
-	stm.b r3,$2[r0]
-	addq r0,3
-endm
+	lddmar r0,r1,1
 
-	
-	send 'H','e','l'
-	send 'l','o',' '
-	send 'W','o','r'
-	send 'l','d',0
-	
-	
 	movei.q r0,0
-	movei.q r1,$10
-	
-	
-
-	
+	movei.q r1,$20
 	;--------------------
 	
 	call print
@@ -42,6 +22,7 @@ endm
 	nop
 	nop
 	
+	org $100
 print:
 
 	Loop:
@@ -52,7 +33,6 @@ print:
 	cmpi r1,0
 	nop
 	
-	
 	beq Label
 	addq r0,1
 	
@@ -60,9 +40,6 @@ print:
 	nop
 	
 	out.b 32,r1 ; data = r0
-	nop
-	
-	nop ;outi.b 0,1 ;control = 1
 	nop
 	
 	bra Loop
@@ -87,6 +64,4 @@ Label:
 	dc.b "Hello World",0
 	
 	org $480
-
-
-
+	

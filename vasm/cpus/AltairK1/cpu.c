@@ -382,9 +382,6 @@ dblock *eval_instruction(instruction *p,section *sec,taddr pc)
 	        }
 
         }
-
-
-        
     }
 
 
@@ -477,9 +474,6 @@ dblock *eval_instruction(instruction *p,section *sec,taddr pc)
 	        opcode |= ( (k1ext&1)<<4);
 	        opcode |= (operand1.val<<24) + (operand2.val<<8);
     	}
-        
-        
-
     }
 
     //REG,IMM
@@ -611,7 +605,6 @@ dblock *eval_instruction(instruction *p,section *sec,taddr pc)
         else
         {
 
-
         }
         
     }
@@ -621,6 +614,7 @@ dblock *eval_instruction(instruction *p,section *sec,taddr pc)
     {
         opcode |= (operand1.val<<26);
     }
+
     //IMM
     if(operand1.type == OP_IMM && operand2.type == OP_VOID && operand3.type == OP_VOID)
     {
@@ -648,7 +642,7 @@ dblock *eval_instruction(instruction *p,section *sec,taddr pc)
 		        	opcode |= (operand1.val<<8);
 	        	}else //jump/call
 	        	{
-                    //printf("%d\n",val);
+                    printf("%d\n",val);
                     if(val == 0)
                     {
                         operand1.val = 0;
@@ -658,6 +652,8 @@ dblock *eval_instruction(instruction *p,section *sec,taddr pc)
                         val++;
                         operand1.val = val&0x3FFF;
                     }
+
+                    //printf("%d\n",val);
                     
                     //printf("%d\n",operand1.val);
 		        	opcode |= (operand1.val<<18);
