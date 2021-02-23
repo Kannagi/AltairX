@@ -648,9 +648,9 @@ static ArResult executeDMAR(ArProcessor restrict processor, int store)
     const ArOperation* restrict const op       = &processor->dmaOperation;
     const uint32_t*    restrict const operands = op->operands;
 
-    const uint64_t sram = ireg[operands[0]] * 32ull;
+    const size_t   size = ireg[operands[0]] * 32u;
     const uint64_t ram  = ireg[operands[1]] * 32ull;
-    const size_t   size = op->size * 32u;
+    const uint64_t sram = ireg[operands[2]] * 32ull;
 
     if(sram + size > AR_PROCESSOR_DSRAM_SIZE)
     {
