@@ -37,7 +37,7 @@ nop RR
 bra EX/IF
 nop WB/ID (delay slot)
 nop --/--
-----------------Pipeline Stall--------------------
+------------------------------------
 add IF
 nop ID
 nop RR

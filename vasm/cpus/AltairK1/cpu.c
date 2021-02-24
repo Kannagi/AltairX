@@ -556,7 +556,7 @@ dblock *eval_instruction(instruction *p,section *sec,taddr pc)
 
         if(inst == 3) //BRU
         {
-        	printf("%d\n",val);
+        	//printf("%d\n",val);
             operand2.val = val&0xFFFF;
             opcode |= (operand1.val<<25) + (operand2.val<<9) + (k1ext&3);
 
@@ -642,7 +642,7 @@ dblock *eval_instruction(instruction *p,section *sec,taddr pc)
 		        	opcode |= (operand1.val<<8);
 	        	}else //jump/call
 	        	{
-                    printf("%d\n",val);
+                    //printf("%d\n",val);
                     if(val == 0)
                     {
                         operand1.val = 0;
