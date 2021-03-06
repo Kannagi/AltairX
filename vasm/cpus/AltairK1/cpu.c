@@ -406,7 +406,10 @@ dblock *eval_instruction(instruction *p,section *sec,taddr pc)
     //REG,REG (CMP/MOVE)
     if(operand1.type == OP_REG && operand2.type == OP_REG && operand3.type == OP_VOID)
     {
-    	opcode |= (operand1.reg<<26) + (operand2.reg<<20) + ( (k1ext&3)<<6);
+        if(inst == 2)
+    	   opcode |= (operand1.reg<<26) + (operand2.reg<<20) + ( (k1ext&3)<<6);
+        else
+            opcode |= (operand1.reg<<26) + (operand2.reg<<20) + ( (k1ext&3)<<8);
     }
 
 
@@ -424,9 +427,13 @@ dblock *eval_instruction(instruction *p,section *sec,taddr pc)
 
         if(inst == 2)
         {
+            /*
         	type = (opcode>>2)&0xF;
 	        if(type > 9)
 	        	operand3.val = val&0x3F;
+            */
+
+            operand3.val = val&0x3FF;
 
 	        opcode |= (operand1.reg<<26) + (operand2.reg<<20) + (operand3.val<<10) + ( (k1ext&3)<<8);
         }else
@@ -435,7 +442,7 @@ dblock *eval_instruction(instruction *p,section *sec,taddr pc)
         	{
         		type = (opcode>>4)&0xF;
 
-        		 operand3.val = val&0xFFF;
+        		operand3.val = val&0xFFF;
         	    opcode |= (operand1.reg<<26) + (operand2.reg<<20) + (operand3.val<<8);
 
         	}
@@ -485,10 +492,11 @@ dblock *eval_instruction(instruction *p,section *sec,taddr pc)
             type = (opcode>>2)&0x3;
             if(type == 2)
             {
-                operand2.val = val&0x3FF;
+                operand2.val = val&0xFFFF;
+                /*
                 type = (opcode>>2)&0xF;
                 if(type > 9)
-        			operand2.val = val&0x3F;
+        			operand2.val = val&0x3F;*/
                 
         		opcode |= (operand1.reg<<26) + (operand2.val<<10) + ( (k1ext&3)<<8);
             }else

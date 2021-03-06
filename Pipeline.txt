@@ -48,11 +48,11 @@ nop WB/ID
 add IF
 add ID/IF
 nop RR/ID
-nop EX/RR
+--- EX/RR
 --- WB/RR
---- --/RR
-nop IF/EX
-nop ID/WB
+nop --/RR
+nop --/EX
+nop --/WB
 
 --------
 FDIV IF
