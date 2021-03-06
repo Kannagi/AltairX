@@ -43,10 +43,10 @@ static const ArOpcode BRUComparators[16] =
 
 static const ArOpcode BRUJumpsCalls[4] =
 {
-    AR_OPCODE_CALL,
     AR_OPCODE_JMP,
+    AR_OPCODE_JMPR,
+    AR_OPCODE_CALL,
     AR_OPCODE_CALLR,
-    AR_OPCODE_JMPR
 };
 
 static int decodeBRU(uint32_t br, uint32_t pc, uint32_t opcode, ArOperation* restrict output)
@@ -113,7 +113,7 @@ static int decodeBRU(uint32_t br, uint32_t pc, uint32_t opcode, ArOperation* res
             }
             else if(category == 2) //Jumps or calls
             {
-                const uint32_t subtype = readbits(opcode, 8,  4);
+                const uint32_t subtype = readbits(opcode, 8,  2);
                 const uint32_t label   = readbits(opcode, 18, 14);
 
                 if(subtype < 4)
