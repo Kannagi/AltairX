@@ -178,17 +178,17 @@ static ArResult executeInstruction(ArProcessor restrict processor, uint32_t inde
             break;
 
         case AR_OPCODE_MULS: //REG = REG * REG (signed)
-            (*(int64_t*)ireg[operands[2]]) = (int64_t)ireg[operands[1]] * (int64_t)ireg[operands[0]];
+            ireg[operands[2]] = (uint64_t)((int64_t)ireg[operands[1]] * (int64_t)ireg[operands[0]]);
             ireg[operands[2]] &= sizemask[op->size];
             break;
 
         case AR_OPCODE_MULSI: //REG = REG * IMM (signed)
-            (*(int64_t*)ireg[operands[2]]) = (int64_t)ireg[operands[1]] * (int64_t)operands[0];
+            ireg[operands[2]] = (uint64_t)((int64_t)ireg[operands[1]] * (int64_t)operands[0]);
             ireg[operands[2]] &= sizemask[op->size];
             break;
 
         case AR_OPCODE_MULSQ: //REG *= IMM (signed)
-            (*(int64_t*)ireg[operands[2]]) *= (int64_t)operands[0];
+            ireg[operands[2]] = (uint64_t)((int64_t)ireg[operands[2]] * (int64_t)operands[0]);
             ireg[operands[2]] &= sizemask[op->size];
             break;
 
@@ -208,17 +208,17 @@ static ArResult executeInstruction(ArProcessor restrict processor, uint32_t inde
             break;
 
         case AR_OPCODE_DIVS: //REG = REG / REG (signed)
-            (*(int64_t*)ireg[operands[2]]) = (int64_t)ireg[operands[1]] / (int64_t)ireg[operands[0]];
+            ireg[operands[2]] = (uint64_t)((int64_t)ireg[operands[1]] / (int64_t)ireg[operands[0]]);
             ireg[operands[2]] &= sizemask[op->size];
             break;
 
         case AR_OPCODE_DIVSI: //REG = REG / IMM (signed)
-            (*(int64_t*)ireg[operands[2]]) = (int64_t)ireg[operands[1]] / (int64_t)operands[0];
+            ireg[operands[2]] = (uint64_t)((int64_t)ireg[operands[1]] / (int64_t)operands[0]);
             ireg[operands[2]] &= sizemask[op->size];
             break;
 
         case AR_OPCODE_DIVSQ: //REG /= IMM (signed)
-            (*(int64_t*)ireg[operands[2]]) /= (int64_t)operands[0];
+            ireg[operands[2]] = (uint64_t)((int64_t)ireg[operands[2]] / (int64_t)operands[0]);
             ireg[operands[2]] &= sizemask[op->size];
             break;
 
@@ -283,17 +283,17 @@ static ArResult executeInstruction(ArProcessor restrict processor, uint32_t inde
             break;
 
         case AR_OPCODE_ASL: //REG = REG << REG (signed)
-            (*(int64_t*)ireg[operands[2]]) = (int64_t)ireg[operands[1]] << (int64_t)ireg[operands[0]];
+            ireg[operands[2]] = (uint64_t)((int64_t)ireg[operands[1]] << (int64_t)ireg[operands[0]]);
             ireg[operands[2]] &= sizemask[op->size];
             break;
 
         case AR_OPCODE_ASLI: //REG = REG << IMM (signed)
-            (*(int64_t*)ireg[operands[2]]) = (int64_t)ireg[operands[1]] << (int64_t)operands[0];
+            ireg[operands[2]] = (uint64_t)((int64_t)ireg[operands[1]] << (int64_t)operands[0]);
             ireg[operands[2]] &= sizemask[op->size];
             break;
 
         case AR_OPCODE_ASLQ: //REG <<= IMM (signed)
-            (*(int64_t*)ireg[operands[2]]) <<= (int64_t)operands[0];
+            ireg[operands[2]] = (uint64_t)((int64_t)ireg[operands[2]] << (int64_t)operands[0]);
             ireg[operands[2]] &= sizemask[op->size];
             break;
 
@@ -313,17 +313,17 @@ static ArResult executeInstruction(ArProcessor restrict processor, uint32_t inde
             break;
 
         case AR_OPCODE_ASR: //REG = REG >> REG (signed)
-            (*(int64_t*)ireg[operands[2]]) = (int64_t)ireg[operands[1]] >> (int64_t)ireg[operands[0]];
+            ireg[operands[2]] = (uint64_t)((int64_t)ireg[operands[1]] >> (int64_t)ireg[operands[0]]);
             ireg[operands[2]] &= sizemask[op->size];
             break;
 
         case AR_OPCODE_ASRI: //REG = REG >> IMM (signed)
-            (*(int64_t*)ireg[operands[2]]) = (int64_t)ireg[operands[1]] >> (int64_t)operands[0];
+            ireg[operands[2]] = (uint64_t)((int64_t)ireg[operands[1]] >> (int64_t)operands[0]);
             ireg[operands[2]] &= sizemask[op->size];
             break;
 
         case AR_OPCODE_ASRQ: //REG >>= IMM (signed)
-            (*(int64_t*)ireg[operands[2]]) >>= (int64_t)operands[0];
+            ireg[operands[2]] = (uint64_t)((int64_t)ireg[operands[2]] >> (int64_t)operands[0]);
             ireg[operands[2]] &= sizemask[op->size];
             break;
 
