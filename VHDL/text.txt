@@ -1,0 +1,6 @@
+
+    Type ghdl -s func.vhd func_tb.vhd to check the syntax.
+    Type ghdl -a func.vhd func_tb.vhd to analyze the design.
+    Type ghdl -e t_func to build an executable for the testbench.
+    Type ghdl -r t_func --vcd=func.vcd to simulate the design and dump the waveform to a file.
+
