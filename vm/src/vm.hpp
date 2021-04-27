@@ -6,6 +6,7 @@
 #include <stdexcept>
 #include <utility>
 #include <memory>
+#include <array>
 
 #include "nes/shared_library.hpp"
 
@@ -15,9 +16,11 @@ namespace ar
 inline namespace functions
 {
 
-static PFN_arCreateVirtualMachine arCreateVirtualMachine{};
-static PFN_arCreateProcessor      arCreateProcessor{};
-static PFN_arCreatePhysicalMemory arCreatePhysicalMemory{};
+static PFN_arCreateVirtualMachine    arCreateVirtualMachine{};
+static PFN_arCreateProcessor         arCreateProcessor{};
+static PFN_arCreatePhysicalMemory    arCreatePhysicalMemory{};
+static PFN_arCreateGraphicsProcessor arCreateGraphicsProcessor{};
+static PFN_arCreateScreen            arCreateScreen{};
 
 static PFN_arDecodeInstruction         arDecodeInstruction{};
 static PFN_arExecuteInstruction        arExecuteInstruction{};
@@ -26,15 +29,19 @@ static PFN_arExecuteDirectMemoryAccess arExecuteDirectMemoryAccess{};
 static PFN_arGetProcessorOperations arGetProcessorOperations{};
 static PFN_arGetProcessorMemoryInfo arGetProcessorMemoryInfo{};
 
-static PFN_arDestroyVirtualMachine arDestroyVirtualMachine{};
-static PFN_arDestroyProcessor      arDestroyProcessor{};
-static PFN_arDestroyPhysicalMemory arDestroyPhysicalMemory{};
+static PFN_arDestroyVirtualMachine    arDestroyVirtualMachine{};
+static PFN_arDestroyProcessor         arDestroyProcessor{};
+static PFN_arDestroyPhysicalMemory    arDestroyPhysicalMemory{};
+static PFN_arDestroyGraphicsProcessor arDestroyGraphicsProcessor{};
+static PFN_arDestroyScreen            arDestroyScreen{};
 
 inline void load_functions(nes::shared_library& library)
 {
     arCreateVirtualMachine      = library.load<PFN_arCreateVirtualMachine>("arCreateVirtualMachine");
     arCreateProcessor           = library.load<PFN_arCreateProcessor>("arCreateProcessor");
     arCreatePhysicalMemory      = library.load<PFN_arCreatePhysicalMemory>("arCreatePhysicalMemory");
+    arCreateGraphicsProcessor   = library.load<PFN_arCreateGraphicsProcessor>("arCreateGraphicsProcessor");
+    arCreateScreen              = library.load<PFN_arCreateScreen>("arCreateScreen");
 
     arDecodeInstruction         = library.load<PFN_arDecodeInstruction>("arDecodeInstruction");
     arExecuteInstruction        = library.load<PFN_arExecuteInstruction>("arExecuteInstruction");
@@ -46,6 +53,8 @@ inline void load_functions(nes::shared_library& library)
     arDestroyVirtualMachine     = library.load<PFN_arDestroyVirtualMachine>("arDestroyVirtualMachine");
     arDestroyProcessor          = library.load<PFN_arDestroyProcessor>("arDestroyProcessor");
     arDestroyPhysicalMemory     = library.load<PFN_arDestroyPhysicalMemory>("arDestroyPhysicalMemory");
+    arDestroyGraphicsProcessor  = library.load<PFN_arDestroyGraphicsProcessor>("arDestroyGraphicsProcessor");
+    arDestroyScreen             = library.load<PFN_arDestroyScreen>("arDestroyScreen");
 }
 
 }
@@ -272,6 +281,62 @@ private:
     ArVirtualMachine m_virtual_machine{};
     std::unique_ptr<std::uint8_t[]> m_memory;
     ArPhysicalMemory m_physical_memory{};
+};
+
+class graphics_processor
+{
+public:
+    using operation_set_t = std::pair<std::size_t, std::array<ArOperation, AR_PROCESSOR_MAX_OPERATIONS>>;
+
+public:
+    explicit graphics_processor(virtual_machine& machine)
+        :m_virtual_machine{ machine.handle() }
+    {
+        ArGraphicsProcessorCreateInfo info;
+        info.sType = AR_STRUCTURE_TYPE_GRAPHICS_PROCESSOR_CREATE_INFO;
+        info.pNext = nullptr;
+
+        const auto result{ arCreateGraphicsProcessor(m_virtual_machine, &info, &m_graphics_processor) };
+        if (result != AR_SUCCESS)
+        {
+            throw std::runtime_error{ "Can not create processor." };
+        }
+    }
+
+    ~graphics_processor()
+    {
+        if (m_graphics_processor)
+        {
+            arDestroyGraphicsProcessor(m_virtual_machine, m_graphics_processor);
+        }
+    }
+
+    graphics_processor(const graphics_processor&) = delete;
+    graphics_processor& operator=(const graphics_processor&) = delete;
+
+    graphics_processor(graphics_processor&& other) noexcept
+        :m_virtual_machine{ other.m_virtual_machine }
+        , m_graphics_processor{ std::exchange(other.m_graphics_processor, nullptr) }
+    {
+
+    }
+
+    graphics_processor& operator=(graphics_processor&& other) noexcept
+    {
+        m_virtual_machine = other.m_virtual_machine;
+        m_graphics_processor = std::exchange(other.m_graphics_processor, m_graphics_processor);
+
+        return *this;
+    }
+
+    ArGraphicsProcessor handle() const noexcept
+    {
+        return m_graphics_processor;
+    }
+
+private:
+    ArVirtualMachine m_virtual_machine{};
+    ArGraphicsProcessor m_graphics_processor{};
 };
 
 }

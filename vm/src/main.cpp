@@ -96,6 +96,16 @@ static void run(const machine_options& options)
     ar::functions::load_functions(implementation);
 
     ar::virtual_machine machine{};
+
+    ar::graphics_processor graphics_processor{ machine };
+
+    ArScreen screen;
+    ArScreenCreateInfo screenInfo{ AR_STRUCTURE_TYPE_SCREEN_CREATE_INFO, NULL };
+    screenInfo.graphicsProcessor = graphics_processor.handle();
+    screenInfo.width = 800;
+    screenInfo.height = 600;
+    ar::functions::arCreateScreen(machine.handle(), &screenInfo, &screen);
+
     ar::physical_memory rom{machine, AR_PHYSICAL_MEMORY_ROLE_ROM, 1024 * 1024};
     ar::physical_memory ram{machine, AR_PHYSICAL_MEMORY_ROLE_RAM};
 
@@ -109,6 +119,8 @@ static void run(const machine_options& options)
     {
         execute(processor);
     }
+
+    ar::functions::arDestroyScreen(machine.handle(), screen);
 }
 
 int main(int argc, char** argv)

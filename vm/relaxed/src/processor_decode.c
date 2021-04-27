@@ -49,7 +49,7 @@ static const ArOpcode BRUJumpsCalls[4] =
     AR_OPCODE_CALLR,
 };
 
-static int decodeBRU(uint32_t br, uint32_t pc, uint32_t opcode, ArOperation* restrict output)
+static int decodeBRU(uint32_t br, uint32_t pc, uint32_t opcode, ArOperation* __restrict output)
 {
     const uint32_t type = readbits(opcode, 2, 2);
 
@@ -207,7 +207,7 @@ static const ArOpcode LSUPositLoadStore[8] =
     AR_OPCODE_STCVI,
 };
 
-static int decodeLSU(uint32_t opcode, ArOperation* restrict output)
+static int decodeLSU(uint32_t opcode, ArOperation* __restrict output)
 {
     const uint32_t type = readbits(opcode, 2, 2);
 
@@ -345,7 +345,7 @@ static const ArOpcode ALURegImmOpcodes[16] =
     AR_OPCODE_UNKNOWN,
 };
 
-static int decodeALU(uint32_t opcode, ArOperation* restrict output)
+static int decodeALU(uint32_t opcode, ArOperation* __restrict output)
 {
     const uint32_t category = readbits(opcode, 2, 2);
 
@@ -473,7 +473,7 @@ static ArOpcode AGUOpcodes[16] =
     AR_OPCODE_UNKNOWN,
 };
 
-static int decodeAGU(uint32_t opcode, ArOperation* restrict output)
+static int decodeAGU(uint32_t opcode, ArOperation* __restrict output)
 {
     const uint32_t category = readbits(opcode, 2, 1);
 
@@ -518,7 +518,7 @@ static int decodeAGU(uint32_t opcode, ArOperation* restrict output)
     return 1;
 }
 
-static int decodeVPU(uint32_t opcode, ArOperation* restrict output)
+static int decodeVPU(uint32_t opcode, ArOperation* __restrict output)
 {
     (void)opcode;
     (void)output;
@@ -526,7 +526,7 @@ static int decodeVPU(uint32_t opcode, ArOperation* restrict output)
     return 1;
 }
 
-static int decode(uint32_t index, uint32_t br, uint32_t pc, uint32_t opcode, ArOperation* restrict output)
+static int decode(uint32_t index, uint32_t br, uint32_t pc, uint32_t opcode, ArOperation* __restrict output)
 {
     const uint32_t compute_unit = readbits(opcode, 0, 2);
 

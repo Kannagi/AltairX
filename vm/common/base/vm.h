@@ -13,6 +13,8 @@ extern "C" {
 ALTAIR_DEFINE_TYPE(ArVirtualMachine);
 ALTAIR_DEFINE_TYPE(ArProcessor);
 ALTAIR_DEFINE_TYPE(ArPhysicalMemory);
+ALTAIR_DEFINE_TYPE(ArGraphicsProcessor);
+ALTAIR_DEFINE_TYPE(ArScreen);
 
 typedef enum ArResult
 {
@@ -31,6 +33,8 @@ typedef enum ArStructureType
     AR_STRUCTURE_TYPE_VIRTUAl_MACHINE_CREATE_INFO = 0,
     AR_STRUCTURE_TYPE_PROCESSOR_CREATE_INFO = 1,
     AR_STRUCTURE_TYPE_PHYSICAL_MEMORY_CREATE_INFO = 2,
+    AR_STRUCTURE_TYPE_GRAPHICS_PROCESSOR_CREATE_INFO = 3,
+    AR_STRUCTURE_TYPE_SCREEN_CREATE_INFO = 4,
 } ArStructureType;
 
 typedef enum ArOpcode
@@ -180,6 +184,21 @@ typedef struct ArPhysicalMemoryCreateInfo
     ArPhysicalMemoryRole role;
 } ArPhysicalMemoryCreateInfo;
 
+typedef struct ArGraphicsProcessorCreateInfo
+{
+    ArStructureType sType;     //< The type of this structure
+    void* pNext;               //< A pointer to the next structure
+} ArGraphicsProcessorCreateInfo;
+
+typedef struct ArScreenCreateInfo
+{
+    ArStructureType sType;     //< The type of this structure
+    void* pNext;               //< A pointer to the next structure
+    ArGraphicsProcessor graphicsProcessor; //< The GPU the screen is bound to
+    uint32_t width; //< The screen's width
+    uint32_t height; //< The screen's height
+} ArScreenCreateInfo;
+
 #define AR_OPERATION_MAX_OPERANDS 3
 
 typedef struct ArOperation
@@ -222,7 +241,7 @@ ArResult arCreateVirtualMachine(ArVirtualMachine* pVirtualMachine, const ArVirtu
 
 /** \brief Creates a new processor within a virtual machine
 
-    \param virtualMachine A ArVirtualMachine handle
+    \param virtualMachine An ArVirtualMachine handle
     \param pInfo A pointer on a valid ArProcessorCreateInfo instance
     \param pProcessor A pointer to a ArProcessor handle
 
@@ -234,7 +253,7 @@ ArResult arCreateProcessor(ArVirtualMachine virtualMachine, const ArProcessorCre
 
 /** \brief Creates a new physical memory device within a virtual machine
 
-    \param virtualMachine A ArVirtualMachine handle
+    \param virtualMachine An ArVirtualMachine handle
     \param pInfo A pointer on a valid ArPhysicalMemoryCreateInfo instance
     \param pProcessor A pointer to a ArPhysicalMemory handle
 
@@ -244,9 +263,31 @@ ArResult arCreateProcessor(ArVirtualMachine virtualMachine, const ArProcessorCre
 */
 ArResult arCreatePhysicalMemory(ArVirtualMachine virtualMachine, const ArPhysicalMemoryCreateInfo* pInfo, ArPhysicalMemory* pMemory);
 
+/** \brief Creates a new graphics processor within a virtual machine
+
+    \param virtualMachine An ArVirtualMachine handle
+    \param pInfo A pointer on a valid ArGraphicsProcessorCreateInfo instance
+    \param pGraphicsProcessor A pointer to a ArGraphicsProcessor handle
+
+    \return AR_SUCCESS in case of success
+            AR_ERROR_HOST_OUT_OF_MEMORY if a host memory allocation failed
+*/
+ArResult arCreateGraphicsProcessor(ArVirtualMachine virtualMachine, const ArGraphicsProcessorCreateInfo* pInfo, ArGraphicsProcessor* pGraphicsProcessor);
+
+/** \brief Creates a new screen within a virtual machine
+
+    \param virtualMachine An ArVirtualMachine handle
+    \param pInfo A pointer on a valid ArScreenCreateInfo instance
+    \param pScreen A pointer to a ArScreen handle
+
+    \return AR_SUCCESS in case of success
+            AR_ERROR_HOST_OUT_OF_MEMORY if a host memory allocation failed
+*/
+ArResult arCreateScreen(ArVirtualMachine virtualMachine, const ArScreenCreateInfo* pInfo, ArScreen* pScreen);
+
 /** \brief Decode the next instructions and increment the program counter
 
-    \param processor A ArProcessor handle
+    \param processor An ArProcessor handle
 
     \return AR_SUCCESS in case of success
             AR_ERROR_ILLEGAL_INSTRUCTION if the op-code is illegal
@@ -256,7 +297,7 @@ ArResult arDecodeInstruction(ArProcessor processor);
 
 /** \brief Run the instruction on the processor, and update its status
 
-    \param processor A ArProcessor handle
+    \param processor An ArProcessor handle
 
     \return AR_SUCCESS in case of success
             AR_END_OF_CODE if the processor reached the end of its code
@@ -267,7 +308,7 @@ ArResult arExecuteInstruction(ArProcessor processor);
 
 /** \brief Run the instruction on the processor, and update its status
 
-    \param processor A ArProcessor handle
+    \param processor An ArProcessor handle
 
     \return AR_SUCCESS in case of success
             AR_ERROR_ILLEGAL_INSTRUCTION if the op-code is illegal, or if the instruction tries to access non-existing physical memory
@@ -287,7 +328,7 @@ void arGetProcessorOperations(ArProcessor processor, ArOperation* pOutput, size_
 
 /** \brief Get a pointer on internal memories of the processor.
 
-    \param processor A ArProcessor handle
+    \param processor An ArProcessor handle
     \param pOutput A pointer to a ArProcessorMemoryInfo structure to be filled. The pointers returned by this fonction never expire until the destruction of the processor.
 */
 void arGetProcessorMemoryInfo(ArProcessor processor, ArProcessorMemoryInfo* pOutput);
@@ -296,7 +337,7 @@ void arGetProcessorMemoryInfo(ArProcessor processor, ArProcessorMemoryInfo* pOut
 
     All subobjects must have been freed
 
-    \param virtualMachine A ArVirtualMachine handle
+    \param virtualMachine An ArVirtualMachine handle
 */
 void arDestroyVirtualMachine(ArVirtualMachine virtualMachine);
 
@@ -304,8 +345,8 @@ void arDestroyVirtualMachine(ArVirtualMachine virtualMachine);
 
     Must be called before any call to arDestroyVirtualMachine
 
-    \param virtualMachine A ArVirtualMachine handle
-    \param processor A ArProcessor handle
+    \param virtualMachine An ArVirtualMachine handle
+    \param processor An ArProcessor handle
 */
 void arDestroyProcessor(ArVirtualMachine virtualMachine, ArProcessor processor);
 
@@ -313,16 +354,36 @@ void arDestroyProcessor(ArVirtualMachine virtualMachine, ArProcessor processor);
 
     Must be called before any call to arDestroyVirtualMachine
 
-    \param virtualMachine A ArVirtualMachine handle
-    \param processor A ArPhysicalMemory handle
+    \param virtualMachine An ArVirtualMachine handle
+    \param processor An ArPhysicalMemory handle
 */
 void arDestroyPhysicalMemory(ArVirtualMachine virtualMachine, ArPhysicalMemory memory);
+
+/** \brief Destroy a graphics processor within the virtual machine
+
+    Must be called before any call to arDestroyVirtualMachine
+
+    \param virtualMachine An ArVirtualMachine handle
+    \param graphicsProcessor An ArGraphicsProcessor handle
+*/
+void arDestroyGraphicsProcessor(ArVirtualMachine virtualMachine, ArGraphicsProcessor graphicsProcessor);
+
+/** \brief Destroy a screen within the virtual machine
+
+    Must be called before any call to arDestroyVirtualMachine
+
+    \param virtualMachine An ArVirtualMachine handle
+    \param screen An ArScreen handle
+*/
+void arDestroyScreen(ArVirtualMachine virtualMachine, ArScreen screen);
 
 #endif
 
 typedef ArResult (*PFN_arCreateVirtualMachine)(ArVirtualMachine* pVirtualMachine, const ArVirtualMachineCreateInfo* pInfo);
 typedef ArResult (*PFN_arCreateProcessor)(ArVirtualMachine virtualMachine, const ArProcessorCreateInfo* pInfo, ArProcessor* pProcessor);
 typedef ArResult (*PFN_arCreatePhysicalMemory)(ArVirtualMachine virtualMachine, const ArPhysicalMemoryCreateInfo* pInfo, ArPhysicalMemory* pMemory);
+typedef ArResult(*PFN_arCreateGraphicsProcessor)(ArVirtualMachine virtualMachine, const ArGraphicsProcessorCreateInfo* pInfo, ArGraphicsProcessor* pGraphicsProcessor);
+typedef ArResult(*PFN_arCreateScreen)(ArVirtualMachine virtualMachine, const ArScreenCreateInfo* pInfo, ArScreen* pScreen);
 
 typedef ArResult (*PFN_arDecodeInstruction)(ArProcessor processor);
 typedef ArResult (*PFN_arExecuteInstruction)(ArProcessor processor);
@@ -334,6 +395,8 @@ typedef void (*PFN_arGetProcessorMemoryInfo)(ArProcessor processor, ArProcessorM
 typedef void (*PFN_arDestroyVirtualMachine)(ArVirtualMachine virtualMachine);
 typedef void (*PFN_arDestroyProcessor)(ArVirtualMachine virtualMachine, ArProcessor processor);
 typedef void (*PFN_arDestroyPhysicalMemory)(ArVirtualMachine virtualMachine, ArPhysicalMemory memory);
+typedef void (*PFN_arDestroyGraphicsProcessor)(ArVirtualMachine virtualMachine, ArGraphicsProcessor graphicsProcessor);
+typedef void (*PFN_arDestroyScreen)(ArVirtualMachine virtualMachine, ArScreen screen);
 
 #undef ALTAIR_DEFINE_TYPE
 

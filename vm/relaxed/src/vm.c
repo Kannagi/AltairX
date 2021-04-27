@@ -1,5 +1,7 @@
 #include "vm.h"
 
+#include <SDL2/SDL.h>
+
 #include <stdlib.h>
 #include <assert.h>
 #include <string.h>
@@ -10,7 +12,7 @@ ArResult arCreateVirtualMachine(ArVirtualMachine* pVirtualMachine, const ArVirtu
     assert(pInfo);
     assert(pInfo->sType == AR_STRUCTURE_TYPE_VIRTUAl_MACHINE_CREATE_INFO);
 
-    const ArVirtualMachine output = malloc(sizeof(ArVirtualMachine_T));
+    const ArVirtualMachine output = (ArVirtualMachine)malloc(sizeof(ArVirtualMachine_T));
     if(!output)
     {
         return AR_ERROR_HOST_OUT_OF_MEMORY;
@@ -54,7 +56,7 @@ ArResult arCreateProcessor(ArVirtualMachine virtualMachine, const ArProcessorCre
     assert(AR_PROCESSOR_ISRAM_SIZE >= pInfo->bootCodeSize * sizeof(uint32_t));
     assert(pProcessor);
 
-    const ArProcessor output = malloc(sizeof(ArProcessor_T));
+    const ArProcessor output = (ArProcessor)malloc(sizeof(ArProcessor_T));
     if(!output)
     {
         return AR_ERROR_HOST_OUT_OF_MEMORY;
@@ -98,19 +100,93 @@ ArResult arCreatePhysicalMemory(ArVirtualMachine virtualMachine, const ArPhysica
         return AR_ERROR_TOO_MANY_OBJECTS;
     }
 
-    const ArPhysicalMemory output = malloc(sizeof(ArPhysicalMemory_T));
+    const ArPhysicalMemory output = (ArPhysicalMemory)malloc(sizeof(ArPhysicalMemory_T));
     if(!output)
     {
         return AR_ERROR_HOST_OUT_OF_MEMORY;
     }
 
     output->parent = virtualMachine;
-    output->memory = pInfo->pMemory;
+    output->memory = (uint8_t*)pInfo->pMemory;
     output->size   = pInfo->size;
     output->role   = pInfo->role;
 
     *memory  = output;
     *pMemory = output;
+
+    return AR_SUCCESS;
+}
+
+ArResult arCreateScreen(ArVirtualMachine virtualMachine, const ArScreenCreateInfo* pInfo, ArScreen* pScreen)
+{
+    assert(virtualMachine);
+    assert(pInfo);
+    assert(pInfo->sType == AR_STRUCTURE_TYPE_PHYSICAL_MEMORY_CREATE_INFO);
+    assert(pInfo->width > 0);
+    assert(pInfo->height > 0);
+    assert(pInfo->graphicsProcessor != NULL);
+    assert(pScreen);
+
+    const ArScreen output = (ArScreen)malloc(sizeof(ArScreen_T));
+    if(!output)
+    {
+        return AR_ERROR_HOST_OUT_OF_MEMORY;
+    }
+
+    output->parent = virtualMachine;
+    output->graphicsProcessor = pInfo->graphicsProcessor;
+
+    int posX = 100, posY = 100;
+
+    SDL_Init(SDL_INIT_VIDEO);
+
+    output->win = SDL_CreateWindow("Hello World", posX, posY, pInfo->width, pInfo->height, 0);
+
+    output->renderer = SDL_CreateRenderer(output->win, -1, SDL_RENDERER_ACCELERATED);
+
+    output->texture = SDL_CreateTexture(output->renderer, SDL_PIXELFORMAT_RGBA8888, SDL_TEXTUREACCESS_STREAMING, pInfo->width, pInfo->height);
+    //SDL_UpdateTexture(output->texture, NULL, const void* pixels, int pitch);
+
+    //while (1)
+    {
+        SDL_Event e;
+        if (SDL_PollEvent(&e))
+        {
+            if (e.type == SDL_QUIT)
+            {
+                //break;
+            }
+        }
+
+        SDL_RenderClear(output->renderer);
+        SDL_RenderCopy(output->renderer, output->texture, NULL, NULL);
+        SDL_RenderPresent(output->renderer);
+    }
+
+//    Uint32 rmask, gmask, bmask, amask;
+//
+//#if SDL_BYTEORDER == SDL_BIG_ENDIAN
+//    rmask = 0xff000000;
+//    gmask = 0x00ff0000;
+//    bmask = 0x0000ff00;
+//    amask = 0x000000ff;
+//#else
+//    rmask = 0x000000ff;
+//    gmask = 0x0000ff00;
+//    bmask = 0x00ff0000;
+//    amask = 0xff000000;
+//#endif
+//
+//    output->surface = SDL_CreateRGBSurface(0, pInfo->width, pInfo->height, 0,
+//        rmask, gmask, bmask, amask);
+//    if (output->surface == NULL)
+//    {
+//        SDL_Log("SDL_CreateRGBSurface() failed: %s", SDL_GetError());
+//        free(output);
+//        return AR_ERROR_HOST_OUT_OF_MEMORY;
+//    }
+
+    *pScreen = output;
 
     return AR_SUCCESS;
 }
@@ -187,7 +263,24 @@ void arDestroyPhysicalMemory(ArVirtualMachine virtualMachine, ArPhysicalMemory m
     free(memory);
 }
 
-uint32_t opcodeSetSize(ArProcessor restrict processor)
+void arDestroyScreen(ArVirtualMachine virtualMachine, ArScreen screen)
+{
+    assert(virtualMachine);
+
+    if (screen)
+    {
+        //SDL_FreeSurface(screen->surface);
+        SDL_DestroyTexture(screen->texture);
+        SDL_DestroyRenderer(screen->renderer);
+        SDL_DestroyWindow(screen->win);
+
+        SDL_Quit();
+
+        free(screen);
+    }
+}
+
+uint32_t opcodeSetSize(ArProcessor __restrict processor)
 {
     uint32_t size;
     if(processor->flags & 0x01)
