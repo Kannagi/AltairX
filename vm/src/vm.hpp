@@ -286,9 +286,6 @@ private:
 class graphics_processor
 {
 public:
-    using operation_set_t = std::pair<std::size_t, std::array<ArOperation, AR_PROCESSOR_MAX_OPERATIONS>>;
-
-public:
     explicit graphics_processor(virtual_machine& machine)
         :m_virtual_machine{ machine.handle() }
     {
@@ -296,7 +293,7 @@ public:
         info.sType = AR_STRUCTURE_TYPE_GRAPHICS_PROCESSOR_CREATE_INFO;
         info.pNext = nullptr;
 
-        const auto result{ arCreateGraphicsProcessor(m_virtual_machine, &info, &m_graphics_processor) };
+        const auto result{ functions::arCreateGraphicsProcessor(m_virtual_machine, &info, &m_graphics_processor) };
         if (result != AR_SUCCESS)
         {
             throw std::runtime_error{ "Can not create processor." };
@@ -307,7 +304,7 @@ public:
     {
         if (m_graphics_processor)
         {
-            arDestroyGraphicsProcessor(m_virtual_machine, m_graphics_processor);
+            functions::arDestroyGraphicsProcessor(m_virtual_machine, m_graphics_processor);
         }
     }
 
@@ -337,6 +334,62 @@ public:
 private:
     ArVirtualMachine m_virtual_machine{};
     ArGraphicsProcessor m_graphics_processor{};
+};
+
+class screen
+{
+public:
+    explicit screen(virtual_machine& machine, graphics_processor& gpu, int width, int height)
+        :m_virtual_machine{ machine.handle() }
+    {
+        ArScreenCreateInfo info;
+        info.sType = AR_STRUCTURE_TYPE_SCREEN_CREATE_INFO;
+        info.pNext = nullptr;
+        info.width = width;
+        info.height = height;
+        info.graphicsProcessor = gpu.handle();
+
+        const auto result{ functions::arCreateScreen(m_virtual_machine, &info, &m_screen) };
+        if (result != AR_SUCCESS)
+        {
+            throw std::runtime_error{ "Can not create screen." };
+        }
+    }
+
+    ~screen()
+    {
+        if (m_screen)
+        {
+            functions::arDestroyScreen(m_virtual_machine, m_screen);
+        }
+    }
+
+    screen(const screen&) = delete;
+    screen& operator=(const screen&) = delete;
+
+    screen(screen&& other) noexcept
+        :m_virtual_machine{ other.m_virtual_machine }
+        , m_screen{ std::exchange(other.m_screen, nullptr) }
+    {
+
+    }
+
+    screen& operator=(screen&& other) noexcept
+    {
+        m_virtual_machine = other.m_virtual_machine;
+        m_screen = std::exchange(other.m_screen, m_screen);
+
+        return *this;
+    }
+
+    ArScreen handle() const noexcept
+    {
+        return m_screen;
+    }
+
+private:
+    ArVirtualMachine m_virtual_machine{};
+    ArScreen m_screen{};
 };
 
 }

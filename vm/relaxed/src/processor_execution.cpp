@@ -1,10 +1,11 @@
-#include "vm.h"
+#include "processor.hpp"
+#include "memory.hpp"
 
-#include <assert.h>
-#include <string.h>
-#include <math.h>
+#include <cassert>
+#include <cmath>
+#include <string>
 
-static ArResult executeInstruction(ArProcessor __restrict processor, uint32_t index)
+static ArResult executeInstruction(ArProcessor AR_RESTRICT processor, uint32_t index)
 {
     //Mask to trunc results base on size (8 bits, 16 bits, 32 bits or 64 bits)
     static const uint64_t sizemask[4] =
@@ -17,11 +18,11 @@ static ArResult executeInstruction(ArProcessor __restrict processor, uint32_t in
 
     static const uint32_t ZSUClearMask  = ~(Z_MASK | S_MASK | U_MASK);
 
-    uint64_t* __restrict const ireg = processor->ireg;
-    uint64_t* __restrict const vreg = processor->vreg;
+    uint64_t* AR_RESTRICT const ireg = processor->ireg;
+    uint64_t* AR_RESTRICT const vreg = processor->vreg;
 
-    const ArOperation* __restrict const op = &processor->operations[index];
-    const uint32_t*    __restrict const operands = op->operands;
+    const ArOperation* AR_RESTRICT const op = &processor->operations[index];
+    const uint32_t*    AR_RESTRICT const operands = op->operands;
 
     switch(op->op)
     {
@@ -407,12 +408,12 @@ static ArResult executeInstruction(ArProcessor __restrict processor, uint32_t in
     return AR_SUCCESS;
 }
 
-static ArResult executeDelayedInstruction(ArProcessor __restrict processor, uint32_t index)
+static ArResult executeDelayedInstruction(ArProcessor AR_RESTRICT processor, uint32_t index)
 {
     static const uint32_t ZSUClearMask = ~(Z_MASK | S_MASK | U_MASK);
 
-    const ArOperation* __restrict op = &processor->delayed[index];
-    const uint32_t*    __restrict const operands = op->operands;
+    const ArOperation* AR_RESTRICT op = &processor->delayed[index];
+    const uint32_t*    AR_RESTRICT const operands = op->operands;
 
     switch(op->op)
     {
@@ -575,7 +576,7 @@ ArResult arExecuteInstruction(ArProcessor processor)
     return AR_SUCCESS;
 }
 
-static ArResult copyFromRAM(ArPhysicalMemory memory, uint64_t memoryAddress, uint8_t* __restrict output, size_t size)
+static ArResult copyFromRAM(ArPhysicalMemory memory, uint64_t memoryAddress, uint8_t* AR_RESTRICT output, size_t size)
 {
     if(memoryAddress + size > memory->size)
     {
@@ -587,7 +588,7 @@ static ArResult copyFromRAM(ArPhysicalMemory memory, uint64_t memoryAddress, uin
     return AR_SUCCESS;
 }
 
-static ArResult copyToRAM(ArPhysicalMemory memory, uint64_t memoryAddress, const uint8_t* __restrict input, size_t size)
+static ArResult copyToRAM(ArPhysicalMemory memory, uint64_t memoryAddress, const uint8_t* AR_RESTRICT input, size_t size)
 {
     if(memoryAddress + size > memory->size)
     {
@@ -599,13 +600,13 @@ static ArResult copyToRAM(ArPhysicalMemory memory, uint64_t memoryAddress, const
     return AR_SUCCESS;
 }
 
-static ArResult executeDMA(ArProcessor __restrict processor, int store)
+static ArResult executeDMA(ArProcessor AR_RESTRICT processor, int store)
 {/*
     //RAM -> SDRAM
-    uint64_t* __restrict const ireg = processor->ireg;
+    uint64_t* AR_RESTRICT const ireg = processor->ireg;
 
-    const ArOperation* __restrict const op       = &processor->dmaOperation;
-    const uint32_t*    __restrict const operands = op->operands;
+    const ArOperation* AR_RESTRICT const op       = &processor->dmaOperation;
+    const uint32_t*    AR_RESTRICT const operands = op->operands;
 
     const uint64_t sramb = (op->data)        & 0x0FFFu;
     const uint64_t ramb  = (op->data >> 12u) & 0x0FFFu;
@@ -640,13 +641,13 @@ static ArResult executeDMA(ArProcessor __restrict processor, int store)
     return AR_ERROR_ILLEGAL_INSTRUCTION;
 }
 
-static ArResult executeDMAR(ArProcessor __restrict processor, int store)
+static ArResult executeDMAR(ArProcessor AR_RESTRICT processor, int store)
 {
     //RAM -> SDRAM
-    uint64_t* __restrict const ireg = processor->ireg;
+    uint64_t* AR_RESTRICT const ireg = processor->ireg;
 
-    const ArOperation* __restrict const op       = &processor->dmaOperation;
-    const uint32_t*    __restrict const operands = op->operands;
+    const ArOperation* AR_RESTRICT const op       = &processor->dmaOperation;
+    const uint32_t*    AR_RESTRICT const operands = op->operands;
 
     const size_t   size = ireg[operands[0]] * 32u;
     const uint64_t ram  = ireg[operands[1]] * 32ull;
@@ -695,13 +696,13 @@ static ArResult executeDMAR(ArProcessor __restrict processor, int store)
     }
 }
 
-static ArResult executeDMAIR(ArProcessor __restrict processor)
+static ArResult executeDMAIR(ArProcessor AR_RESTRICT processor)
 {/*
     //RAM -> SDRAM
-    uint64_t* __restrict const ireg = processor->ireg;
+    uint64_t* AR_RESTRICT const ireg = processor->ireg;
 
-    const ArOperation* __restrict const op       = &processor->dmaOperation;
-    const uint32_t*    __restrict const operands = op->operands;
+    const ArOperation* AR_RESTRICT const op       = &processor->dmaOperation;
+    const uint32_t*    AR_RESTRICT const operands = op->operands;
 
     const uint64_t sram = ireg[operands[0]] * 32ull;
     const uint64_t ram  = ireg[operands[1]] * 32ull;
@@ -726,13 +727,13 @@ static ArResult executeDMAIR(ArProcessor __restrict processor)
     return AR_ERROR_ILLEGAL_INSTRUCTION;
 }
 
-static ArResult executeDMAL(ArProcessor __restrict processor, int store)
+static ArResult executeDMAL(ArProcessor AR_RESTRICT processor, int store)
 {/*
     //RAM -> SDRAM
-    uint64_t* __restrict const ireg = processor->ireg;
+    uint64_t* AR_RESTRICT const ireg = processor->ireg;
 
-    const ArOperation* __restrict const op       = &processor->dmaOperation;
-    const uint32_t*    __restrict const operands = op->operands;
+    const ArOperation* AR_RESTRICT const op       = &processor->dmaOperation;
+    const uint32_t*    AR_RESTRICT const operands = op->operands;
 
     const uint64_t sram = ireg[operands[0]] * 32ull;
     const uint64_t ram  = ireg[operands[1]] * 32ull;

@@ -8,6 +8,22 @@
 extern "C" {
 #endif
 
+#ifdef _MSC_VER
+#   ifdef AR_EXPORT
+#       define AR_API __declspec( dllexport )
+#   else
+#       define AR_API __declspec( dllimport )
+#   endif
+#else
+#   define AR_API
+#endif
+
+#if defined(__cplusplus) || defined(_MSC_VER)
+#   define AR_RESTRICT __restrict
+#else
+#   define AR_RESTRICT restrict
+#endif
+
 #define ALTAIR_DEFINE_TYPE(name) typedef struct name##_T* name
 
 ALTAIR_DEFINE_TYPE(ArVirtualMachine);
@@ -217,6 +233,19 @@ typedef struct ArOperation
 #define AR_PROCESSOR_VREG_COUNT     (64u)
 #define AR_PROCESSOR_MAX_OPERATIONS (4u)
 
+#define AR_GRAPHICS_PROCESSOR_REG_COUNT (64u)
+// L1
+#define AR_GRAPHICS_PROCESSOR_L1_DSRAM_SIZE  (128u * 1024u) // 128 KiB
+#define AR_GRAPHICS_PROCESSOR_ISRAM_SIZE     (128u * 1024u) // 128 KiB
+#define AR_GRAPHICS_PROCESSOR_L1_CACHE_SIZE  (32u * 1024u)  // 32 KiB
+// L2
+#define AR_GRAPHICS_PROCESSOR_L2_CACHE_SIZE  (4u * 1'048'576u) // 4 MiB
+#define AR_GRAPHICS_PROCESSOR_L2_DSRAM_SIZE  (32u * 1024u)     // 32 KiB
+// L3
+#define AR_GRAPHICS_PROCESSOR_1T_SRAM_SIZE   (64u * 1'048'576u) // 64 MiB
+
+#define AR_GRAPHICS_PROCESSOR_MAX_OPERATIONS (4u)
+
 typedef struct ArProcessorMemoryInfo
 {
     uint8_t*  dsram;
@@ -237,7 +266,7 @@ typedef struct ArProcessorMemoryInfo
     \return AR_SUCCESS in case of success
             AR_ERROR_HOST_OUT_OF_MEMORY if a host memory allocation failed
 */
-ArResult arCreateVirtualMachine(ArVirtualMachine* pVirtualMachine, const ArVirtualMachineCreateInfo* pInfo);
+AR_API ArResult arCreateVirtualMachine(ArVirtualMachine* pVirtualMachine, const ArVirtualMachineCreateInfo* pInfo);
 
 /** \brief Creates a new processor within a virtual machine
 
@@ -249,7 +278,7 @@ ArResult arCreateVirtualMachine(ArVirtualMachine* pVirtualMachine, const ArVirtu
             AR_ERROR_INVALID_CODE if the code is empty, or its size is not a multiple of 4
             AR_ERROR_HOST_OUT_OF_MEMORY if a host memory allocation failed
 */
-ArResult arCreateProcessor(ArVirtualMachine virtualMachine, const ArProcessorCreateInfo* pInfo, ArProcessor* pProcessor);
+AR_API ArResult arCreateProcessor(ArVirtualMachine virtualMachine, const ArProcessorCreateInfo* pInfo, ArProcessor* pProcessor);
 
 /** \brief Creates a new physical memory device within a virtual machine
 
@@ -261,7 +290,7 @@ ArResult arCreateProcessor(ArVirtualMachine virtualMachine, const ArProcessorCre
             AR_ERROR_HOST_OUT_OF_MEMORY if a host memory allocation failed
             AR_ERROR_TOO_MANY_OBJECTS if there is already a physical memory instance inside the virtual machine
 */
-ArResult arCreatePhysicalMemory(ArVirtualMachine virtualMachine, const ArPhysicalMemoryCreateInfo* pInfo, ArPhysicalMemory* pMemory);
+AR_API ArResult arCreatePhysicalMemory(ArVirtualMachine virtualMachine, const ArPhysicalMemoryCreateInfo* pInfo, ArPhysicalMemory* pMemory);
 
 /** \brief Creates a new graphics processor within a virtual machine
 
@@ -272,7 +301,7 @@ ArResult arCreatePhysicalMemory(ArVirtualMachine virtualMachine, const ArPhysica
     \return AR_SUCCESS in case of success
             AR_ERROR_HOST_OUT_OF_MEMORY if a host memory allocation failed
 */
-ArResult arCreateGraphicsProcessor(ArVirtualMachine virtualMachine, const ArGraphicsProcessorCreateInfo* pInfo, ArGraphicsProcessor* pGraphicsProcessor);
+AR_API ArResult arCreateGraphicsProcessor(ArVirtualMachine virtualMachine, const ArGraphicsProcessorCreateInfo* pInfo, ArGraphicsProcessor* pGraphicsProcessor);
 
 /** \brief Creates a new screen within a virtual machine
 
@@ -283,7 +312,7 @@ ArResult arCreateGraphicsProcessor(ArVirtualMachine virtualMachine, const ArGrap
     \return AR_SUCCESS in case of success
             AR_ERROR_HOST_OUT_OF_MEMORY if a host memory allocation failed
 */
-ArResult arCreateScreen(ArVirtualMachine virtualMachine, const ArScreenCreateInfo* pInfo, ArScreen* pScreen);
+AR_API ArResult arCreateScreen(ArVirtualMachine virtualMachine, const ArScreenCreateInfo* pInfo, ArScreen* pScreen);
 
 /** \brief Decode the next instructions and increment the program counter
 
@@ -293,7 +322,7 @@ ArResult arCreateScreen(ArVirtualMachine virtualMachine, const ArScreenCreateInf
             AR_ERROR_ILLEGAL_INSTRUCTION if the op-code is illegal
             AR_ERROR_HOST_OUT_OF_MEMORY if a host memory allocation failed
 */
-ArResult arDecodeInstruction(ArProcessor processor);
+AR_API ArResult arDecodeInstruction(ArProcessor processor);
 
 /** \brief Run the instruction on the processor, and update its status
 
@@ -304,7 +333,7 @@ ArResult arDecodeInstruction(ArProcessor processor);
             AR_ERROR_ILLEGAL_INSTRUCTION if the op-code is illegal
             AR_ERROR_HOST_OUT_OF_MEMORY if a host memory allocation failed
 */
-ArResult arExecuteInstruction(ArProcessor processor);
+AR_API ArResult arExecuteInstruction(ArProcessor processor);
 
 /** \brief Run the instruction on the processor, and update its status
 
@@ -316,7 +345,7 @@ ArResult arExecuteInstruction(ArProcessor processor);
             AR_ERROR_PHYSICAL_MEMORY_OUT_OF_RANGE if the final address + size of machine's physical memory is out of range
             AR_ERROR_HOST_OUT_OF_MEMORY if a host memory allocation failed
 */
-ArResult arExecuteDirectMemoryAccess(ArProcessor processor);
+AR_API ArResult arExecuteDirectMemoryAccess(ArProcessor processor);
 
 /** \brief Get a copy of current processor fetch operations.
 
@@ -324,14 +353,14 @@ ArResult arExecuteDirectMemoryAccess(ArProcessor processor);
     \param pOutput A pointer to a ArOperation structure array to be filled. The array's size must be of at least AR_PROCESSOR_MAX_OPERATIONS.
     \param pCount A pointer to a size_t, the value is updated with the current amount of decoded instructions.
 */
-void arGetProcessorOperations(ArProcessor processor, ArOperation* pOutput, size_t* pCount);
+AR_API void arGetProcessorOperations(ArProcessor processor, ArOperation* pOutput, size_t* pCount);
 
 /** \brief Get a pointer on internal memories of the processor.
 
     \param processor An ArProcessor handle
     \param pOutput A pointer to a ArProcessorMemoryInfo structure to be filled. The pointers returned by this fonction never expire until the destruction of the processor.
 */
-void arGetProcessorMemoryInfo(ArProcessor processor, ArProcessorMemoryInfo* pOutput);
+AR_API void arGetProcessorMemoryInfo(ArProcessor processor, ArProcessorMemoryInfo* pOutput);
 
 /** \brief Destroy a virtual machine
 
@@ -339,7 +368,7 @@ void arGetProcessorMemoryInfo(ArProcessor processor, ArProcessorMemoryInfo* pOut
 
     \param virtualMachine An ArVirtualMachine handle
 */
-void arDestroyVirtualMachine(ArVirtualMachine virtualMachine);
+AR_API void arDestroyVirtualMachine(ArVirtualMachine virtualMachine);
 
 /** \brief Destroy a processor within the virtual machine
 
@@ -348,7 +377,7 @@ void arDestroyVirtualMachine(ArVirtualMachine virtualMachine);
     \param virtualMachine An ArVirtualMachine handle
     \param processor An ArProcessor handle
 */
-void arDestroyProcessor(ArVirtualMachine virtualMachine, ArProcessor processor);
+AR_API void arDestroyProcessor(ArVirtualMachine virtualMachine, ArProcessor processor);
 
 /** \brief Destroy a physical memory device within a virtual machine
 
@@ -357,7 +386,7 @@ void arDestroyProcessor(ArVirtualMachine virtualMachine, ArProcessor processor);
     \param virtualMachine An ArVirtualMachine handle
     \param processor An ArPhysicalMemory handle
 */
-void arDestroyPhysicalMemory(ArVirtualMachine virtualMachine, ArPhysicalMemory memory);
+AR_API void arDestroyPhysicalMemory(ArVirtualMachine virtualMachine, ArPhysicalMemory memory);
 
 /** \brief Destroy a graphics processor within the virtual machine
 
@@ -366,7 +395,7 @@ void arDestroyPhysicalMemory(ArVirtualMachine virtualMachine, ArPhysicalMemory m
     \param virtualMachine An ArVirtualMachine handle
     \param graphicsProcessor An ArGraphicsProcessor handle
 */
-void arDestroyGraphicsProcessor(ArVirtualMachine virtualMachine, ArGraphicsProcessor graphicsProcessor);
+AR_API void arDestroyGraphicsProcessor(ArVirtualMachine virtualMachine, ArGraphicsProcessor graphicsProcessor);
 
 /** \brief Destroy a screen within the virtual machine
 
@@ -375,7 +404,7 @@ void arDestroyGraphicsProcessor(ArVirtualMachine virtualMachine, ArGraphicsProce
     \param virtualMachine An ArVirtualMachine handle
     \param screen An ArScreen handle
 */
-void arDestroyScreen(ArVirtualMachine virtualMachine, ArScreen screen);
+AR_API void arDestroyScreen(ArVirtualMachine virtualMachine, ArScreen screen);
 
 #endif
 

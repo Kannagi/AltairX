@@ -1,5 +1,5 @@
 target("altair_vm_base")
 	set_kind("static")
-	set_languages("c99")
+	set_languages("c++17")
 	add_headerfiles("base/vm.h")
 	add_includedirs(".", { public = true })

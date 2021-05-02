@@ -49,7 +49,8 @@ static machine_options parse_arguments(const std::vector<std::string_view>& args
 }
 
 #ifdef NES_WIN32_SHARED_LIBRARY
-static constexpr const char* relaxed_default_path{"altair_vm_relaxed.dll"};
+//static constexpr const char* relaxed_default_path{"altair_vm_relaxed.dll"};
+static constexpr const char* relaxed_default_path{"D:/Projects/git/Altair/vm/build/windows/x64/debug/altair_vm_relaxed.dll"};
 static constexpr const char* pedantic_default_path{"altair_vm_pedantic.dll"};
 #else
 static constexpr const char* relaxed_default_path{"altair_vm_relaxed.so"};
@@ -58,6 +59,13 @@ static constexpr const char* pedantic_default_path{"altair_vm_pedantic.so"};
 
 static nes::shared_library open_implementation(std::uint32_t flags)
 {
+    //auto m_handle1 = LoadLibrary("vulkan-1.dll");
+    //auto m_handle2 = LoadLibrary(relaxed_default_path);
+    auto m_handle2 = LoadLibraryEx(relaxed_default_path, nullptr, LOAD_LIBRARY_SEARCH_APPLICATION_DIR);
+    DWORD lastError = GetLastError();
+    auto m_handle3 = LoadLibraryEx("altair_vm_relaxed.dll", nullptr, LOAD_LIBRARY_SEARCH_APPLICATION_DIR);
+    lastError = GetLastError();
+
     if(static_cast<bool>(flags & machine_options::pedantic))
     {
         return nes::shared_library{pedantic_default_path};
@@ -97,19 +105,13 @@ static void run(const machine_options& options)
 
     ar::virtual_machine machine{};
 
-    ar::graphics_processor graphics_processor{ machine };
-
-    ArScreen screen;
-    ArScreenCreateInfo screenInfo{ AR_STRUCTURE_TYPE_SCREEN_CREATE_INFO, NULL };
-    screenInfo.graphicsProcessor = graphics_processor.handle();
-    screenInfo.width = 800;
-    screenInfo.height = 600;
-    ar::functions::arCreateScreen(machine.handle(), &screenInfo, &screen);
-
     ar::physical_memory rom{machine, AR_PHYSICAL_MEMORY_ROLE_ROM, 1024 * 1024};
     ar::physical_memory ram{machine, AR_PHYSICAL_MEMORY_ROLE_RAM};
 
     ar::processor processor{machine, std::data(boot_code), std::size(boot_code)};
+    ar::graphics_processor graphics_processor{ machine };
+
+    ar::screen screen{ machine, graphics_processor, 800, 600 };
 
     if(static_cast<bool>(options.flags & machine_options::debugger))
     {
@@ -119,8 +121,6 @@ static void run(const machine_options& options)
     {
         execute(processor);
     }
-
-    ar::functions::arDestroyScreen(machine.handle(), screen);
 }
 
 int main(int argc, char** argv)
