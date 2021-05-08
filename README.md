@@ -33,16 +33,16 @@ For the calculation unit it has:
 
 The advantage of this processor is that it has a simple design, and requires little transistor for "high performance" and therefore consume / cost less than RISC Out Of Order processors.
 
-## Target configuration  
-Altair K1 2.5 GHz ,8-10 cores  
-LPDDR4 2666 MHz , 8GB in a unified memory  
-GPU Aldebaran G1 1 GHz , 8 CU , 2 TFlops  
-
 ### Todo list
 - Finish the assembler program
 - Make documentation (pdf / html) (ISA and hardware)
 - Translate the IR code (Clang) for Altair
 - Make the virtual machine
+
+## Target configuration  
+Altair K1 2.5 GHz ,8-10 cores  
+LPDDR4 2666 MHz , 8GB in a unified memory  
+GPU Aldebaran G1 1 GHz , 8 CU , 2 TFlops  
 
 ## Pipeline
 <img src="Pipeline4.png?raw=true" alt="Pipeline" width="887" height="785">
