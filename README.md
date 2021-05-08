@@ -33,7 +33,7 @@ For the calculation unit it has:
 
 The advantage of this processor is that it has a simple design, and requires little transistor for "high performance" and therefore consume / cost less than RISC Out Of Order processors.
 
-##Target configuration  
+## Target configuration  
 Altair K1 2.5 GHz ,8-10 cores  
 LPDDR4 2666 MHz , 8GB in a unified memory  
 GPU Aldebaran G1 1 GHz , 8 CU , 2 TFlops  
