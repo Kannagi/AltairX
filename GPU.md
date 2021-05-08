@@ -40,8 +40,4 @@ For the textures, here is what will have to manage:
 ## Pipeline Compute Unit
 <img src="PipelineGPU.png?raw=true" alt="Compute Unit" width="640" height="840">
 
-## GPU Die 1
-<img src="dieGPU2.png?raw=true" alt="GPU" width="1136" height="1150">
 
-## GPU Die 2
-<img src="dieGPU3.png?raw=true" alt="GPU" width="1568" height="1166">
