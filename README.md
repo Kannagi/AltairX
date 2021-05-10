@@ -41,8 +41,22 @@ The advantage of this processor is that it has a simple design, and requires lit
 
 ## Target configuration  
 Altair K1 2.5 GHz ,8-10 cores  
-LPDDR4 2666 MHz , 8GB in a unified memory  
+LPDDR4 3200 MHz , 8GB in a unified memory  
 GPU Aldebaran G1 1 GHz , 8 CU , 2 TFlops  
+
+## Link
+Altair K1 ISA : https://docs.google.com/spreadsheets/d/1QSawEbuZwvMbYRcha7aj3VXp76EGc-zYoRJHNPjmhB8/edit?usp=sharing  
+
+ALTAIR K1 Pipeline : https://docs.google.com/spreadsheets/d/1u-XBjAyq8LOzAFcWMXsdAChMMzbmTIuZtzWQ7XDTRdk/edit?usp=sharing  
+
+ALTAIR IR ISA : https://docs.google.com/spreadsheets/d/19nOBbH_4KWaXxDSNA4JuZjaBble0VRrBxcVlEjTZ3iI/edit?usp=sharing  
+
+ALTAIR Executable Header : https://docs.google.com/spreadsheets/d/1g7mEhaBIVBJ75-5gJ_TrYiVJVTZHEJQnqN0XXUBX57g/edit?usp=sharing
+
+Aldebaran G1 ISA : https://docs.google.com/spreadsheets/d/1LiSZbdd6wCpa-sZZ9uLg5eAyGxdpMl363waUP927xS4/edit?usp=sharing  
+
+
+
 
 ## Pipeline
 <img src="Pipeline4.png?raw=true" alt="Pipeline" width="887" height="785">
