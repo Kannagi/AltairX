@@ -27,7 +27,7 @@ Then we execute the buffer 2 and we preload the buffer 1 and so on.
 For floating point numbers Altair , it will not be 100% compatible with the standard  with IEEE 754
 
 For the calculation unit it has:  
-2ALU+2ALU(32 bits) 2VFPU 2LSU FDIV DIV BRU AGU CMP  
+2ALU+2ALU(32 bits) 2VFPU 2LSU FDIV DIV BRU CMP  
 
 Altair will have as main kernel (for the OS), a 64 bits RISC-V, scalar in order with an ALU/FPU/BRU/LSU,there will be no double float.  
 32 KiB L1 data cache (Direct mapped or Set-associative 2/4 ways).  
