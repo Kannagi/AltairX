@@ -62,7 +62,7 @@ Aldebaran G1 ISA : https://docs.google.com/spreadsheets/d/1LiSZbdd6wCpa-sZZ9uLg5
 
 
 ## Pipeline
-<img src="Pipeline4.png?raw=true" alt="Pipeline" width="887" height="785">
+<img src="Pipeline4.png?raw=true" alt="Pipeline">
 
 ## CPU Die
 <img src="CPU.png?raw=true" alt="CPU" width="500" height="400">
