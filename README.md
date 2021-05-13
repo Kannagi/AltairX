@@ -24,8 +24,12 @@ For this, the compiler will have to do two things:
 This is a technique used on consoles like the Playstation 2 and 3, we have to make a double buffer, and therefore execute and read our data in buffer 1, while we preload our data in buffer 2.  
 Then we execute the buffer 2 and we preload the buffer 1 and so on.
 
-For floating point numbers Altair , it will not be 100% compatible with the standard  with IEEE 754
-
+For floating point numbers in Altair , it will not be 100% compatible with the standard with IEEE 754  
+-Non-normalized numbers are not handled (they are equal to zero).  
+-Infinite numbers cannot be handled (they are worth the max value).  
+-NaN values are not manage (they are worth the max value).  
+-Rounding is always towards 0  
+-Exceptions are not handled   
 For the calculation unit it has:  
 2ALU+2ALU(32 bits) 2VFPU 2LSU FDIV DIV BRU CMP  
 
