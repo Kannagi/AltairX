@@ -30,6 +30,7 @@ For floating point numbers in Altair , it will not be 100% compatible with the s
 -NaN values are not manage (they are worth the max value).  
 -Rounding is always towards 0  
 -Exceptions are not handled   
+
 For the calculation unit it has:  
 2ALU+2ALU(32 bits) 2VFPU 2LSU FDIV DIV BRU CMP  
 
