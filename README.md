@@ -2,11 +2,13 @@
 New computer and new CPU PoC
 
 The main processor of the Altair K1 is a VLIW In Order CPU.  
-It has 4 internal memory:  
-A SRAM memory (Scratchpad) for 128 KiB instructions.  
-Another SRAM memory (Scratchpad) for 128 KiB data.  
-A 32 KiB cache memory. (Direct mapped)  
-256B SRAM memory for I / O.  
+It has 3 internal memory:  
+128 KiB L1 data Scratchpad memory.  
+128 KiB L1 instruction Scratchpad memory.  
+32 KiB  L1 data cache (Direct mapped or Set-associative 2/4 ways).  
+  
+1/4 MIB L2 cache (Set-associative 2/4 ways).  
+1/4 MIB L2 cache Scratchpad memory.  
 
 The processor has no branch prediction, it will be based on the delay slot (1 cycle for Fetch) and 1 decode cycle + Jump (Delay)
 
@@ -22,14 +24,14 @@ For this, the compiler will have to do two things:
 This is a technique used on consoles like the Playstation 2 and 3, we have to make a double buffer, and therefore execute and read our data in buffer 1, while we preload our data in buffer 2.  
 Then we execute the buffer 2 and we preload the buffer 1 and so on.
 
-The L1 I/O SRAM, is not made to read / write hardware, but to control another CPU or core.  
-The configuration thought is that the main processor can indicate I/O for the other cores, while keeping a security (for the OS).  
-The main core also has an I/O SRAM, if you want, for example, to have 2 processors on a machine. 
-
 For floating point numbers Altair , it will not be 100% compatible with the standard  with IEEE 754
 
 For the calculation unit it has:  
-2ALU+2ALU(move/logical operation only) 2VFPU 2LSU FDIV DIV BRU AGU CMP
+2ALU+2ALU(32 bits) 2VFPU 2LSU FDIV DIV BRU AGU CMP  
+
+Altair will have as main kernel (for the OS), a 64 bits RISC-V, scalar in order with an ALU/FPU/BRU/LSU,there will be no double float.  
+32 KiB L1 data cache (Direct mapped or Set-associative 2/4 ways).  
+32 KiB L1 instruction cache (Direct mapped or Set-associative 2/4 ways).  
 
 The advantage of this processor is that it has a simple design, and requires little transistor for "high performance" and therefore consume / cost less than RISC Out Of Order processors.
 
@@ -39,10 +41,11 @@ The advantage of this processor is that it has a simple design, and requires lit
 - Translate the IR code (Clang) for Altair
 - Make the virtual machine
 
-## Target configuration  
-Altair K1 2.5 GHz ,8-10 cores  
-LPDDR4 3200 MHz , 8GB in a unified memory  
-GPU Aldebaran G1 1 GHz , 8 CU , 2 TFlops  
+## Target configuration
+RISC-V 2.5 GHz 1 core  
+Altair K1 2.5 GHz ,6 cores  
+LPDDR4 2666/3200 MHz , 8GB in a unified memory  
+GPU Aldebaran G1 1 GHz , 4/8 CU , 1-2 TFlops  
 
 ## Link
 Altair K1 ISA : https://docs.google.com/spreadsheets/d/1QSawEbuZwvMbYRcha7aj3VXp76EGc-zYoRJHNPjmhB8/edit?usp=sharing  
