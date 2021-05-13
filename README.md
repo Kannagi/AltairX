@@ -65,9 +65,9 @@ Aldebaran G1 ISA : https://docs.google.com/spreadsheets/d/1LiSZbdd6wCpa-sZZ9uLg5
 <img src="Pipeline4.png?raw=true" alt="Pipeline">
 
 ## CPU Die
-<img src="CPU.png?raw=true" alt="CPU" width="500" height="400">
+<img src="CPU.png?raw=true" alt="CPU">
 
 
 ## CPU Core
-<img src="die.png?raw=true" alt="CPU" width="256" height="256">
+<img src="die.png?raw=true" alt="CPU">
 
