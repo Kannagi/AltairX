@@ -1,26 +1,24 @@
-# Altair GPU
+# Aldebaran GPU
 
 Altair for GPU shares many points in common with the CPU version, it is a simplified version oriented parallel computing and rendering.
 
-So Altair G1 is a VLIW in order processor.  
-It has the same L1 cache count.  
-It has 32-64MB 1T-SRAM memory for textures.  
-A 128 KB SRAM for texture indexes (to manage palettes or VQ).  
+So Aldebaran G1 is a VLIW in order processor.  
+128 KiB L1 data Scratchpad memory.  
+128 KiB L1 instruction Scratchpad memory.  
+32 KiB  L1 data cache (Direct mapped or Set-associative 2/4 ways).  
 
-L2 cache memory is intended for textures that are too large  
-For example if we use two non-compressive textures of 4096x4096, it does not enter the texture buffer, and it will be managed by the cache (longer and therefore with a lot of missing cache).  
-To avoid using the cache for managing images (or 2D rendering) with a large texture, there will be a “Sprite” type geometry management.  
+1 MiB L2 Texture cache (Set-associative 2/4 ways).  
+2 MiB L2 cache Scratchpad memory.  
+1 MiB L2 Buffer cache (Set-associative 2/4 ways).  
 
 The calculation unit can only execute 2 instructions / cycle.  
-It has an ALU (no division), CMP, BRU, LSU and AGU.  
 And 32 VFPU (Vector Float Point Unit), 32 FDIV (Float Division), 32 EFU (Elementary Function Unit).  
-The LSU will have specific instructions to load / store 32 vectors at a time.  
-it has access to EDRAM / L2 SRAM / L2 Cache which will take several cycles, read only.  
+AND 32 ALU (32 bits , no division), 32 LSU.
 
 The EFU will have all the necessary instructions to speed up calculations and 3D rendering.  
 (sin, cos, arctan, dot, rasterization, Min / Max, Clip, Culling , Sorting etc etc).  
 
-L2 SRAM (4 MB) stores the vertex / textcoord / normal / index / color / other + code of the shaders.  
+L2 SPM (2 MiB) stores the vertex / textcoord / normal / index / color / other + code of the shaders.  
 If this is insufficient, it is stored on the L2 cache.  
 
 The Pixel Process Unit is used to manage the Frame buffer / Zbuffer and Blending.  
@@ -34,10 +32,13 @@ For the textures, here is what will have to manage:
 - VQ Compressed
 - Palette 8 bpp and 4 bpp
 
+## Die GPU
+<img src="dieGPU.png?raw=true" alt="Compute Unit">
+
 ## Pipeline GPU
-<img src="GPU.png?raw=true" alt="Pipeline" width="584" height="650">
+<img src="GPU.png?raw=true" alt="Pipeline">
 
 ## Pipeline Compute Unit
-<img src="PipelineGPU.png?raw=true" alt="Compute Unit" width="640" height="840">
+<img src="PipelineGPU.png?raw=true" alt="Compute Unit">
 
 
