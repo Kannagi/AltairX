@@ -72,6 +72,8 @@ Aldebaran G1 ISA : https://docs.google.com/spreadsheets/d/1LiSZbdd6wCpa-sZZ9uLg5
 ## CPU Die
 <img src="CPU.png?raw=true" alt="CPU">
 
+## APU Die (800-900 MT) 50 mm²
+<img src="APU.png?raw=true" alt="APU">
 
 ## CPU Core
 <img src="die.png?raw=true" alt="CPU">
