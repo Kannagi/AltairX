@@ -5,10 +5,10 @@ The main processor of the Altair K1 is a VLIW In Order CPU.
 It has 3 internal memory:  
 128 KiB L1 data Scratchpad memory.  
 128 KiB L1 instruction Scratchpad memory.  
-32 KiB  L1 data cache (Direct mapped or Set-associative 2/4 ways).  
+32 KiB  L1 data cache (Direct mapped or Set-associative 2 ways).  
   
-1/4 MIB L2 cache (Set-associative 2/4 ways).  
-1/4 MIB L2 cache Scratchpad memory.  
+1 MiB L2 cache (Set-associative 2/4 ways).  
+1 MiB L2 cache Scratchpad memory.  
 
 The processor has no branch prediction, it will be based on the delay slot (1 cycle for Fetch) and 1 decode cycle + Jump (Delay)
 
@@ -35,8 +35,8 @@ For the calculation unit it has:
 2ALU+2ALU(32 bits) 2VFPU 2LSU FDIV DIV BRU CMP  
 
 Altair will have as main kernel (for the OS), a 64 bits RISC-V, scalar in order with an ALU/FPU/BRU/LSU,there will be no double float.  
-32 KiB L1 data cache (Direct mapped or Set-associative 2/4 ways).  
-32 KiB L1 instruction cache (Direct mapped or Set-associative 2/4 ways).  
+32 KiB L1 data cache (Direct mapped or Set-associative 2 ways).  
+32 KiB L1 instruction cache (Direct mapped or Set-associative 2 ways).  
 
 The advantage of this processor is that it has a simple design, and requires little transistor for "high performance" and therefore consume / cost less than RISC Out Of Order processors.
 
@@ -50,7 +50,7 @@ The advantage of this processor is that it has a simple design, and requires lit
 RISC-V 2.5 GHz 1 core  
 Altair K1 2.5 GHz ,6 cores  
 LPDDR4 2666/3200 MHz , 8GB in a unified memory  
-GPU Aldebaran G1 1 GHz , 4/8 CU , 1-2 TFlops  
+GPU Aldebaran G1 1 GHz , 4 CU , 1 TFlops  
 
 ## Link
 Altair K1 ISA : https://docs.google.com/spreadsheets/d/1QSawEbuZwvMbYRcha7aj3VXp76EGc-zYoRJHNPjmhB8/edit?usp=sharing  
