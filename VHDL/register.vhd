@@ -7,16 +7,8 @@ entity registers is
 		Clk				: in std_logic;
 		s_decode			: in std_logic;
 		
-		i_imm1			: in  std_logic_vector(19 downto 0);
-		i_imm2			: in  std_logic_vector(19 downto 0);
-		i_imm3			: in  std_logic_vector(19 downto 0);
-		i_imm4			: in  std_logic_vector(19 downto 0);
-		
-		i_imm1f			: in  std_logic_vector(2 downto 0);
-		i_imm2f			: in  std_logic_vector(2 downto 0);
-		i_imm3f			: in  std_logic_vector(2 downto 0);
-		i_imm4f			: in  std_logic_vector(2 downto 0);
-		
+
+
 		i_fct1			: in  std_logic_vector(3 downto 0);
 		i_fct2			: in  std_logic_vector(3 downto 0);
 		i_fct3			: in  std_logic_vector(3 downto 0);
@@ -53,8 +45,6 @@ entity registers is
 		i_register3_w		: in  std_logic_vector(63 downto 0);
 		i_register4_w		: in  std_logic_vector(63 downto 0);
 		
-		i_register1x_w		: in  std_logic_vector(63 downto 0);
-		i_register2x_w		: in  std_logic_vector(63 downto 0);
 		
 		o_register1_r1		: out  std_logic_vector(63 downto 0);
 		o_register2_r1		: out  std_logic_vector(63 downto 0);
@@ -139,27 +129,7 @@ begin
 			o_unit1 <= i_unit1;
 		end if; 
 		
-		--imm10
-		if i_imm1f="001" then 
-			o_register1_r2(9 downto 0) <= i_imm1(9 downto 0);
-		--imm16
-		elsif i_imm1f="010" then 
-			o_register1_r2(15 downto 0) <= i_imm1(15 downto 0);
-		--imm20
-		elsif i_imm1f="011" then 
-			o_register1_r2(15 downto 0) <= i_imm1(15 downto 0);
-			o_register1_r2(19 downto 16) <= i_imm1(19 downto 16);
-		--imm15
-		elsif i_imm1f="100" then 
-			o_register1_r2(14 downto 0) <= i_imm1(14 downto 0);
-		--imm8/8
-		elsif i_imm1f="101" then 
-			o_register1_r1(7 downto 0) <= i_imm1(7 downto 0);
-			o_register1_r2(7 downto 0) <= i_imm1(15 downto 8);
-		--no imm
-		else
 
-		end if; 
 		
 
 	end process;

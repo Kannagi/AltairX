@@ -9,51 +9,49 @@ entity decode is
 		Clk				: in std_logic;
 		s_fetch			: in std_logic;
 		
-		i_PC				: in  std_logic_vector(13 downto 0);
+		i_PC				: in  std_logic_vector(15 downto 0);
 		
 		i_opcode1			: in  std_logic_vector(31 downto 0);
 		i_opcode2			: in  std_logic_vector(31 downto 0);
 		i_opcode3			: in  std_logic_vector(31 downto 0);
 		i_opcode4			: in  std_logic_vector(31 downto 0);
-		
-		o_SWT			: out  std_logic_vector(1 downto 0);
-		
+				
 		o_opcode1i		: out  std_logic_vector(9 downto 0);
 		o_opcode2i		: out  std_logic_vector(9 downto 0);
 		o_opcode3i		: out  std_logic_vector(9 downto 0);
 		o_opcode4i		: out  std_logic_vector(9 downto 0);
 		
-		o_size1			: out  std_logic_vector(3 downto 0);
-		o_size2			: out  std_logic_vector(3 downto 0);
-		o_size3			: out  std_logic_vector(3 downto 0);
-		o_size4			: out  std_logic_vector(3 downto 0);
+		o_fct1a			: out  std_logic_vector(1 downto 0);
+		o_fct2a			: out  std_logic_vector(1 downto 0);
+		o_fct3a			: out  std_logic_vector(1 downto 0);
+		o_fct4a			: out  std_logic_vector(1 downto 0);
 		
-		o_imm1f			: out  std_logic_vector(2 downto 0);
-		o_imm2f			: out  std_logic_vector(2 downto 0);
-		o_imm3f			: out  std_logic_vector(2 downto 0);
-		o_imm4f			: out  std_logic_vector(2 downto 0);
+		o_imm1			: out  std_logic_vector(63 downto 0);
+		o_imm2			: out  std_logic_vector(63 downto 0);
+		o_imm3			: out  std_logic_vector(63 downto 0);
+		o_imm4			: out  std_logic_vector(63 downto 0);
 		
-		o_imm1			: out  std_logic_vector(19 downto 0);
-		o_imm2			: out  std_logic_vector(19 downto 0);
-		o_imm3			: out  std_logic_vector(19 downto 0);
-		o_imm4			: out  std_logic_vector(19 downto 0);
+		o_register1_w		: out  std_logic_vector(5 downto 0);
+		o_register2_w		: out  std_logic_vector(5 downto 0);
+		o_register3_w		: out  std_logic_vector(5 downto 0);
+		o_register4_w		: out  std_logic_vector(5 downto 0);
 		
-		o_register1_w		: out  std_logic_vector(6 downto 0);
-		o_register2_w		: out  std_logic_vector(6 downto 0);
-		o_register3_w		: out  std_logic_vector(6 downto 0);
-		o_register4_w		: out  std_logic_vector(6 downto 0);
+		o_register1_r1		: out  std_logic_vector(5 downto 0);
+		o_register2_r1		: out  std_logic_vector(5 downto 0);
+		o_register3_r1		: out  std_logic_vector(5 downto 0);
+		o_register4_r1		: out  std_logic_vector(5 downto 0);
 		
-		o_register1_r1		: out  std_logic_vector(6 downto 0);
-		o_register2_r1		: out  std_logic_vector(6 downto 0);
-		o_register3_r1		: out  std_logic_vector(6 downto 0);
-		o_register4_r1		: out  std_logic_vector(6 downto 0);
+		o_register1_r2		: out  std_logic_vector(5 downto 0);
+		o_register2_r2		: out  std_logic_vector(5 downto 0);
+		o_register3_r2		: out  std_logic_vector(5 downto 0);
+		o_register4_r2		: out  std_logic_vector(5 downto 0);
 		
-		o_register1_r2		: out  std_logic_vector(6 downto 0);
-		o_register2_r2		: out  std_logic_vector(6 downto 0);
-		o_register3_r2		: out  std_logic_vector(6 downto 0);
-		o_register4_r2		: out  std_logic_vector(6 downto 0);
-		
-		o_PC				: out  std_logic_vector(13 downto 0);
+		o_unit1			: out  std_logic_vector(3 downto 0);
+		o_unit2			: out  std_logic_vector(3 downto 0);
+		o_unit3			: out  std_logic_vector(3 downto 0);
+		o_unit4			: out  std_logic_vector(3 downto 0);
+			
+		o_PC				: out  std_logic_vector(15 downto 0);
 		cycle			: inout  integer
 		
 	);
@@ -70,65 +68,96 @@ begin
 	variable    v_unit : std_logic_vector(1 downto 0);
 	variable    v_sub1 : std_logic_vector(1 downto 0);
 	variable    v_sub2 : std_logic_vector(3 downto 0);
-	variable    v_sub3 : std_logic_vector(3 downto 0);
-	variable    v_branch : std_logic_vector(1 downto 0);
-	variable    v_imm : std_logic_vector(13 downto 0);
+	
+	variable    v_branch : 		std_logic_vector(1 downto 0);
+	variable    v_immt1 : 			std_logic_vector(2 downto 0);
+	variable    v_immt2 : 			std_logic_vector(2 downto 0);
+	
+	----opcode 1
+	variable    v_imm1 :			 std_logic_vector(63 downto 0);
+	
+	variable    v_register1_a : 		std_logic_vector(5 downto 0);
+	variable    v_register1_b : 		std_logic_vector(5 downto 0);
+	variable    v_register1_c : 		std_logic_vector(5 downto 0);
+	
+	variable    v_register1_exta  :	std_logic_vector(1 downto 0);
+	variable    v_register1_extb  :	std_logic_vector(1 downto 0);
+	variable    v_register1_extc  :	std_logic_vector(1 downto 0);
+	variable    v_execute1 :		std_logic_vector(3 downto 0);
+	variable    v_execute1s :		std_logic_vector(5 downto 0);
+	variable    v_fct1a :			std_logic_vector(1 downto 0);
+	variable    v_fct1b :			std_logic_vector(1 downto 0);
+	
+	
+	variable    v_register1_type :	std_logic;
+	
+	----opcode 2
+	variable    v_imm2 : 			std_logic_vector(63 downto 0);
+	
+	variable    v_register2_a : 		std_logic_vector(5 downto 0);
+	variable    v_register2_b : 		std_logic_vector(5 downto 0);
+	variable    v_register2_c : 		std_logic_vector(5 downto 0);
+	
+	variable    v_register2_exta  :	std_logic_vector(1 downto 0);
+	variable    v_register2_extb  :	std_logic_vector(1 downto 0);
+	variable    v_register2_extc  :	std_logic_vector(1 downto 0);
+	variable    v_execute2 :		std_logic_vector(3 downto 0);
+	variable    v_execute2s :		std_logic_vector(5 downto 0);
+	variable    v_fct2a :			std_logic_vector(1 downto 0);
+	variable    v_fct2b :			std_logic_vector(1 downto 0);
+	
+	variable    v_register2_type :	std_logic;
+	
+	---opcode 3
+	
+	---opcode 4
+	
+	---
 	
 	begin
 			v_branch := "00";
-			v_imm := "00000000000000";
+			
+			v_immt1 := "000";
+			
+			v_imm1 := x"0000000000000000";
+			v_execute1 := x"0";
+			v_execute1s(5 downto 4) := "00";
+			v_execute1s(3 downto 0) := i_opcode1(7 downto 4);
 			
 			v_unit(1 downto 0) := i_opcode1(1 downto 0);
 			v_sub1(1 downto 0) := i_opcode1(3 downto 2);
-			v_sub2(1 downto 0) := i_opcode1(5 downto 4);
-			v_sub2(3 downto 2) := "00";
+			v_sub2(3 downto 0) := i_opcode1(7 downto 4);
+			
+			v_imm1(15 downto 0) := i_opcode1(25 downto 10);
+			v_imm1(19 downto 16) := i_opcode1(7 downto 4);
 						
-			o_size1(1 downto 0) <= i_opcode1(9 downto 8);
-			o_imm1(15 downto 0) <= i_opcode1(25 downto 10);
-			o_imm1(19 downto 16) <= i_opcode1(7 downto 4);
-			o_register1_w(5 downto 0) <= i_opcode1(31 downto 26);
-			o_register1_r1(5 downto 0) <= i_opcode1(25 downto 20);
-			o_register1_r2(5 downto 0) <= i_opcode1(19 downto 14);
-			o_imm1f <= "000";
+			v_register1_a(5 downto 0) := i_opcode1(31 downto 26);
+			v_register1_b(5 downto 0) := i_opcode1(25 downto 20);
+			v_register1_c(5 downto 0) := i_opcode1(19 downto 14);
 			
-			o_register1_r1(6) <= '0';
-			o_register2_r1(6) <= '0';
-			o_register3_r1(6) <= '0';
-			o_register4_r1(6) <= '0';
 			
-			o_register1_r2(6) <= '0';
-			o_register2_r2(6) <= '0';
-			o_register3_r2(6) <= '0';
-			o_register4_r2(6) <= '0';
 			
-			o_register1_w(6) <= '0';
-			o_register2_w(6) <= '0';
-			o_register3_w(6) <= '0';
-			o_register4_w(6) <= '0';
 			
 			--o_PC(9 downto 0) <= i_opcode1(9 downto 0);
 			
-			o_opcode1i(9 downto 0) <= i_opcode1(9 downto 0);
+			--o_opcode1i(9 downto 0) <= i_opcode1(9 downto 0);
 			
 			
-			o_opcode3i   <= "0100010010";
-			o_opcode4i   <= "0100010010";
+			o_opcode3i   <= "0000001010";
+			o_opcode4i   <= "0000001010";
 			
-			cycle <= cycle +4;
+			--cycle <= cycle +4;
+			
+			
+			
 			
 			--UNIT 1--
 			
 			--BRU/CMP
 			if v_unit="00" then 
 				
-				v_sub2(2) := i_opcode1(6);
-				v_sub2(3) := i_opcode1(7);
-				--v_sub3(3 downto 0) := i_opcode1(11 downto 8);
-				
 				--BRU
-				if v_sub1="00" then 
-					v_imm(13 downto 0)  := i_opcode1(31 downto 18);
-					
+				if v_sub1="00" then 					
 					--BNE
 					if v_sub2="0000" then 
 						--PC += IMM
@@ -186,7 +215,7 @@ begin
 					elsif v_sub2="1011" then 
 						--PC = IMM
 						v_branch := "10";
-					--JUMPR
+					--JUMPBR
 					elsif v_sub2="1100" then 
 						--PC = IMM+BR
 						v_branch := "11";
@@ -194,222 +223,212 @@ begin
 					elsif v_sub2="1101" then 
 						--PC = IMM
 						v_branch := "10";
-					--CALLR
+					--CALLBR
 					elsif v_sub2="1110" then 
 						--LR = PC
 						--PC = IMM+BR
 						v_branch := "11";
-					--RET
+					--JUMPT
 					elsif v_sub2="1111" then 
-						--PC = LR
+						--PC2 = IMM+BR
 						
 					--Illegal instruction
 					else
 						
 					end if; 
 					
-				--CMP/OTHER
+				--CMP
 				elsif v_sub1="01" then 
-					
-					--CMP
-					if v_sub2="1000" then 
-						o_opcode1i   <= "1000000000";
-						
-					--VCMP
-					elsif v_sub2="1001" then 
-						o_opcode1i   <= "1000000001";
-						
-						
-					--SWT 0
-					elsif v_sub2="0000" then 
-						o_SWT <= "00";
-					--SWT 1
-					elsif v_sub2="0001" then 
-						o_SWT <= "01";
-					--SWT 2
-					elsif v_sub2="0010" then 
-						o_SWT <= "10";
-						
+					--CMP R,R
+					if v_sub2="0000" then 
+						v_execute1 := x"9";
+					--FCMP R,R
+					elsif v_sub2="0100" then
+						v_execute1 := x"9";
+					--DCMP R,R
+					elsif v_sub2="0101" then 
+						v_execute1 := x"9";
+					--FCMP R,I
+					elsif v_sub2="0110" then 
+						v_execute1 := x"9";
+						v_immt1 := "101";
+					--DCMP R,I
+					elsif v_sub2="0111" then 
+						v_execute1 := x"9";
+						v_immt1 := "110";
 					--ENDP
-					elsif v_sub2="0011" then 
+					elsif v_sub2="1000" then 
 						
 					--INT
+					elsif v_sub2="1001" then 
+						v_execute1 := x"C";
+						v_immt1 := "011";
+					--WAITI
 					elsif v_sub2="1010" then 
 						
-					--WAITI
+					--RET
 					elsif v_sub2="1011" then 
-					
-					--JUMPT
-					elsif v_sub2="1100" then
-					
-					--MODE 0 (Float Single)
-					elsif v_sub2="0100" then 
-					
-					--MODE 1 (Float Double)
-					elsif v_sub2="0101" then 
-					
-					--MODE 2 (Posit Single ES1)
-					elsif v_sub2="0110" then 
-					
+						
 					--Illegal instruction
 					else
 						
 					end if; 
-				
 				--CMPI
 				elsif v_sub1="10" then 
-					o_opcode1i   <= "1000011000";
-					o_imm1f <= "011";
-				--VCMPI
-				else
-					o_imm1f <= "011";
-					o_opcode1i   <= "1000011010";
-				end if; 
-				
-			--LSU1
-			elsif v_unit="01" then 
-				
-				o_opcode1i(9 downto 6) <="0000";
-				
-				--Load/Store Register
-				if v_sub1="00" then 					
-					--Load Memory
-					if v_sub2="0000" then 
-
-					--Store Memory
-					elsif v_sub2="0001" then 
-
-					--Load Cache
-					elsif v_sub2="0010" then 
-
-					--Store Cache
-					else
-
-					end if; 
-					
-				--Load/Store Vector Register
-				elsif v_sub1="01" then 
-					
-					--Load Memory
-					if v_sub2="0000" then 
-					
-					--Store Memory
-					elsif v_sub2="0001" then 
-
-					--Load Cache
-					elsif v_sub2="0010" then 
-
-					--Store Cache
-					else
-
-					end if; 
-				--IN/OUT
-				elsif v_sub1="10" then 
-					
-					--IN
-					if v_sub2="0000" then 
-						o_imm1f <= "010";
-					--OUT
-					elsif v_sub2="0001" then 
-						o_imm1f <= "010";
-					--OUTI.B
-					elsif v_sub2="0010" then 
-						o_imm1f <= "010";
-					--Illegal instruction
-					else
-					
-					end if; 
-					
+					v_execute1 := x"9";
+					v_immt1 := "100";
 				--Illegal instruction
 				else
-	
+				
+				end if; 
+			
+			--LSU
+			elsif v_unit="01" then 
+				
+				--
+				if v_sub1="00" then 
+					v_execute1 := x"5";
+					--IMM
+					if v_sub2(3)='1' then 
+						v_immt1 := "010";
+					--REGISTER
+					elsif v_sub2(3)='0' then 
+					
+					else
+					
+					end if; 
+					
+				-- IMM LONG
+				elsif v_sub1="01" then
+					v_execute1 := x"5";
+					v_immt1 := "100";
+				--Illegal instruction
+				else
+				
 				end if; 
 				
+				--Register
+				if v_sub2(2)='0' then 
 				
-			--ALU1
-			elsif v_unit="10" then 
+				--Vector Register
+				elsif v_sub2(2)='1' then 
 				
-				o_opcode1i(9 downto 8) <= "00";
+				else
 				
-								
+				end if; 
+				
+			
+			--ALU
+			elsif v_unit="10" then
+			
+				-- R,R,R
 				if v_sub1="00" then 
-				
-					v_sub2(2) := i_opcode1(6);
-					v_sub2(3) := i_opcode1(7);
-					
-					if v_sub2/="0000" then 
-						o_opcode1i(9 downto 8) <="01";
-					end if;
-					
-					-- R,R,R
-					if v_sub2="0000" then 
-						o_size1(1 downto 0) <= i_opcode1(13 downto 12);
-						o_opcode1i(7 downto 4) <=i_opcode1(11 downto 8);
-					
-					--NOP
-					elsif v_sub2="0001" then 
-						
-					--MOVE LR,RX
-					elsif v_sub2="0010" then 
-						
-					--MOVE RX,LR
-					elsif v_sub2="0011" then 
-						
-					--MOVE BR,RX
-					elsif v_sub2="0100" then 
-					
-					--MOVE RX,CYL
-					elsif v_sub2="0101" then 
-					
-					--MOVE RX,INS
-					elsif v_sub2="0110" then 
-						
-					--Illegal instruction
-					else
-						
-					end if; 
-				
+					v_execute1 := x"1";
 				-- R,R,I
 				elsif v_sub1="01" then 
-					o_imm1f <= "001";
-				-- R,I
+					v_execute1 := x"1";
+					v_immt1 := "001";
+				-- MOVE/OTHER
 				elsif v_sub1="10" then 
-					o_imm1f <= "010";
+				
+					--NOP
+					if v_sub2="0000" then 					
+					
+					--MOVE
+					--elsif v_sub2="0001" then 
+					
+					--MOVE INFO
+					elsif v_sub2="0010" then 
+						v_execute1 := x"E";
+					--MOVE LR,RX
+					elsif v_sub2="0011" then 
+						v_execute1 := x"E";
+					--MOVE BR,RX
+					elsif v_sub2="0100" then 
+						v_execute1 := x"E";
+					--MOVE RX,LR
+					elsif v_sub2="0101" then 
+						v_execute1 := x"E";
+					--MOVE RX,INS
+					elsif v_sub2="0110" then 
+						v_execute1 := x"E";
+					--MOVE RX,CYL
+					elsif v_sub2="0111" then 
+						v_execute1 := x"E";
+					--Illegal instruction
+					else
+					
+					end if; 
+				
 				-- MOVEI
 				else
-					o_opcode1i(9 downto 4) <="000000";
-					o_imm1f <= "011";
+					v_immt1 := "100";
 				end if; 
 				
-			--VPU1
-			else
-				if v_sub1/="11" then 
-					o_size1(3 downto 0) <= i_opcode1(13 downto 10);
-				end if; 
-				
-				o_register1_r1(6) <= '1';
-				o_register1_r2(6) <= '1';
-				o_register1_w(6)  <= '1';
+			--VU
+			elsif v_unit="11" then
 			
-				
-				--VMULADD,SUB /VECTOR
+				v_execute1s(5 downto 4) := i_opcode1(3 downto 2);
+				v_execute1 := x"7";
+				--VFPU
 				if v_sub1="00" then 
-					
-				--VMOVE
-				elsif v_sub1="01" then 
-
-				--VDIV/VSQRT
-				elsif v_sub1="10" then 
-
-				--VPU IMM
+				
+				--DOUBLE/MOVE/OTHER
+				elsif v_sub1="01" then
+				
+				--DIV/SIMD
+				elsif v_sub1="10" then
+				
+				--CONVERSION
+				elsif v_sub1="11" then
+				
+				--Illegal instruction
 				else
-					o_imm1f <= "010";
-					o_opcode1i(9 downto 8) <= "00";
+				
 				end if; 
+			
+			
+			else 
+			
+			end if;
+			-------------
+			--signed 10 bits
+			if v_immt1="001" then 
+				if v_imm1(9)='1'then
+					v_imm1(63 downto 10) := "111111111111111111111111111111111111111111111111111111"; 
+				else
+					v_imm1(19 downto 10) := "0000000000";
+				end if;  
+			--unsigned 10 bits
+			elsif v_immt1="010" then 
+				v_imm1(19 downto 10) := "0000000000";
+				
+			--unsigned 16 bits
+			elsif v_branch="011" then 
+				v_imm1(19 downto 16) := "0000";
+				
+			--signed 20 bits
+			elsif v_immt1="100" then 
+				if v_imm1(19)='1'then
+					v_imm1(63 downto 20) := "11111111111111111111111111111111111111111111";
+				end if; 
+				
+			--half to float
+			elsif v_branch="101" then 
+			
+			--half to double
+			elsif v_immt1="110" then 
+			
+			else
 				
 			end if; 
 			
-			
+			-------------
+			o_imm1 <= v_imm1;
+			o_register1_w  <= v_register1_a;
+			o_register1_r1 <= v_register1_b;
+			o_register1_r2 <= v_register1_c;
+			-------------
 			
 			if v_branch="01" then 
 				--PC = PC + IMM

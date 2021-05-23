@@ -3,7 +3,7 @@
 /* (c) in 2020 by Samy Meguenoun */
 
 #define LITTLEENDIAN 1
-#define BIGENDIAN 0
+#define BIGENDIAN 0 
 #define VASM_CPU_VU 1
 
 /* maximum number of operands in one mnemonic */
@@ -30,10 +30,10 @@ typedef uint32_t utaddr;
 /* type to store each operand */
 typedef struct {
     int type;
-    int val,reg;
+    int val,reg,reg2;
     int size;
     float fval;
-    expr *value;
+    expr *value; 
 } operand;
 
 #define K1            0x01
@@ -45,12 +45,20 @@ typedef struct {
 #define OP_RBR             4
 
 #define OP_IMM             7
-#define OP_IM1             8
-#define OP_IM2             9
-#define OP_IM3             10
-#define OP_IM4             11
+#define OP_IMB             8
+#define OP_IMH             9
+#define OP_IMF             10
+#define OP_IMD             11
 
 #define OP_IMR             20
+#define OP_RRG             21
+
+
+
+#define OP_RGP             30
+#define OP_RGQ             31
+#define OP_VRP             32
+#define OP_VRQ             33
 
 #define OP_DATA            0x3e
 

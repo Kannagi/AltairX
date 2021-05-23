@@ -6,15 +6,44 @@ end t_func;
 
 architecture t_behaviour of t_func is
 
+	component init_core is
+		port(
+			Clk	: in std_logic;
+			o_wri	: out std_logic;
+						
+			o_DMA_ADR		: out  std_logic_vector(15 downto 0);
+			o_PC				: out  std_logic_vector(15 downto 0)
+			);
+	end component init_core;
+	
+	component register_internal is
+		port(
+			i_wri0	: in std_logic;
+			i_wri1	: in std_logic;
+			i_wri2	: in std_logic;
+			i_wri3	: in std_logic;
+			
+			io_PC		: inout  std_logic_vector(15 downto 0);
+						
+			i_PC0		: in  std_logic_vector(15 downto 0);
+			i_PC1		: in  std_logic_vector(15 downto 0);
+			i_PC2		: in  std_logic_vector(15 downto 0);
+			i_LR			: in  std_logic_vector(15 downto 0);
+			
+			o_PC			: out  std_logic_vector(15 downto 0);
+			o_LR			: out  std_logic_vector(15 downto 0)
+			);
+	end component register_internal;
+	-------------------------------------------------
+	
 	component fetch is
 		port(
 			Clk	: in std_logic;
 			o_s_fetch	: out std_logic;
-			
-			i_SWT			: in  std_logic_vector(1 downto 0);
-			
+			o_wri	: out std_logic;
+						
 			i_DMA_DATA		: in  std_logic_vector(127 downto 0);
-			i_DMA_ADR		: in  std_logic_vector(13 downto 0);
+			i_DMA_ADR		: in  std_logic_vector(15 downto 0);
 			
 			o_opcode1		: out  std_logic_vector(31 downto 0);
 			o_opcode2		: out  std_logic_vector(31 downto 0);
@@ -23,8 +52,8 @@ architecture t_behaviour of t_func is
 			
 
 			
-			i_PC				: in  std_logic_vector(13 downto 0);
-			o_PC				: out  std_logic_vector(13 downto 0)
+			i_PC				: in  std_logic_vector(15 downto 0);
+			o_PC				: out  std_logic_vector(15 downto 0)
 			);
 	end component fetch;
 
@@ -43,40 +72,39 @@ architecture t_behaviour of t_func is
 			o_opcode3i	: out  std_logic_vector(9 downto 0);
 			o_opcode4i	: out  std_logic_vector(9 downto 0);
 			
-			o_size1		: out  std_logic_vector(3 downto 0);
-			o_size2		: out  std_logic_vector(3 downto 0);
-			o_size3		: out  std_logic_vector(3 downto 0);
-			o_size4		: out  std_logic_vector(3 downto 0);
+			o_fct1a			: out  std_logic_vector(1 downto 0);
+			o_fct2a			: out  std_logic_vector(1 downto 0);
+			o_fct3a			: out  std_logic_vector(1 downto 0);
+			o_fct4a			: out  std_logic_vector(1 downto 0);
 			
-			o_imm1		: out  std_logic_vector(19 downto 0);
-			o_imm2		: out  std_logic_vector(19 downto 0);
-			o_imm3		: out  std_logic_vector(19 downto 0);
-			o_imm4		: out  std_logic_vector(19 downto 0);
+			o_imm1			: out  std_logic_vector(63 downto 0);
+			o_imm2			: out  std_logic_vector(63 downto 0);
+			o_imm3			: out  std_logic_vector(63 downto 0);
+			o_imm4			: out  std_logic_vector(63 downto 0);
 			
-			o_imm1f		: out  std_logic_vector(2 downto 0);
-			o_imm2f		: out  std_logic_vector(2 downto 0);
-			o_imm3f		: out  std_logic_vector(2 downto 0);
-			o_imm4f		: out  std_logic_vector(2 downto 0);
+			o_register1_w		: out  std_logic_vector(5 downto 0);
+			o_register2_w		: out  std_logic_vector(5 downto 0);
+			o_register3_w		: out  std_logic_vector(5 downto 0);
+			o_register4_w		: out  std_logic_vector(5 downto 0);
 			
-			o_register1_w		: out  std_logic_vector(6 downto 0);
-			o_register2_w		: out  std_logic_vector(6 downto 0);
-			o_register3_w		: out  std_logic_vector(6 downto 0);
-			o_register4_w		: out  std_logic_vector(6 downto 0);
+			o_register1_r1		: out  std_logic_vector(5 downto 0);
+			o_register2_r1		: out  std_logic_vector(5 downto 0);
+			o_register3_r1		: out  std_logic_vector(5 downto 0);
+			o_register4_r1		: out  std_logic_vector(5 downto 0);
 			
-			o_register1_r1		: out  std_logic_vector(6 downto 0);
-			o_register2_r1		: out  std_logic_vector(6 downto 0);
-			o_register3_r1		: out  std_logic_vector(6 downto 0);
-			o_register4_r1		: out  std_logic_vector(6 downto 0);
+			o_register1_r2		: out  std_logic_vector(5 downto 0);
+			o_register2_r2		: out  std_logic_vector(5 downto 0);
+			o_register3_r2		: out  std_logic_vector(5 downto 0);
+			o_register4_r2		: out  std_logic_vector(5 downto 0);
 			
-			o_register1_r2		: out  std_logic_vector(6 downto 0);
-			o_register2_r2		: out  std_logic_vector(6 downto 0);
-			o_register3_r2		: out  std_logic_vector(6 downto 0);
-			o_register4_r2		: out  std_logic_vector(6 downto 0);
+			o_unit1			: out  std_logic_vector(3 downto 0);
+			o_unit2			: out  std_logic_vector(3 downto 0);
+			o_unit3			: out  std_logic_vector(3 downto 0);
+			o_unit4			: out  std_logic_vector(3 downto 0);
 		
 			
-			i_PC				: in  std_logic_vector(13 downto 0);
-			o_PC				: out  std_logic_vector(13 downto 0);
-			o_SWT			: out  std_logic_vector(1 downto 0);
+			i_PC				: in  std_logic_vector(15 downto 0);
+			o_PC				: out  std_logic_vector(15 downto 0);
 			
 			cycle			: inout  integer
 			);
@@ -88,6 +116,11 @@ architecture t_behaviour of t_func is
 	constant ClockPeriod    : time    := 1 ps;
 
 	signal Clk    : std_logic := '1';
+	signal Clkinit    : std_logic := '0';
+	signal wri0	: std_logic := '0';
+	signal wri1	: std_logic := '0';
+	signal wri2	: std_logic := '0';
+	signal wri3	: std_logic := '0';
 
 	signal opcode1_t			: std_logic_vector(31 downto 0);
 	signal opcode2_t			: std_logic_vector(31 downto 0);
@@ -102,21 +135,33 @@ architecture t_behaviour of t_func is
 	signal size4_t				: std_logic_vector(3 downto 0);
 	
 	
-	signal SWT_t				: std_logic_vector(1 downto 0) := "00";
-
-	signal ISRAM_DMA_DATA_t	: std_logic_vector(127 downto 0);
-	signal ISRAM_DMA_ADR_t		: std_logic_vector(13 downto 0):= "00000000000000";
+	signal unit1_t				: std_logic_vector(3 downto 0);
+	signal unit2_t				: std_logic_vector(3 downto 0);
+	signal unit3_t				: std_logic_vector(3 downto 0);
+	signal unit4_t				: std_logic_vector(3 downto 0);
 	
-	signal PC_t				: std_logic_vector(13 downto 0) := "00000000000000";
+	
+	signal ISRAM_DMA_DATA_t	: std_logic_vector(127 downto 0);
+	signal ISRAM_DMA_ADR_t		: std_logic_vector(15 downto 0);
+	
+	signal r_PC_t				: std_logic_vector(15 downto 0);
+	signal PC_t				: std_logic_vector(15 downto 0);
+	signal PC_t0				: std_logic_vector(15 downto 0);
+	signal PC_t1				: std_logic_vector(15 downto 0);
+	signal PC_t2				: std_logic_vector(15 downto 0);
+	signal PC_t3				: std_logic_vector(15 downto 0);
+		
+	signal LR_t				: std_logic_vector(15 downto 0);
+	
 	signal cycle_t				:integer :=0;
 	---------------------------------------------
 	begin	
 	
 		module_fetch: fetch
 		port map (
-				i_SWT  => SWT_t,
 				
 				o_s_fetch => s_fetch_t,
+				o_wri    => wri0,
 
 				Clk    => Clk,
 				o_opcode1 => opcode1_t,
@@ -128,13 +173,12 @@ architecture t_behaviour of t_func is
 				i_DMA_ADR  =>  ISRAM_DMA_ADR_t,
 				
 				i_PC  => PC_t,
-				o_PC  => PC_t
+				o_PC  => PC_t0
 				);
 		--
 		module_decode: decode
 		port map (
 				
-				o_SWT  => SWT_t,
 				Clk    => Clk,
 				cycle => cycle_t,
 				s_fetch => s_fetch_t,
@@ -144,12 +188,42 @@ architecture t_behaviour of t_func is
 				i_opcode3 => opcode3_t,
 				i_opcode4 => opcode4_t,
 				
-				o_size1 => size1_t,
-				o_size2 => size2_t,
-				o_size3 => size3_t,
-				o_size4 => size4_t,
+				o_unit1 => unit1_t,
+				o_unit2 => unit2_t,
+				o_unit3 => unit3_t,
+				o_unit4 => unit4_t,
+
 				
 				i_PC  => PC_t,
+				o_PC  => PC_t1
+				);
+		--------------------------------------------------------------------
+		module_init_core: init_core
+		port map (
+				
+				Clk    => Clkinit,
+				o_wri    => wri2,
+				
+				o_DMA_ADR  =>  ISRAM_DMA_ADR_t,
+				o_PC  => PC_t2
+				);
+				
+		module_register_internal: register_internal
+		port map (
+				io_PC  => r_PC_t,
+				
+				i_wri0    => wri0,
+				i_wri1    => wri1,
+				i_wri2    => wri2,
+				i_wri3    => wri3,
+				
+				i_LR  => LR_t,
+				o_LR  => LR_t,
+				
+				i_PC0  => PC_t0,
+				i_PC1  => PC_t1,
+				i_PC2  => PC_t2,
+				
 				o_PC  => PC_t
 				);
 		--
@@ -161,14 +235,19 @@ architecture t_behaviour of t_func is
 			begin
 				
 				-- inputs which produce '1' on the output
-				
-				--SWT_t <="00";
-				PC_t <="00000000000000";
+				Clkinit <= '1';	--0
+				wait for 1 fs;
+
 				Clk <= '0';	--0
 				wait for 1 fs;
 				Clk <= '1';
 				wait for 1 fs;
-				
+				Clk <= '0';	--0
+				wait for 1 fs;
+				Clk <= '1';
+				wait for 1 fs;
+				Clkinit <= '1';	--0
+				wait for 1 fs;
 				--wait for 200 ps;
 				--wait for 200 ps;
 				--wait for 200 ps;

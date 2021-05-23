@@ -1,64 +1,34 @@
 
-	movei.q r0,$00
-	movei.q r1,$20
+	movei r0,-1
+	movei r1,$20
 	
-	nop
-	lddmar r0,r1,1
+	add r5,r4,r20 
+	addi r1,r3,56
 
-	movei.q r0,0
-	movei.q r1,$20
-	;--------------------
-	
-	call print
-	nop
-	
-	nop
-	nop
+	xor r5,r4,r20 
+	xori r1,r3,56
 
+	move r5,r5
+	ori r5,r5,0
 
-	endp
 	nop
-	
-	nop
-	nop
-	
-	org $100
-print:
-
-	Loop:
-
-	ldm.b r1,$0[r0]
-	nop
-	
-	cmpi r1,0
-	nop
-	
-	beq Label
-	addq r0,1
-	
-	outi.b 1,1 ;fputc = 1
-	nop
-	
-	out.b 32,r1 ; data = r0
-	nop
-	
-	bra Loop
-	nop
-	
-	outi.b 0,1 ;control = 1
 	nop
 
-Label:
-	;-------------------------------
-	outi.b 32,$A
-	nop
-	
-	ret
-	nop
-	
-	outi.b 0,1
-	nop
+	move LR,r0
+	move BR,r1
 
+	move r1,LR
+	mulu P,r3,r1
+
+
+	ldmi r0,50[r3]
+	ldm r1,r3[r5]
+
+
+	ldml r3,500
+	stml r1,500
+
+	fcmpi vf01,-1.5
 
 	org $400
 	dc.b "Hello World",0
