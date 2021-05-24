@@ -1,9 +1,9 @@
 
   //DMA
-  "lddmar",  {OP_REG,OP_REG,OP_IMM},{K1,(0b00000000)},
-  "stdmar",  {OP_REG,OP_REG,OP_IMM},{K1,(0b00010000)},
+  "lddma",   {OP_REG,OP_REG,OP_IMM},{K1,(0b00000000)},
+  "stdma",   {OP_REG,OP_REG,OP_IMM},{K1,(0b00010000)},
 
-  "dmair",   {OP_REG,OP_REG,OP_IMM},{K1,(0b00100000)},
+  "dmai",    {OP_REG,OP_REG,OP_IMM},{K1,(0b00100000)},
 
   "lddmacl", {OP_REG,OP_IMM,      },{K1,(0b00110000)},
   "stdmacl", {OP_REG,OP_IMM,      },{K1,(0b01000000)},
@@ -122,7 +122,7 @@
   "waiti",  {                    },{K1,(0b10100100)},
   "ret",    {                    },{K1,(0b10110100)},
 
-  "cmpi",   {OP_REG,OP_IMH,      },{K1,(0b00000100)},
+  "cmpi",   {OP_REG,OP_IMH,      },{K1,(0b00001000)},
 
   //VFPU
   "vfadd",  {OP_VP ,OP_VP ,OP_VP },{K1,(0b00000011)},

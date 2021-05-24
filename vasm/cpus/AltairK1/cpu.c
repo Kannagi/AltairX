@@ -456,13 +456,20 @@ dblock *eval_instruction(instruction *p,section *sec,taddr pc)
     {
         opcode |= (operand2.reg<<20);
 
-        unsigned int tmp,sign,exp,mant;
+        unsigned int tmp,sign,exp,mant,texp;
 
         tmp = operand2.val;
 
         sign = (tmp>>16)&0x8000; //sign
-        exp  = (tmp>>23)&0x00FF; //exp
+        texp = (tmp>>23)&0x00FF; //exp
         mant = (tmp>>13)&0x03FF; //mantisse
+        
+        exp = (texp&0x0F)<<10;
+
+        if(texp&0x80)
+            exp |= 0x4000;
+
+        val = sign+mant+exp;
 
         //printf("%x\n",exp);
         opcode |= ( (val & 0xFFFF)<<10);
@@ -479,7 +486,7 @@ dblock *eval_instruction(instruction *p,section *sec,taddr pc)
     {
         eval_expr(operand3.value,&val,sec,pc);
         operand3.val = val&0x3FF;
-        opcode |= (operand3.val<<14);
+        opcode |= (operand3.val<<10);
     }
 
     //-------------

@@ -29,6 +29,7 @@
 	stml r1,500
 
 	fcmpi vf01,-1.5
+	move r5,r6
 
 	org $400
 	dc.b "Hello World",0
