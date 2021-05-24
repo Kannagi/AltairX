@@ -30,14 +30,17 @@ int main()
 	exp = (half&0x3C00)>>3;
 
 	if(half&0x4000)
+	{
 		exp |= 0x4000;
+	}
 	else
-		exp |= 0x3800;
-
+	{
+		if(exp != 0)
+			exp |= 0x3800;
+	}
+	
 	exp = exp<<16;
 
-	if(half == 0)
-		exp = 0;
 
 
 	xval  = (half&0x8000)<<16;

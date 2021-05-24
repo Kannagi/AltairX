@@ -53,7 +53,7 @@
   "move",   {OP_REG,OP_RLR,      },{K1,(0b01011010)},
   "move",   {OP_RBR,OP_REG,      },{K1,(0b01001010)},
 
-  "move",   {OP_REG,OP_REG,      },{K1,(0b00110110)},
+  "move",   {OP_REG,OP_REG,      },{K1,(0b00110010)},
   "movei",  {OP_REG,OP_IMH,      },{K1,(0b00001110)},
 
   "add",    {OP_REG,OP_REG,OP_REG},{K1,(0b00000010)},

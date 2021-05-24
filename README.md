@@ -47,8 +47,8 @@ The advantage of this processor is that it has a simple design, and requires lit
 - Make the virtual machine
 
 ## Target configuration
-Main core : RISC-V 2.5 GHz  or Altair K1 2.5 GHz
-Altair K1 2.5 GHz ,6 cores  
+Main core : RISC-V 2.5 GHz or Altair K1 2.5 GHz  
+Sub  core : Altair K1 2.5 GHz , 6 cores   
 LPDDR4 2666/3200 MHz , 8GB in a unified memory  
 GPU Aldebaran G1 1 GHz , 4 CU , 1 TFlops  
 
@@ -64,17 +64,10 @@ ALTAIR Executable Header : https://docs.google.com/spreadsheets/d/1g7mEhaBIVBJ75
 Aldebaran G1 ISA : https://docs.google.com/spreadsheets/d/1LiSZbdd6wCpa-sZZ9uLg5eAyGxdpMl363waUP927xS4/edit?usp=sharing  
 
 
-
-
 ## Pipeline
 <img src="Pipeline4.png?raw=true" alt="Pipeline">
-
-## CPU Die
-<img src="CPU.png?raw=true" alt="CPU">
 
 ## APU Die (700-900 MT) 40-50 mm² , 28 nm FD-SOI
 <img src="APU.png?raw=true" alt="APU">
 
-## CPU Core
-<img src="die.png?raw=true" alt="CPU">
 

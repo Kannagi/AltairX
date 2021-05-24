@@ -8,8 +8,8 @@
 	xor r5,r4,r20 
 	xori r1,r3,56
 
-	move r5,r5
-	ori r5,r5,0
+	move r4,r5
+	or r4,r5,r5
 
 	nop
 	nop
