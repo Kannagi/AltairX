@@ -34,7 +34,7 @@ For floating point numbers in Altair , it will not be 100% compatible with the s
 For the calculation unit it has:  
 2ALU+2ALU(32 bits) 2VFPU 2LSU FDIV DIV BRU CMP  
 
-Altair will have as main kernel (for the OS), a 64 bits RISC-V, scalar in order with an ALU/FPU/BRU/LSU,there will be no double float.  
+If we are having trouble porting Linux to the Altair K1 thenwill have as main core (for the OS), a 64 bits RISC-V, scalar in order with an ALU/FPU/BRU/LSU,there will be no double float.  
 32 KiB L1 data cache (Direct mapped or Set-associative 2 ways).  
 32 KiB L1 instruction cache (Direct mapped or Set-associative 2 ways).  
 
@@ -47,7 +47,7 @@ The advantage of this processor is that it has a simple design, and requires lit
 - Make the virtual machine
 
 ## Target configuration
-RISC-V 2.5 GHz 1 core  
+Main core : RISC-V 2.5 GHz  or Altair K1 2.5 GHz
 Altair K1 2.5 GHz ,6 cores  
 LPDDR4 2666/3200 MHz , 8GB in a unified memory  
 GPU Aldebaran G1 1 GHz , 4 CU , 1 TFlops  
