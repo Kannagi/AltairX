@@ -4,25 +4,39 @@
 #include "vm_relaxed.hpp"
 
 #include <array>
+#include <cstddef>
 
-typedef struct ArGraphicsProcessor_T
+template<size_t S>
+using buffer_t = std::array<std::byte, S>;
+
+union register_t
 {
-    ArGraphicsProcessor next;
-    ArVirtualMachine parent;
+    std::array<float, 4> vector;
+    buffer_t<sizeof(float) * 4> buffer;
+};
 
-    uint8_t dsram[AR_PROCESSOR_DSRAM_SIZE];
-    uint8_t isram[AR_PROCESSOR_ISRAM_SIZE];
-    uint8_t cache[AR_PROCESSOR_CACHE_SIZE];
-    uint8_t iosram[AR_PROCESSOR_IOSRAM_SIZE];
+struct ArGraphicsProcessor_T
+{
+    ArGraphicsProcessor next = nullptr;
+    ArVirtualMachine parent = nullptr;
 
-    using vector = std::array<float, 4>;
+    buffer_t<AR_GRAPHICS_PROCESSOR_L1_DSRAM_SIZE> l1dsram{};
+    buffer_t<AR_GRAPHICS_PROCESSOR_L1_ISRAM_SIZE> l1isram{};
+    buffer_t<AR_GRAPHICS_PROCESSOR_L1_CACHE_SIZE> l1cache{};
 
-    vector reg[AR_GRAPHICS_PROCESSOR_REG_COUNT];
+    buffer_t<AR_GRAPHICS_PROCESSOR_L2_TEXTURE_CACHE_SIZE> l2texturecache{};
+    buffer_t<AR_GRAPHICS_PROCESSOR_L2_BUFFER_CACHE_SIZE> l2buffercache{};
+    buffer_t<AR_GRAPHICS_PROCESSOR_L2_CACHE_SIZE> l2cache{};
+    buffer_t<AR_GRAPHICS_PROCESSOR_L2_SPM_SIZE> l2spm{};
+    buffer_t<AR_GRAPHICS_PROCESSOR_L2_DSRAM_SIZE> l2dsram{};
 
-    uint32_t pc; //program-counter
-    uint32_t br; //buffer-register
-    uint32_t lr; //link-register
-    uint32_t opcodes[AR_GRAPHICS_PROCESSOR_MAX_OPERATIONS];
+    buffer_t<AR_GRAPHICS_PROCESSOR_1T_SRAM_SIZE> sram1t{};
+
+    std::array<register_t, AR_GRAPHICS_PROCESSOR_REG_COUNT> reg{};
+
+    uint32_t pc{ 0 }; //program-counter
+    uint32_t br{ 0 }; //buffer-register
+    std::array<uint32_t, AR_GRAPHICS_PROCESSOR_MAX_OPERATIONS> opcodes{};
 
     /// \brief CPU Flags register
     ///
@@ -30,14 +44,11 @@ typedef struct ArGraphicsProcessor_T
     /// Bit 1: Z flag, 1 if not equal, 0 if equal
     /// Bit 2: S flag, 1 if lesser, 0 if greater (signed comparison)
     /// Bit 3: U flag, 1 if lesser, 0 if greater (unsigned comparison)
-    uint32_t flags;
+    uint32_t flags{ 0 };
 
-    ArOperation operations[AR_GRAPHICS_PROCESSOR_MAX_OPERATIONS];
-    //uint32_t delayedBits;
-    //ArOperation delayed[AR_PROCESSOR_MAX_OPERATIONS];
-    //uint32_t dma; //1 if dmaOperation is to be treated
-    //ArOperation dmaOperation;
-
+    std::array<ArOperation, AR_PROCESSOR_MAX_OPERATIONS> operations{};
 } ArGraphicsProcessor_T;
+
+uint32_t opcodeSetSize(ArGraphicsProcessor AR_RESTRICT graphicsProcessor);
 
 #endif

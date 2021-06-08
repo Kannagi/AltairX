@@ -1,11 +1,11 @@
-#include "processor.hpp"
+#include "graphics_processor.hpp"
 #include "memory.hpp"
 
 #include <cassert>
 #include <cmath>
 #include <string>
 
-ArResult executeInstruction(ArProcessor AR_RESTRICT processor, uint32_t index)
+ArResult executeInstruction(ArGraphicsProcessor AR_RESTRICT graphicsProcessor, uint32_t index)
 {
     //Mask to trunc results base on size (8 bits, 16 bits, 32 bits or 64 bits)
     static const uint64_t sizemask[4] =
@@ -18,10 +18,9 @@ ArResult executeInstruction(ArProcessor AR_RESTRICT processor, uint32_t index)
 
     static const uint32_t ZSUClearMask  = ~(Z_MASK | S_MASK | U_MASK);
 
-    uint64_t* AR_RESTRICT const ireg = processor->ireg;
-    uint64_t* AR_RESTRICT const vreg = processor->vreg;
+    auto& reg = graphicsProcessor->reg;
 
-    const ArOperation* AR_RESTRICT const op = &processor->operations[index];
+    const ArOperation* AR_RESTRICT const op = &graphicsProcessor->operations[index];
     const uint32_t*    AR_RESTRICT const operands = op->operands;
 
     switch(op->op)
@@ -39,92 +38,92 @@ ArResult executeInstruction(ArProcessor AR_RESTRICT processor, uint32_t index)
         case AR_OPCODE_STDMAL: //fallthrough
         case AR_OPCODE_CLEARC: //fallthrough
         case AR_OPCODE_WAIT:
-            processor->dma = true;
-            processor->dmaOperation = *op;
+            graphicsProcessor->dma = 1;
+            graphicsProcessor->dmaOperation = *op;
             break;
 
         //LSU
         case AR_OPCODE_LDM: //copy data from dsram to register
-            memcpy(&ireg[operands[2]], processor->dsram + operands[0] + ireg[operands[1]], 1u << op->size);
+            memcpy(&ireg[operands[2]], graphicsProcessor->dsram + operands[0] + ireg[operands[1]], 1u << op->size);
             break;
 
         case AR_OPCODE_LDMI: //copy data from dsram to register
-            memcpy(&ireg[operands[2]], processor->dsram + operands[0] + ireg[operands[1]], 1u << op->size);
+            memcpy(&ireg[operands[2]], graphicsProcessor->dsram + operands[0] + ireg[operands[1]], 1u << op->size);
             ireg[operands[1]] += 1;
             break;
 
         case AR_OPCODE_STM: //copy data from register to dsram
-            memcpy(processor->dsram + operands[0] + ireg[operands[1]], &ireg[operands[2]], 1u << op->size);
+            memcpy(graphicsProcessor->dsram + operands[0] + ireg[operands[1]], &ireg[operands[2]], 1u << op->size);
             break;
 
         case AR_OPCODE_STMI: //copy data from register to dsram
-            memcpy(processor->dsram + operands[0] + ireg[operands[1]], &ireg[operands[2]], 1u << op->size);
+            memcpy(graphicsProcessor->dsram + operands[0] + ireg[operands[1]], &ireg[operands[2]], 1u << op->size);
             ireg[operands[1]] += 1;
             break;
 
         case AR_OPCODE_LDC: //copy data from cache to register
-            memcpy(&ireg[operands[2]], processor->cache + operands[0] + ireg[operands[1]], 1u << op->size);
+            memcpy(&ireg[operands[2]], graphicsProcessor->cache + operands[0] + ireg[operands[1]], 1u << op->size);
             break;
 
         case AR_OPCODE_LDCI: //copy data from cache to register
-            memcpy(&ireg[operands[2]], processor->cache + operands[0] + ireg[operands[1]], 1u << op->size);
+            memcpy(&ireg[operands[2]], graphicsProcessor->cache + operands[0] + ireg[operands[1]], 1u << op->size);
             ireg[operands[1]] += 1;
             break;
 
         case AR_OPCODE_STC: //copy data from register to cache
-            memcpy(processor->cache + operands[0] + ireg[operands[1]], &ireg[operands[2]], 1u << op->size);
+            memcpy(graphicsProcessor->cache + operands[0] + ireg[operands[1]], &ireg[operands[2]], 1u << op->size);
             break;
 
         case AR_OPCODE_STCI: //copy data from register to cache
-            memcpy(processor->cache + operands[0] + ireg[operands[1]], &ireg[operands[2]], 1u << op->size);
+            memcpy(graphicsProcessor->cache + operands[0] + ireg[operands[1]], &ireg[operands[2]], 1u << op->size);
             ireg[operands[1]] += 1;
             break;
 
         case AR_OPCODE_IN: //copy data from iosram to register
-            memcpy(&ireg[operands[2]], processor->iosram + operands[0], 1u << op->size);
+            memcpy(&ireg[operands[2]], graphicsProcessor->iosram + operands[0], 1u << op->size);
             break;
 
         case AR_OPCODE_OUT: //copy data from register to iosram
-            memcpy(processor->iosram + operands[0], &ireg[operands[2]], 1u << op->size);
+            memcpy(graphicsProcessor->iosram + operands[0], &ireg[operands[2]], 1u << op->size);
             break;
 
         case AR_OPCODE_OUTI: //write data to iosram
-            memcpy(processor->iosram + operands[0], &operands[2], 1u << op->size);
+            memcpy(graphicsProcessor->iosram + operands[0], &operands[2], 1u << op->size);
             break;
 
         case AR_OPCODE_LDMV: //copy data from dsram to vector register
-            memcpy(&vreg[operands[2]], processor->dsram + (operands[0] + ireg[operands[1]]) * 8, 2 * (op->size + 1));
+            memcpy(&vreg[operands[2]], graphicsProcessor->dsram + (operands[0] + ireg[operands[1]]) * 8, 2 * (op->size + 1));
             break;
 
         case AR_OPCODE_LDMVI: //copy data from dsram to vector register
-            memcpy(&vreg[operands[2]], processor->dsram + (operands[0] + ireg[operands[1]]) * 8, 2 * (op->size + 1));
+            memcpy(&vreg[operands[2]], graphicsProcessor->dsram + (operands[0] + ireg[operands[1]]) * 8, 2 * (op->size + 1));
             ireg[operands[1]] += 1;
             break;
 
         case AR_OPCODE_STMV: //copy data from vector register to dsram
-            memcpy(processor->dsram + (operands[0] + ireg[operands[1]]) * 8, &vreg[operands[2]], 2 * (op->size + 1));
+            memcpy(graphicsProcessor->dsram + (operands[0] + ireg[operands[1]]) * 8, &vreg[operands[2]], 2 * (op->size + 1));
             break;
 
         case AR_OPCODE_STMVI: //copy data from vector register to dsram
-            memcpy(processor->dsram + (operands[0] + ireg[operands[1]]) * 8, &vreg[operands[2]], 2 * (op->size + 1));
+            memcpy(graphicsProcessor->dsram + (operands[0] + ireg[operands[1]]) * 8, &vreg[operands[2]], 2 * (op->size + 1));
             ireg[operands[1]] += 1;
             break;
 
         case AR_OPCODE_LDCV: //copy data from cache to vector register
-            memcpy(&vreg[operands[2]], processor->cache + (operands[0] + ireg[operands[1]]) * 8, 2 * (op->size + 1));
+            memcpy(&vreg[operands[2]], graphicsProcessor->cache + (operands[0] + ireg[operands[1]]) * 8, 2 * (op->size + 1));
             break;
 
         case AR_OPCODE_LDCVI: //copy data from cache to vector register
-            memcpy(&vreg[operands[2]], processor->cache + (operands[0] + ireg[operands[1]]) * 8, 2 * (op->size + 1));
+            memcpy(&vreg[operands[2]], graphicsProcessor->cache + (operands[0] + ireg[operands[1]]) * 8, 2 * (op->size + 1));
             ireg[operands[1]] += 1;
             break;
 
         case AR_OPCODE_STCV: //copy data from vector register to cache
-            memcpy(processor->cache + (operands[0] + ireg[operands[1]]) * 8, &vreg[operands[2]], 2 * (op->size + 1));
+            memcpy(graphicsProcessor->cache + (operands[0] + ireg[operands[1]]) * 8, &vreg[operands[2]], 2 * (op->size + 1));
             break;
 
         case AR_OPCODE_STCVI: //copy data from vector register to cache
-            memcpy(processor->cache + (operands[0] + ireg[operands[1]]) * 8, &vreg[operands[2]], 2 * (op->size + 1));
+            memcpy(graphicsProcessor->cache + (operands[0] + ireg[operands[1]]) * 8, &vreg[operands[2]], 2 * (op->size + 1));
             ireg[operands[1]] += 1;
             break;
 
@@ -137,15 +136,15 @@ ArResult executeInstruction(ArProcessor AR_RESTRICT processor, uint32_t index)
             break;
 
         case AR_OPCODE_MOVELRL: //Write LR value to a registre
-            ireg[operands[0]] = processor->lr;
+            ireg[operands[0]] = graphicsProcessor->lr;
             break;
 
         case AR_OPCODE_MOVELRS: //Write a value to LR
-            processor->lr = ireg[operands[0]];
+            graphicsProcessor->lr = ireg[operands[0]];
             break;
 
         case AR_OPCODE_MOVEBR: //Write a value to BR
-            processor->br = ireg[operands[0]];
+            graphicsProcessor->br = ireg[operands[0]];
             break;
 
         case AR_OPCODE_ADD: //REG = REG + REG
@@ -350,10 +349,10 @@ ArResult executeInstruction(ArProcessor AR_RESTRICT processor, uint32_t index)
             const uint64_t right = ireg[operands[0]] & sizemask[op->size];
             const uint64_t left  = ireg[operands[1]] & sizemask[op->size];
 
-            processor->flags &= ZSUClearMask;
-            processor->flags |= (left != right) << 1u;
-            processor->flags |= ((int64_t)left < (int64_t)right) << 2u;
-            processor->flags |= (left < right) << 3u;
+            graphicsProcessor->flags &= ZSUClearMask;
+            graphicsProcessor->flags |= (left != right) << 1u;
+            graphicsProcessor->flags |= ((int64_t)left < (int64_t)right) << 2u;
+            graphicsProcessor->flags |= (left < right) << 3u;
 
             break;
         }
@@ -363,10 +362,10 @@ ArResult executeInstruction(ArProcessor AR_RESTRICT processor, uint32_t index)
             const uint64_t right = operands[0] & sizemask[op->size];
             const uint64_t left  = ireg[operands[1]] & sizemask[op->size];
 
-            processor->flags &= ZSUClearMask;
-            processor->flags |= (left != right) << 1u;
-            processor->flags |= ((int64_t)left < (int64_t)right) << 2u;
-            processor->flags |= (left < right) << 3u;
+            graphicsProcessor->flags &= ZSUClearMask;
+            graphicsProcessor->flags |= (left != right) << 1u;
+            graphicsProcessor->flags |= ((int64_t)left < (int64_t)right) << 2u;
+            graphicsProcessor->flags |= (left < right) << 3u;
 
             break;
         }
@@ -394,8 +393,8 @@ ArResult executeInstruction(ArProcessor AR_RESTRICT processor, uint32_t index)
         case AR_OPCODE_CALLR: //fallthrough
         case AR_OPCODE_RET:   //fallthrough
         case AR_OPCODE_SWT:
-            processor->delayedBits |= (1u << index);
-            processor->delayed[index] = *op;
+            graphicsProcessor->delayedBits |= (1u << index);
+            graphicsProcessor->delayed[index] = *op;
             break;
 
         case AR_OPCODE_ENDP:
@@ -408,11 +407,11 @@ ArResult executeInstruction(ArProcessor AR_RESTRICT processor, uint32_t index)
     return AR_SUCCESS;
 }
 
-ArResult executeDelayedInstruction(ArProcessor AR_RESTRICT processor, uint32_t index)
+ArResult executeDelayedInstruction(ArGraphicsProcessor AR_RESTRICT graphicsProcessor, uint32_t index)
 {
     static const uint32_t ZSUClearMask = ~(Z_MASK | S_MASK | U_MASK);
 
-    const ArOperation* AR_RESTRICT op = &processor->delayed[index];
+    const ArOperation* AR_RESTRICT op = &graphicsProcessor->delayed[index];
     const uint32_t*    AR_RESTRICT const operands = op->operands;
 
     switch(op->op)
@@ -421,140 +420,140 @@ ArResult executeDelayedInstruction(ArProcessor AR_RESTRICT processor, uint32_t i
             return AR_ERROR_ILLEGAL_INSTRUCTION;
 
         case AR_OPCODE_BNE: // !=
-            if(processor->flags & Z_MASK)
+            if(graphicsProcessor->flags & Z_MASK)
             {
-                processor->pc = operands[0];
+                graphicsProcessor->pc = operands[0];
             }
 
-            processor->flags &= ZSUClearMask;
+            graphicsProcessor->flags &= ZSUClearMask;
             break;
 
         case AR_OPCODE_BEQ: // ==
-            if(!(processor->flags & Z_MASK))
+            if(!(graphicsProcessor->flags & Z_MASK))
             {
-                processor->pc = operands[0];
+                graphicsProcessor->pc = operands[0];
             }
 
-            processor->flags &= ZSUClearMask;
+            graphicsProcessor->flags &= ZSUClearMask;
             break;
 
         case AR_OPCODE_BL: // <
-            if(processor->flags & U_MASK)
+            if(graphicsProcessor->flags & U_MASK)
             {
-                processor->pc = operands[0];
+                graphicsProcessor->pc = operands[0];
             }
 
-            processor->flags &= ZSUClearMask;
+            graphicsProcessor->flags &= ZSUClearMask;
             break;
 
         case AR_OPCODE_BLE: // <=
-            if((processor->flags & U_MASK) || !(processor->flags & Z_MASK))
+            if((graphicsProcessor->flags & U_MASK) || !(graphicsProcessor->flags & Z_MASK))
             {
-                processor->pc = operands[0];
+                graphicsProcessor->pc = operands[0];
             }
 
-            processor->flags &= ZSUClearMask;
+            graphicsProcessor->flags &= ZSUClearMask;
             break;
 
         case AR_OPCODE_BG: // >
-            if(!(processor->flags & U_MASK))
+            if(!(graphicsProcessor->flags & U_MASK))
             {
-                processor->pc = operands[0];
+                graphicsProcessor->pc = operands[0];
             }
 
-            processor->flags &= ZSUClearMask;
+            graphicsProcessor->flags &= ZSUClearMask;
             break;
 
         case AR_OPCODE_BGE: // >=
-            if(!(processor->flags & U_MASK) || !(processor->flags & Z_MASK))
+            if(!(graphicsProcessor->flags & U_MASK) || !(graphicsProcessor->flags & Z_MASK))
             {
-                processor->pc = operands[0];
+                graphicsProcessor->pc = operands[0];
             }
 
-            processor->flags &= ZSUClearMask;
+            graphicsProcessor->flags &= ZSUClearMask;
             break;
 
         case AR_OPCODE_BLS: // <
-            if(processor->flags & S_MASK)
+            if(graphicsProcessor->flags & S_MASK)
             {
-                processor->pc = operands[0];
+                graphicsProcessor->pc = operands[0];
             }
 
-            processor->flags &= ZSUClearMask;
+            graphicsProcessor->flags &= ZSUClearMask;
             break;
 
         case AR_OPCODE_BLES: // <=
-            if((processor->flags & S_MASK) || !(processor->flags & Z_MASK))
+            if((graphicsProcessor->flags & S_MASK) || !(graphicsProcessor->flags & Z_MASK))
             {
-                processor->pc = operands[0];
+                graphicsProcessor->pc = operands[0];
             }
 
-            processor->flags &= ZSUClearMask;
+            graphicsProcessor->flags &= ZSUClearMask;
             break;
 
         case AR_OPCODE_BGS: // >
-            if(!(processor->flags & S_MASK))
+            if(!(graphicsProcessor->flags & S_MASK))
             {
-                processor->pc = operands[0];
+                graphicsProcessor->pc = operands[0];
             }
 
-            processor->flags &= ZSUClearMask;
+            graphicsProcessor->flags &= ZSUClearMask;
             break;
 
         case AR_OPCODE_BGES: // >=
-            if(!(processor->flags & S_MASK) || !(processor->flags & Z_MASK))
+            if(!(graphicsProcessor->flags & S_MASK) || !(graphicsProcessor->flags & Z_MASK))
             {
-                processor->pc = operands[0];
+                graphicsProcessor->pc = operands[0];
             }
 
-            processor->flags &= ZSUClearMask;
+            graphicsProcessor->flags &= ZSUClearMask;
             break;
 
         case AR_OPCODE_BRA:
-            processor->pc = operands[0];
+            graphicsProcessor->pc = operands[0];
             break;
 
         case AR_OPCODE_JMP:
-            processor->pc = operands[0];
+            graphicsProcessor->pc = operands[0];
             break;
 
         case AR_OPCODE_CALL:
-            processor->pc = operands[0];
-            processor->lr = operands[1];
+            graphicsProcessor->pc = operands[0];
+            graphicsProcessor->lr = operands[1];
             break;
 
         case AR_OPCODE_JMPR:
-            processor->pc = operands[0];
+            graphicsProcessor->pc = operands[0];
             break;
 
         case AR_OPCODE_CALLR:
-            processor->pc = operands[0];
-            processor->lr = operands[1];
+            graphicsProcessor->pc = operands[0];
+            graphicsProcessor->lr = operands[1];
             break;
 
         case AR_OPCODE_RET:
-            processor->pc = processor->lr;
+            graphicsProcessor->pc = graphicsProcessor->lr;
             break;
 
         case AR_OPCODE_SWT: //Flip XCHG bit
-            processor->flags = (processor->flags & 0xFFFFFFFEu) | operands[0];
+            graphicsProcessor->flags = (graphicsProcessor->flags & 0xFFFFFFFEu) | operands[0];
             break;
     }
 
     return AR_SUCCESS;
 }
 
-ArResult arProcessorExecuteInstruction(ArProcessor processor)
+ArResult arExecuteInstruction(ArGraphicsProcessor graphicsProcessor)
 {
-    assert(processor);
+    assert(graphicsProcessor);
 
-    const uint32_t size = opcodeSetSize(processor);
+    const uint32_t size = opcodeSetSize(graphicsProcessor);
 
     for(uint32_t i = 0; i < size; ++i)
     {
-        if(processor->delayedBits & (1u << i))
+        if(graphicsProcessor->delayedBits & (1u << i))
         {
-            ArResult result = executeDelayedInstruction(processor, i);
+            ArResult result = executeDelayedInstruction(graphicsProcessor, i);
             if(result != AR_SUCCESS)
             {
                 return result;
@@ -562,11 +561,11 @@ ArResult arProcessorExecuteInstruction(ArProcessor processor)
         }
     }
 
-    processor->delayedBits = 0;
+    graphicsProcessor->delayedBits = 0;
 
     for(uint32_t i = 0; i < size; ++i)
     {
-        ArResult result = executeInstruction(processor, i);
+        ArResult result = executeInstruction(graphicsProcessor, i);
         if(result != AR_SUCCESS)
         {
             return result;
@@ -576,12 +575,12 @@ ArResult arProcessorExecuteInstruction(ArProcessor processor)
     return AR_SUCCESS;
 }
 
-ArResult executeDMA(ArProcessor AR_RESTRICT processor, int store)
+ArResult executeDMA(ArGraphicsProcessor AR_RESTRICT graphicsProcessor, int store)
 {/*
     //RAM -> SDRAM
-    uint64_t* AR_RESTRICT const ireg = processor->ireg;
+    uint64_t* AR_RESTRICT const ireg = graphicsProcessor->ireg;
 
-    const ArOperation* AR_RESTRICT const op       = &processor->dmaOperation;
+    const ArOperation* AR_RESTRICT const op       = &graphicsProcessor->dmaOperation;
     const uint32_t*    AR_RESTRICT const operands = op->operands;
 
     const uint64_t sramb = (op->data)        & 0x0FFFu;
@@ -599,11 +598,11 @@ ArResult executeDMA(ArProcessor AR_RESTRICT processor, int store)
     {
         if(store)
         {
-            return copyToRAM(, ram - MEMORY_MAP_RAM_BEGIN, processor->dsram + sram, size);
+            return copyToRAM(, ram - MEMORY_MAP_RAM_BEGIN, graphicsProcessor->dsram + sram, size);
         }
         else
         {
-            return copyFromRAM(processor, ram - MEMORY_MAP_RAM_BEGIN, processor->dsram + sram, size);
+            return copyFromRAM(graphicsProcessor, ram - MEMORY_MAP_RAM_BEGIN, graphicsProcessor->dsram + sram, size);
         }
     }
     else
@@ -611,18 +610,18 @@ ArResult executeDMA(ArProcessor AR_RESTRICT processor, int store)
         return AR_ERROR_ILLEGAL_INSTRUCTION;
     }*/
 
-    (void)processor;
+    (void)graphicsProcessor;
     (void)store;
 
     return AR_ERROR_ILLEGAL_INSTRUCTION;
 }
 
-ArResult executeDMAR(ArProcessor AR_RESTRICT processor, int store)
+ArResult executeDMAR(ArGraphicsProcessor AR_RESTRICT graphicsProcessor, int store)
 {
     //RAM -> SDRAM
-    uint64_t* AR_RESTRICT const ireg = processor->ireg;
+    uint64_t* AR_RESTRICT const ireg = graphicsProcessor->ireg;
 
-    const ArOperation* AR_RESTRICT const op       = &processor->dmaOperation;
+    const ArOperation* AR_RESTRICT const op       = &graphicsProcessor->dmaOperation;
     const uint32_t*    AR_RESTRICT const operands = op->operands;
 
     const size_t   size = ireg[operands[0]] * 32u;
@@ -636,7 +635,7 @@ ArResult executeDMAR(ArProcessor AR_RESTRICT processor, int store)
 
     if(ram > MEMORY_MAP_RAM_BEGIN)
     {
-        ArPhysicalMemory* memory = getMemoryByRole(processor->parent, AR_PHYSICAL_MEMORY_ROLE_RAM);
+        ArPhysicalMemory* memory = getMemoryByRole(graphicsProcessor->parent, AR_PHYSICAL_MEMORY_ROLE_RAM);
 
         if(!*memory)
         {
@@ -645,16 +644,16 @@ ArResult executeDMAR(ArProcessor AR_RESTRICT processor, int store)
 
         if(store)
         {
-            return copyToRAM(*memory, ram - MEMORY_MAP_RAM_BEGIN, processor->dsram + sram, size);
+            return copyToRAM(*memory, ram - MEMORY_MAP_RAM_BEGIN, graphicsProcessor->dsram + sram, size);
         }
         else
         {
-            return copyFromRAM(*memory, ram - MEMORY_MAP_RAM_BEGIN, processor->dsram + sram, size);
+            return copyFromRAM(*memory, ram - MEMORY_MAP_RAM_BEGIN, graphicsProcessor->dsram + sram, size);
         }
     }
     else
     {
-        ArPhysicalMemory* memory = getMemoryByRole(processor->parent, AR_PHYSICAL_MEMORY_ROLE_ROM);
+        ArPhysicalMemory* memory = getMemoryByRole(graphicsProcessor->parent, AR_PHYSICAL_MEMORY_ROLE_ROM);
 
         if(!*memory)
         {
@@ -663,21 +662,21 @@ ArResult executeDMAR(ArProcessor AR_RESTRICT processor, int store)
 
         if(store)
         {
-            return copyToRAM(*memory, ram - MEMORY_MAP_ROM_BEGIN, processor->dsram + sram, size);
+            return copyToRAM(*memory, ram - MEMORY_MAP_ROM_BEGIN, graphicsProcessor->dsram + sram, size);
         }
         else
         {
-            return copyFromRAM(*memory, ram - MEMORY_MAP_ROM_BEGIN, processor->dsram + sram, size);
+            return copyFromRAM(*memory, ram - MEMORY_MAP_ROM_BEGIN, graphicsProcessor->dsram + sram, size);
         }
     }
 }
 
-ArResult executeDMAIR(ArProcessor AR_RESTRICT processor)
+ArResult executeDMAIR(ArGraphicsProcessor AR_RESTRICT graphicsProcessor)
 {/*
     //RAM -> SDRAM
-    uint64_t* AR_RESTRICT const ireg = processor->ireg;
+    uint64_t* AR_RESTRICT const ireg = graphicsProcessor->ireg;
 
-    const ArOperation* AR_RESTRICT const op       = &processor->dmaOperation;
+    const ArOperation* AR_RESTRICT const op       = &graphicsProcessor->dmaOperation;
     const uint32_t*    AR_RESTRICT const operands = op->operands;
 
     const uint64_t sram = ireg[operands[0]] * 32ull;
@@ -691,24 +690,24 @@ ArResult executeDMAIR(ArProcessor AR_RESTRICT processor)
 
     if(ram > MEMORY_MAP_RAM_BEGIN)
     {
-        return copyFromRAM(processor, ram, processor->isram + sram, size);
+        return copyFromRAM(graphicsProcessor, ram, graphicsProcessor->isram + sram, size);
     }
     else
     {
         return AR_ERROR_ILLEGAL_INSTRUCTION;
     }*/
 
-    (void)processor;
+    (void)graphicsProcessor;
 
     return AR_ERROR_ILLEGAL_INSTRUCTION;
 }
 
-ArResult executeDMAL(ArProcessor AR_RESTRICT processor, int store)
+ArResult executeDMAL(ArGraphicsProcessor AR_RESTRICT graphicsProcessor, int store)
 {/*
     //RAM -> SDRAM
-    uint64_t* AR_RESTRICT const ireg = processor->ireg;
+    uint64_t* AR_RESTRICT const ireg = graphicsProcessor->ireg;
 
-    const ArOperation* AR_RESTRICT const op       = &processor->dmaOperation;
+    const ArOperation* AR_RESTRICT const op       = &graphicsProcessor->dmaOperation;
     const uint32_t*    AR_RESTRICT const operands = op->operands;
 
     const uint64_t sram = ireg[operands[0]] * 32ull;
@@ -722,54 +721,54 @@ ArResult executeDMAL(ArProcessor AR_RESTRICT processor, int store)
 
     if(store)
     {
-        return copyToRAM(processor, ram, processor->dsram + sram, size);
+        return copyToRAM(graphicsProcessor, ram, graphicsProcessor->dsram + sram, size);
     }
     else
     {
-        return copyFromRAM(processor, ram, processor->dsram + sram, size);
+        return copyFromRAM(graphicsProcessor, ram, graphicsProcessor->dsram + sram, size);
     }*/
 
     //TODO
 
-    (void)processor;
+    (void)graphicsProcessor;
     (void)store;
 
     return AR_ERROR_ILLEGAL_INSTRUCTION;
 }
 
-ArResult arExecuteDirectMemoryAccess(ArProcessor processor)
+ArResult arExecuteDirectMemoryAccess(ArGraphicsProcessor graphicsProcessor)
 {
-    assert(processor);
+    assert(graphicsProcessor);
 
-    if(processor->dma)
+    if(graphicsProcessor->dma)
     {
-        processor->dma = false;
+        graphicsProcessor->dma = 0;
 
-        switch(processor->dmaOperation.op)
+        switch(graphicsProcessor->dmaOperation.op)
         {
             default:
                 return AR_ERROR_ILLEGAL_INSTRUCTION;
 
             case AR_OPCODE_LDDMA:
-                return executeDMA(processor, 0);
+                return executeDMA(graphicsProcessor, 0);
 
             case AR_OPCODE_STDMA:
-                return executeDMA(processor, 1);
+                return executeDMA(graphicsProcessor, 1);
 
             case AR_OPCODE_LDDMAR:
-                return executeDMAR(processor, 0);
+                return executeDMAR(graphicsProcessor, 0);
 
             case AR_OPCODE_STDMAR:
-                return executeDMAR(processor, 1);
+                return executeDMAR(graphicsProcessor, 1);
 
             case AR_OPCODE_DMAIR:
-                return executeDMAIR(processor);
+                return executeDMAIR(graphicsProcessor);
 
             case AR_OPCODE_LDDMAL:
-                return executeDMAL(processor, 0);
+                return executeDMAL(graphicsProcessor, 0);
 
             case AR_OPCODE_STDMAL:
-                return executeDMAL(processor, 1);
+                return executeDMAL(graphicsProcessor, 1);
 
             case AR_OPCODE_CLEARC: //fallthrough
             case AR_OPCODE_WAIT:

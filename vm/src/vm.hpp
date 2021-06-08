@@ -22,9 +22,12 @@ static PFN_arCreatePhysicalMemory    arCreatePhysicalMemory{};
 static PFN_arCreateGraphicsProcessor arCreateGraphicsProcessor{};
 static PFN_arCreateScreen            arCreateScreen{};
 
-static PFN_arDecodeInstruction         arDecodeInstruction{};
-static PFN_arExecuteInstruction        arExecuteInstruction{};
-static PFN_arExecuteDirectMemoryAccess arExecuteDirectMemoryAccess{};
+static PFN_arProcessorDecodeInstruction         arProcessorDecodeInstruction{};
+static PFN_arProcessorExecuteInstruction        arProcessorExecuteInstruction{};
+static PFN_arProcessorExecuteDirectMemoryAccess arProcessorExecuteDirectMemoryAccess{};
+
+static PFN_arGraphicsProcessorDecodeInstruction  arGraphicsProcessorDecodeInstruction{};
+static PFN_arGraphicsProcessorExecuteInstruction arGraphicsProcessorExecuteInstruction{};
 
 static PFN_arGetProcessorOperations arGetProcessorOperations{};
 static PFN_arGetProcessorMemoryInfo arGetProcessorMemoryInfo{};
@@ -37,24 +40,24 @@ static PFN_arDestroyScreen            arDestroyScreen{};
 
 inline void load_functions(nes::shared_library& library)
 {
-    arCreateVirtualMachine      = library.load<PFN_arCreateVirtualMachine>("arCreateVirtualMachine");
-    arCreateProcessor           = library.load<PFN_arCreateProcessor>("arCreateProcessor");
-    arCreatePhysicalMemory      = library.load<PFN_arCreatePhysicalMemory>("arCreatePhysicalMemory");
-    arCreateGraphicsProcessor   = library.load<PFN_arCreateGraphicsProcessor>("arCreateGraphicsProcessor");
-    arCreateScreen              = library.load<PFN_arCreateScreen>("arCreateScreen");
+    arCreateVirtualMachine               = library.load<PFN_arCreateVirtualMachine>("arCreateVirtualMachine");
+    arCreateProcessor                    = library.load<PFN_arCreateProcessor>("arCreateProcessor");
+    arCreatePhysicalMemory               = library.load<PFN_arCreatePhysicalMemory>("arCreatePhysicalMemory");
+    arCreateGraphicsProcessor            = library.load<PFN_arCreateGraphicsProcessor>("arCreateGraphicsProcessor");
+    arCreateScreen                       = library.load<PFN_arCreateScreen>("arCreateScreen");
 
-    arDecodeInstruction         = library.load<PFN_arDecodeInstruction>("arDecodeInstruction");
-    arExecuteInstruction        = library.load<PFN_arExecuteInstruction>("arExecuteInstruction");
-    arExecuteDirectMemoryAccess = library.load<PFN_arExecuteDirectMemoryAccess>("arExecuteDirectMemoryAccess");
+    arProcessorDecodeInstruction         = library.load<PFN_arProcessorDecodeInstruction>("arProcessorDecodeInstruction");
+    arProcessorExecuteInstruction        = library.load<PFN_arProcessorExecuteInstruction>("arProcessorExecuteInstruction");
+    arProcessorExecuteDirectMemoryAccess = library.load<PFN_arProcessorExecuteDirectMemoryAccess>("arProcessorExecuteDirectMemoryAccess");
 
-    arGetProcessorOperations    = library.load<PFN_arGetProcessorOperations>("arGetProcessorOperations");
-    arGetProcessorMemoryInfo    = library.load<PFN_arGetProcessorMemoryInfo>("arGetProcessorMemoryInfo");
+    arGetProcessorOperations             = library.load<PFN_arGetProcessorOperations>("arGetProcessorOperations");
+    arGetProcessorMemoryInfo             = library.load<PFN_arGetProcessorMemoryInfo>("arGetProcessorMemoryInfo");
 
-    arDestroyVirtualMachine     = library.load<PFN_arDestroyVirtualMachine>("arDestroyVirtualMachine");
-    arDestroyProcessor          = library.load<PFN_arDestroyProcessor>("arDestroyProcessor");
-    arDestroyPhysicalMemory     = library.load<PFN_arDestroyPhysicalMemory>("arDestroyPhysicalMemory");
-    arDestroyGraphicsProcessor  = library.load<PFN_arDestroyGraphicsProcessor>("arDestroyGraphicsProcessor");
-    arDestroyScreen             = library.load<PFN_arDestroyScreen>("arDestroyScreen");
+    arDestroyVirtualMachine              = library.load<PFN_arDestroyVirtualMachine>("arDestroyVirtualMachine");
+    arDestroyProcessor                   = library.load<PFN_arDestroyProcessor>("arDestroyProcessor");
+    arDestroyPhysicalMemory              = library.load<PFN_arDestroyPhysicalMemory>("arDestroyPhysicalMemory");
+    arDestroyGraphicsProcessor           = library.load<PFN_arDestroyGraphicsProcessor>("arDestroyGraphicsProcessor");
+    arDestroyScreen                      = library.load<PFN_arDestroyScreen>("arDestroyScreen");
 }
 
 }
@@ -158,7 +161,7 @@ public:
 
     void decode()
     {
-        const auto result{arDecodeInstruction(m_processor)};
+        const auto result{arProcessorDecodeInstruction(m_processor)};
         if(result != AR_SUCCESS)
         {
             //TODO: put a backtrace and opcode that generated the error
@@ -168,7 +171,7 @@ public:
 
     bool execute()
     {
-        const auto result{arExecuteInstruction(m_processor)};
+        const auto result{arProcessorExecuteInstruction(m_processor)};
 
         if(result == AR_END_OF_CODE)
         {
@@ -185,7 +188,7 @@ public:
 
     void direct_memory_access()
     {
-        const auto result{arExecuteDirectMemoryAccess(m_processor)};
+        const auto result{arProcessorExecuteDirectMemoryAccess(m_processor)};
 
         if(result != AR_SUCCESS)
         {

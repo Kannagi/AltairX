@@ -235,12 +235,15 @@ typedef struct ArOperation
 
 #define AR_GRAPHICS_PROCESSOR_REG_COUNT (64u)
 // L1
-#define AR_GRAPHICS_PROCESSOR_L1_DSRAM_SIZE  (128u * 1024u) // 128 KiB
-#define AR_GRAPHICS_PROCESSOR_ISRAM_SIZE     (128u * 1024u) // 128 KiB
-#define AR_GRAPHICS_PROCESSOR_L1_CACHE_SIZE  (32u * 1024u)  // 32 KiB
+#define AR_GRAPHICS_PROCESSOR_L1_DSRAM_SIZE (128u * 1024u) // 128 KiB
+#define AR_GRAPHICS_PROCESSOR_L1_ISRAM_SIZE (128u * 1024u) // 128 KiB
+#define AR_GRAPHICS_PROCESSOR_L1_CACHE_SIZE (32u * 1024u)  // 32 KiB
 // L2
-#define AR_GRAPHICS_PROCESSOR_L2_CACHE_SIZE  (4u * 1'048'576u) // 4 MiB
-#define AR_GRAPHICS_PROCESSOR_L2_DSRAM_SIZE  (32u * 1024u)     // 32 KiB
+#define AR_GRAPHICS_PROCESSOR_L2_TEXTURE_CACHE_SIZE (1u * 1'048'576u) // 1 MiB
+#define AR_GRAPHICS_PROCESSOR_L2_BUFFER_CACHE_SIZE  (1u * 1'048'576u) // 1 MiB
+#define AR_GRAPHICS_PROCESSOR_L2_CACHE_SIZE         (2u * 1'048'576u) // 2 MiB
+#define AR_GRAPHICS_PROCESSOR_L2_SPM_SIZE           (2u * 1'048'576u) // 2 MiB
+#define AR_GRAPHICS_PROCESSOR_L2_DSRAM_SIZE         (32u * 1024u)     // 32 KiB
 // L3
 #define AR_GRAPHICS_PROCESSOR_1T_SRAM_SIZE   (64u * 1'048'576u) // 64 MiB
 
@@ -322,7 +325,7 @@ AR_API ArResult arCreateScreen(ArVirtualMachine virtualMachine, const ArScreenCr
             AR_ERROR_ILLEGAL_INSTRUCTION if the op-code is illegal
             AR_ERROR_HOST_OUT_OF_MEMORY if a host memory allocation failed
 */
-AR_API ArResult arDecodeInstruction(ArProcessor processor);
+AR_API ArResult arProcessorDecodeInstruction(ArProcessor processor);
 
 /** \brief Run the instruction on the processor, and update its status
 
@@ -333,7 +336,7 @@ AR_API ArResult arDecodeInstruction(ArProcessor processor);
             AR_ERROR_ILLEGAL_INSTRUCTION if the op-code is illegal
             AR_ERROR_HOST_OUT_OF_MEMORY if a host memory allocation failed
 */
-AR_API ArResult arExecuteInstruction(ArProcessor processor);
+AR_API ArResult arProcessorExecuteInstruction(ArProcessor processor);
 
 /** \brief Run the instruction on the processor, and update its status
 
@@ -341,11 +344,32 @@ AR_API ArResult arExecuteInstruction(ArProcessor processor);
 
     \return AR_SUCCESS in case of success
             AR_ERROR_ILLEGAL_INSTRUCTION if the op-code is illegal, or if the instruction tries to access non-existing physical memory
-            AR_ERROR_MEMORY_OUT_OF_RANGE if the final address + size of processor's SRAM is out of range
-            AR_ERROR_PHYSICAL_MEMORY_OUT_OF_RANGE if the final address + size of machine's physical memory is out of range
+            AR_ERROR_MEMORY_OUT_OF_RANGE if the final address + size of processor's SRAM is out of range\
+            AR_ERROR_PHYSICAL_MEMORY_OUT_OF_RANGE if the final address + size of machine's physical memory is out of range\
             AR_ERROR_HOST_OUT_OF_MEMORY if a host memory allocation failed
 */
-AR_API ArResult arExecuteDirectMemoryAccess(ArProcessor processor);
+AR_API ArResult arProcessorExecuteDirectMemoryAccess(ArProcessor processor);
+
+/** \brief Decode the next instructions and increment the program counter
+
+    \param graphicsProcessor An ArGraphicsProcessor handle
+
+    \return AR_SUCCESS in case of success
+            AR_ERROR_ILLEGAL_INSTRUCTION if the op-code is illegal
+            AR_ERROR_HOST_OUT_OF_MEMORY if a host memory allocation failed
+*/
+AR_API ArResult arGraphicsProcessorDecodeInstruction(ArGraphicsProcessor graphicsProcessor);
+
+/** \brief Run the instruction on the graphics processor, and update its status
+
+    \param graphicsProcessor An ArGraphicsProcessor handle
+
+    \return AR_SUCCESS in case of success
+            AR_END_OF_CODE if the graphics processor reached the end of its code
+            AR_ERROR_ILLEGAL_INSTRUCTION if the op-code is illegal
+            AR_ERROR_HOST_OUT_OF_MEMORY if a host memory allocation failed
+*/
+AR_API ArResult arGraphicsProcessorExecuteInstruction(ArGraphicsProcessor graphicsProcessor);
 
 /** \brief Get a copy of current processor fetch operations.
 
@@ -414,9 +438,12 @@ typedef ArResult (*PFN_arCreatePhysicalMemory)(ArVirtualMachine virtualMachine, 
 typedef ArResult(*PFN_arCreateGraphicsProcessor)(ArVirtualMachine virtualMachine, const ArGraphicsProcessorCreateInfo* pInfo, ArGraphicsProcessor* pGraphicsProcessor);
 typedef ArResult(*PFN_arCreateScreen)(ArVirtualMachine virtualMachine, const ArScreenCreateInfo* pInfo, ArScreen* pScreen);
 
-typedef ArResult (*PFN_arDecodeInstruction)(ArProcessor processor);
-typedef ArResult (*PFN_arExecuteInstruction)(ArProcessor processor);
-typedef ArResult (*PFN_arExecuteDirectMemoryAccess)(ArProcessor processor);
+typedef ArResult (*PFN_arProcessorDecodeInstruction)(ArProcessor processor);
+typedef ArResult (*PFN_arProcessorExecuteInstruction)(ArProcessor processor);
+typedef ArResult (*PFN_arProcessorExecuteDirectMemoryAccess)(ArProcessor processor);
+
+typedef ArResult (*PFN_arGraphicsProcessorDecodeInstruction)(ArGraphicsProcessor graphicsProcessor);
+typedef ArResult (*PFN_arGraphicsProcessorExecuteInstruction)(ArGraphicsProcessor graphicsProcessor);
 
 typedef void (*PFN_arGetProcessorOperations)(ArProcessor processor, ArOperation* pOutput, size_t* pCount);
 typedef void (*PFN_arGetProcessorMemoryInfo)(ArProcessor processor, ArProcessorMemoryInfo* pOutput);

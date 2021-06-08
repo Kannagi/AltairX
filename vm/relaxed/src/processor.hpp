@@ -32,7 +32,8 @@ typedef struct ArProcessor_T
     ArOperation operations[AR_PROCESSOR_MAX_OPERATIONS];
     uint32_t delayedBits;
     ArOperation delayed[AR_PROCESSOR_MAX_OPERATIONS];
-    uint32_t dma; //1 if dmaOperation is to be treated
+    // true if dmaOperation is to be treated
+    bool dma;
     ArOperation dmaOperation;
 
 } ArProcessor_T;

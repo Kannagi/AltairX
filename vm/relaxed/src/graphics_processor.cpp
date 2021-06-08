@@ -10,13 +10,11 @@ ArResult arCreateGraphicsProcessor(ArVirtualMachine virtualMachine, const ArGrap
     assert(pInfo->sType == AR_STRUCTURE_TYPE_GRAPHICS_PROCESSOR_CREATE_INFO);
     assert(pGraphicsProcessor);
 
-    const ArGraphicsProcessor output = new ArGraphicsProcessor_T;
+    ArGraphicsProcessor output = new ArGraphicsProcessor_T;
     if (!output)
     {
         return AR_ERROR_HOST_OUT_OF_MEMORY;
     }
-
-    memset(output, 0, sizeof(ArGraphicsProcessor_T));
 
     output->parent = virtualMachine;
 
@@ -30,8 +28,21 @@ void arDestroyGraphicsProcessor(ArVirtualMachine virtualMachine, ArGraphicsProce
 {
     assert(virtualMachine);
 
-    if (graphicsProcessor)
+    delete graphicsProcessor;
+}
+
+uint32_t opcodeSetSize(ArGraphicsProcessor AR_RESTRICT graphicsProcessor)
+{
+    uint32_t size;
+    if (graphicsProcessor->flags & 0x01)
     {
-        delete graphicsProcessor;
+        const uint32_t available = graphicsProcessor->pc - (AR_PROCESSOR_ISRAM_SIZE / 4u); //we may overflow otherwise
+        size = MIN(available, 4u);
     }
+    else
+    {
+        size = 2;
+    }
+
+    return size;
 }

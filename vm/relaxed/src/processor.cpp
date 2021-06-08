@@ -5,7 +5,7 @@
 #include <cassert>
 #include <cstring>
 
-static void insertProcessor(ArVirtualMachine virtualMachine, ArProcessor processor)
+void insertProcessor(ArVirtualMachine virtualMachine, ArProcessor processor)
 {
     ArProcessor previous = virtualMachine->processor;
     if(previous)

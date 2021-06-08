@@ -2,6 +2,7 @@
 #include "virtual_machine.hpp"
 
 #include <cassert>
+#include <cstring>
 
 ArPhysicalMemory* getMemoryByRole(ArVirtualMachine virtualMachine, ArPhysicalMemoryRole role)
 {
@@ -57,4 +58,28 @@ void arDestroyPhysicalMemory(ArVirtualMachine virtualMachine, ArPhysicalMemory m
 
     *machineMemory = NULL;
     delete memory;
+}
+
+ArResult copyFromRAM(ArPhysicalMemory memory, uint64_t memoryAddress, uint8_t* AR_RESTRICT output, size_t size)
+{
+    if (memoryAddress + size > memory->size)
+    {
+        return AR_ERROR_PHYSICAL_MEMORY_OUT_OF_RANGE;
+    }
+
+    memcpy(output, memory->memory + memoryAddress, size);
+
+    return AR_SUCCESS;
+}
+
+ArResult copyToRAM(ArPhysicalMemory memory, uint64_t memoryAddress, const uint8_t* AR_RESTRICT input, size_t size)
+{
+    if (memoryAddress + size > memory->size)
+    {
+        return AR_ERROR_PHYSICAL_MEMORY_OUT_OF_RANGE;
+    }
+
+    memcpy(memory->memory + memoryAddress, input, size);
+
+    return AR_SUCCESS;
 }
