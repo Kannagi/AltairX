@@ -49,7 +49,7 @@ const ArOpcode BRUJumpsCalls[4] =
     AR_OPCODE_CALLR,
 };
 
-int decodeBRU(uint32_t br, uint32_t pc, uint32_t opcode, ArOperation* AR_RESTRICT output)
+bool decodeBRU(uint32_t br, uint32_t pc, uint32_t opcode, ArOperation* AR_RESTRICT output)
 {
     const uint32_t type = readbits(opcode, 2, 2);
 
@@ -104,12 +104,12 @@ int decodeBRU(uint32_t br, uint32_t pc, uint32_t opcode, ArOperation* AR_RESTRIC
 
                 if (output->op == AR_OPCODE_UNKNOWN)
                 {
-                    return 0;
+                    return false;
                 }
             }
             else if (category == 1) //Illegal
             {
-                return 0;
+                return false;
             }
             else if (category == 2) //Jumps or calls
             {
@@ -176,7 +176,7 @@ int decodeBRU(uint32_t br, uint32_t pc, uint32_t opcode, ArOperation* AR_RESTRIC
         output->size = 1;
     }
 
-    return 1;
+    return true;
 }
 
 //bit 0: load or store
@@ -207,15 +207,15 @@ const ArOpcode LSUPositLoadStore[8] =
     AR_OPCODE_STCVI,
 };
 
-int decodeLSU(uint32_t opcode, ArOperation* AR_RESTRICT output)
+bool decodeLSU(uint32_t opcode, ArOperation* AR_RESTRICT output)
 {
     const uint32_t type = readbits(opcode, 2, 2);
 
     if (type < 2) //REG Load/Store
     {
-        const uint32_t cache = readbits(opcode, 2, 1);
-        const uint32_t store = readbits(opcode, 4, 1);
-        const uint32_t incr = readbits(opcode, 5, 1);
+        const size_t cache = readbits(opcode, 2, 1);
+        const size_t store = readbits(opcode, 4, 1);
+        const size_t incr = readbits(opcode, 5, 1);
         const uint32_t size = readbits(opcode, 6, 2);
         const uint32_t value = readbits(opcode, 8, 14);
         const uint32_t src = readbits(opcode, 23, 3);
@@ -282,7 +282,7 @@ int decodeLSU(uint32_t opcode, ArOperation* AR_RESTRICT output)
         output->operands[2] = reg;
     }
 
-    return 1;
+    return true;
 }
 
 const ArOpcode ALURegRegRegOpcodes[16] =
@@ -345,7 +345,7 @@ const ArOpcode ALURegImmOpcodes[16] =
     AR_OPCODE_UNKNOWN,
 };
 
-int decodeALU(uint32_t opcode, ArOperation* AR_RESTRICT output)
+bool decodeALU(uint32_t opcode, ArOperation* AR_RESTRICT output)
 {
     const uint32_t category = readbits(opcode, 2, 2);
 
@@ -369,7 +369,7 @@ int decodeALU(uint32_t opcode, ArOperation* AR_RESTRICT output)
 
             if (output->op == AR_OPCODE_UNKNOWN)
             {
-                return 0;
+                return false;
             }
         }
         else if (type == 1) //NOP
@@ -399,7 +399,7 @@ int decodeALU(uint32_t opcode, ArOperation* AR_RESTRICT output)
         }
         else
         {
-            return 0;
+            return false;
         }
     }
     else if (category == 1) // ALU REG-REG-IMM (ADDI, SUBI, ...)
@@ -418,7 +418,7 @@ int decodeALU(uint32_t opcode, ArOperation* AR_RESTRICT output)
 
         if (output->op == AR_OPCODE_UNKNOWN)
         {
-            return 0;
+            return false;
         }
     }
     else if (category == 2) // ALU REG-IMM (ADDQ, SUBQ, ...)
@@ -435,7 +435,7 @@ int decodeALU(uint32_t opcode, ArOperation* AR_RESTRICT output)
 
         if (output->op == AR_OPCODE_UNKNOWN)
         {
-            return 0;
+            return false;
         }
     }
     else // MOVEI
@@ -450,7 +450,7 @@ int decodeALU(uint32_t opcode, ArOperation* AR_RESTRICT output)
         output->operands[2] = dest;
     }
 
-    return 1;
+    return true;
 }
 
 ArOpcode AGUOpcodes[16] =
@@ -473,7 +473,7 @@ ArOpcode AGUOpcodes[16] =
     AR_OPCODE_UNKNOWN,
 };
 
-int decodeAGU(uint32_t opcode, ArOperation* AR_RESTRICT output)
+bool decodeAGU(uint32_t opcode, ArOperation* AR_RESTRICT output)
 {
     const uint32_t category = readbits(opcode, 2, 1);
 
@@ -511,72 +511,17 @@ int decodeAGU(uint32_t opcode, ArOperation* AR_RESTRICT output)
 
         if (output->op == AR_OPCODE_UNKNOWN)
         {
-            return 0;
+            return false;
         }
     }
 
-    return 1;
+    return true;
 }
 
-int decodeVPU(uint32_t opcode, ArOperation* AR_RESTRICT output)
+bool decodeVPU(uint32_t opcode, ArOperation* AR_RESTRICT output)
 {
     (void)opcode;
     (void)output;
 
-    return 1;
-}
-
-int decode(uint32_t index, uint32_t br, uint32_t pc, uint32_t opcode, ArOperation* AR_RESTRICT output)
-{
-    const uint32_t compute_unit = readbits(opcode, 0, 2);
-
-    if (index == 0)
-    {
-        if (compute_unit == 0) //BRU
-        {
-            return decodeBRU(br, pc, opcode, output);
-        }
-        else if (compute_unit == 1) //LSU
-        {
-            return decodeLSU(opcode, output);
-        }
-        else if (compute_unit == 2) //ALU
-        {
-            return decodeALU(opcode, output);
-        }
-        else //VFPU/VDIV
-        {
-            return decodeVPU(opcode, output);
-        }
-    }
-    else if (index == 1)
-    {
-        if (compute_unit == 0) //AGU
-        {
-            return decodeAGU(opcode, output);
-        }
-        else if (compute_unit == 1) //LSU
-        {
-            return decodeLSU(opcode, output);
-        }
-        else if (compute_unit == 2) //ALU
-        {
-            return decodeALU(opcode, output);
-        }
-        else //VFPU
-        {
-            return decodeVPU(opcode, output);
-        }
-    }
-    else //2 or 3
-    {
-        if (compute_unit == 2) //ALU
-        {
-            return decodeALU(opcode, output);
-        }
-        else //VFPU
-        {
-            return 0;
-        }
-    }
+    return true;
 }

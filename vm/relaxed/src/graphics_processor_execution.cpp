@@ -28,103 +28,88 @@ ArResult executeInstruction(ArGraphicsProcessor AR_RESTRICT graphicsProcessor, u
         case AR_OPCODE_UNKNOWN:
             return AR_ERROR_ILLEGAL_INSTRUCTION;
 
-        //AGU
-        case AR_OPCODE_LDDMA:  //fallthrough
-        case AR_OPCODE_STDMA:  //fallthrough
-        case AR_OPCODE_LDDMAR: //fallthrough
-        case AR_OPCODE_STDMAR: //fallthrough
-        case AR_OPCODE_DMAIR:  //fallthrough
-        case AR_OPCODE_LDDMAL: //fallthrough
-        case AR_OPCODE_STDMAL: //fallthrough
-        case AR_OPCODE_CLEARC: //fallthrough
-        case AR_OPCODE_WAIT:
-            graphicsProcessor->dma = 1;
-            graphicsProcessor->dmaOperation = *op;
-            break;
-
         //LSU
         case AR_OPCODE_LDM: //copy data from dsram to register
-            memcpy(&ireg[operands[2]], graphicsProcessor->dsram + operands[0] + ireg[operands[1]], 1u << op->size);
+            memcpy(&reg[operands[2]], graphicsProcessor->dsram.data() + reg[operands[0]].vectori[0] + reg[operands[1]].vectori[0], 1ull << op->size);
             break;
 
         case AR_OPCODE_LDMI: //copy data from dsram to register
-            memcpy(&ireg[operands[2]], graphicsProcessor->dsram + operands[0] + ireg[operands[1]], 1u << op->size);
-            ireg[operands[1]] += 1;
+            memcpy(&reg[operands[2]], graphicsProcessor->dsram.data() + operands[0] + reg[operands[1]].vectori[0], 1ull << op->size);
             break;
 
         case AR_OPCODE_STM: //copy data from register to dsram
-            memcpy(graphicsProcessor->dsram + operands[0] + ireg[operands[1]], &ireg[operands[2]], 1u << op->size);
+            memcpy(graphicsProcessor->dsram.data() + operands[0] + reg[operands[1]], &reg[operands[2]], 1ull << op->size);
             break;
 
         case AR_OPCODE_STMI: //copy data from register to dsram
-            memcpy(graphicsProcessor->dsram + operands[0] + ireg[operands[1]], &ireg[operands[2]], 1u << op->size);
-            ireg[operands[1]] += 1;
+            memcpy(graphicsProcessor->dsram.data() + operands[0] + reg[operands[1]], &reg[operands[2]], 1ull << op->size);
+            reg[operands[1]] += 1;
             break;
 
         case AR_OPCODE_LDC: //copy data from cache to register
-            memcpy(&ireg[operands[2]], graphicsProcessor->cache + operands[0] + ireg[operands[1]], 1u << op->size);
+            memcpy(&reg[operands[2]], graphicsProcessor->cache + operands[0] + reg[operands[1]], 1ull << op->size);
             break;
 
         case AR_OPCODE_LDCI: //copy data from cache to register
-            memcpy(&ireg[operands[2]], graphicsProcessor->cache + operands[0] + ireg[operands[1]], 1u << op->size);
-            ireg[operands[1]] += 1;
+            memcpy(&reg[operands[2]], graphicsProcessor->cache + operands[0] + reg[operands[1]], 1ull << op->size);
+            reg[operands[1]] += 1;
             break;
 
         case AR_OPCODE_STC: //copy data from register to cache
-            memcpy(graphicsProcessor->cache + operands[0] + ireg[operands[1]], &ireg[operands[2]], 1u << op->size);
+            memcpy(graphicsProcessor->cache + operands[0] + reg[operands[1]], &reg[operands[2]], 1ull << op->size);
             break;
 
         case AR_OPCODE_STCI: //copy data from register to cache
-            memcpy(graphicsProcessor->cache + operands[0] + ireg[operands[1]], &ireg[operands[2]], 1u << op->size);
-            ireg[operands[1]] += 1;
+            memcpy(graphicsProcessor->cache + operands[0] + reg[operands[1]], &reg[operands[2]], 1ull << op->size);
+            reg[operands[1]] += 1;
             break;
 
         case AR_OPCODE_IN: //copy data from iosram to register
-            memcpy(&ireg[operands[2]], graphicsProcessor->iosram + operands[0], 1u << op->size);
+            memcpy(&reg[operands[2]], graphicsProcessor->iosram + operands[0], 1ull << op->size);
             break;
 
         case AR_OPCODE_OUT: //copy data from register to iosram
-            memcpy(graphicsProcessor->iosram + operands[0], &ireg[operands[2]], 1u << op->size);
+            memcpy(graphicsProcessor->iosram + operands[0], &reg[operands[2]], 1ull << op->size);
             break;
 
         case AR_OPCODE_OUTI: //write data to iosram
-            memcpy(graphicsProcessor->iosram + operands[0], &operands[2], 1u << op->size);
+            memcpy(graphicsProcessor->iosram + operands[0], &operands[2], 1ull << op->size);
             break;
 
         case AR_OPCODE_LDMV: //copy data from dsram to vector register
-            memcpy(&vreg[operands[2]], graphicsProcessor->dsram + (operands[0] + ireg[operands[1]]) * 8, 2 * (op->size + 1));
+            memcpy(&vreg[operands[2]], graphicsProcessor->dsram + (operands[0] + reg[operands[1]]) * 8, 2 * (op->size + 1));
             break;
 
         case AR_OPCODE_LDMVI: //copy data from dsram to vector register
-            memcpy(&vreg[operands[2]], graphicsProcessor->dsram + (operands[0] + ireg[operands[1]]) * 8, 2 * (op->size + 1));
-            ireg[operands[1]] += 1;
+            memcpy(&vreg[operands[2]], graphicsProcessor->dsram + (operands[0] + reg[operands[1]]) * 8, 2 * (op->size + 1));
+            reg[operands[1]] += 1;
             break;
 
         case AR_OPCODE_STMV: //copy data from vector register to dsram
-            memcpy(graphicsProcessor->dsram + (operands[0] + ireg[operands[1]]) * 8, &vreg[operands[2]], 2 * (op->size + 1));
+            memcpy(graphicsProcessor->dsram + (operands[0] + reg[operands[1]]) * 8, &vreg[operands[2]], 2 * (op->size + 1));
             break;
 
         case AR_OPCODE_STMVI: //copy data from vector register to dsram
-            memcpy(graphicsProcessor->dsram + (operands[0] + ireg[operands[1]]) * 8, &vreg[operands[2]], 2 * (op->size + 1));
-            ireg[operands[1]] += 1;
+            memcpy(graphicsProcessor->dsram + (operands[0] + reg[operands[1]]) * 8, &vreg[operands[2]], 2 * (op->size + 1));
+            reg[operands[1]] += 1;
             break;
 
         case AR_OPCODE_LDCV: //copy data from cache to vector register
-            memcpy(&vreg[operands[2]], graphicsProcessor->cache + (operands[0] + ireg[operands[1]]) * 8, 2 * (op->size + 1));
+            memcpy(&vreg[operands[2]], graphicsProcessor->cache + (operands[0] + reg[operands[1]]) * 8, 2 * (op->size + 1));
             break;
 
         case AR_OPCODE_LDCVI: //copy data from cache to vector register
-            memcpy(&vreg[operands[2]], graphicsProcessor->cache + (operands[0] + ireg[operands[1]]) * 8, 2 * (op->size + 1));
-            ireg[operands[1]] += 1;
+            memcpy(&vreg[operands[2]], graphicsProcessor->cache + (operands[0] + reg[operands[1]]) * 8, 2 * (op->size + 1));
+            reg[operands[1]] += 1;
             break;
 
         case AR_OPCODE_STCV: //copy data from vector register to cache
-            memcpy(graphicsProcessor->cache + (operands[0] + ireg[operands[1]]) * 8, &vreg[operands[2]], 2 * (op->size + 1));
+            memcpy(graphicsProcessor->cache + (operands[0] + reg[operands[1]]) * 8, &vreg[operands[2]], 2 * (op->size + 1));
             break;
 
         case AR_OPCODE_STCVI: //copy data from vector register to cache
-            memcpy(graphicsProcessor->cache + (operands[0] + ireg[operands[1]]) * 8, &vreg[operands[2]], 2 * (op->size + 1));
-            ireg[operands[1]] += 1;
+            memcpy(graphicsProcessor->cache + (operands[0] + reg[operands[1]]) * 8, &vreg[operands[2]], 2 * (op->size + 1));
+            reg[operands[1]] += 1;
             break;
 
         //ALU
@@ -132,222 +117,222 @@ ArResult executeInstruction(ArGraphicsProcessor AR_RESTRICT graphicsProcessor, u
             break;
 
         case AR_OPCODE_MOVEI: //Write a value to a register
-            ireg[operands[2]] = operands[0];
+            reg[operands[2]] = operands[0];
             break;
 
         case AR_OPCODE_MOVELRL: //Write LR value to a registre
-            ireg[operands[0]] = graphicsProcessor->lr;
+            reg[operands[0]] = graphicsProcessor->lr;
             break;
 
         case AR_OPCODE_MOVELRS: //Write a value to LR
-            graphicsProcessor->lr = ireg[operands[0]];
+            graphicsProcessor->lr = reg[operands[0]];
             break;
 
         case AR_OPCODE_MOVEBR: //Write a value to BR
-            graphicsProcessor->br = ireg[operands[0]];
+            graphicsProcessor->br = reg[operands[0]];
             break;
 
         case AR_OPCODE_ADD: //REG = REG + REG
-            ireg[operands[2]] = ireg[operands[1]] + ireg[operands[0]];
-            ireg[operands[2]] &= sizemask[op->size];
+            reg[operands[2]] = reg[operands[1]] + reg[operands[0]];
+            reg[operands[2]] &= sizemask[op->size];
             break;
 
         case AR_OPCODE_ADDI: //REG = REG + IMM
-            ireg[operands[2]] = ireg[operands[1]] + operands[0];
-            ireg[operands[2]] &= sizemask[op->size];
+            reg[operands[2]] = reg[operands[1]] + operands[0];
+            reg[operands[2]] &= sizemask[op->size];
             break;
 
         case AR_OPCODE_ADDQ: //REG += IMM
-            ireg[operands[2]] += operands[0];
-            ireg[operands[2]] &= sizemask[op->size];
+            reg[operands[2]] += operands[0];
+            reg[operands[2]] &= sizemask[op->size];
             break;
 
         case AR_OPCODE_SUB: //REG = REG - REG
-            ireg[operands[2]] = ireg[operands[1]] - ireg[operands[0]];
-            ireg[operands[2]] &= sizemask[op->size];
+            reg[operands[2]] = reg[operands[1]] - reg[operands[0]];
+            reg[operands[2]] &= sizemask[op->size];
             break;
 
         case AR_OPCODE_SUBI: //REG = REG - IMM
-            ireg[operands[2]] = ireg[operands[1]] - operands[0];
-            ireg[operands[2]] &= sizemask[op->size];
+            reg[operands[2]] = reg[operands[1]] - operands[0];
+            reg[operands[2]] &= sizemask[op->size];
             break;
 
         case AR_OPCODE_SUBQ: //REG -= IMM
-            ireg[operands[2]] -= operands[0];
-            ireg[operands[2]] &= sizemask[op->size];
+            reg[operands[2]] -= operands[0];
+            reg[operands[2]] &= sizemask[op->size];
             break;
 
         case AR_OPCODE_MULS: //REG = REG * REG (signed)
-            ireg[operands[2]] = (uint64_t)((int64_t)ireg[operands[1]] * (int64_t)ireg[operands[0]]);
-            ireg[operands[2]] &= sizemask[op->size];
+            reg[operands[2]] = (uint64_t)((int64_t)reg[operands[1]] * (int64_t)reg[operands[0]]);
+            reg[operands[2]] &= sizemask[op->size];
             break;
 
         case AR_OPCODE_MULSI: //REG = REG * IMM (signed)
-            ireg[operands[2]] = (uint64_t)((int64_t)ireg[operands[1]] * (int64_t)operands[0]);
-            ireg[operands[2]] &= sizemask[op->size];
+            reg[operands[2]] = (uint64_t)((int64_t)reg[operands[1]] * (int64_t)operands[0]);
+            reg[operands[2]] &= sizemask[op->size];
             break;
 
         case AR_OPCODE_MULSQ: //REG *= IMM (signed)
-            ireg[operands[2]] = (uint64_t)((int64_t)ireg[operands[2]] * (int64_t)operands[0]);
-            ireg[operands[2]] &= sizemask[op->size];
+            reg[operands[2]] = (uint64_t)((int64_t)reg[operands[2]] * (int64_t)operands[0]);
+            reg[operands[2]] &= sizemask[op->size];
             break;
 
         case AR_OPCODE_MULU: //REG = REG * REG
-            ireg[operands[2]] = ireg[operands[1]] * ireg[operands[0]];
-            ireg[operands[2]] &= sizemask[op->size];
+            reg[operands[2]] = reg[operands[1]] * reg[operands[0]];
+            reg[operands[2]] &= sizemask[op->size];
             break;
 
         case AR_OPCODE_MULUI: //REG = REG * IMM
-            ireg[operands[2]] = ireg[operands[1]] * operands[0];
-            ireg[operands[2]] &= sizemask[op->size];
+            reg[operands[2]] = reg[operands[1]] * operands[0];
+            reg[operands[2]] &= sizemask[op->size];
             break;
 
         case AR_OPCODE_MULUQ: //REG *= IMM
-            ireg[operands[2]] *= operands[0];
-            ireg[operands[2]] &= sizemask[op->size];
+            reg[operands[2]] *= operands[0];
+            reg[operands[2]] &= sizemask[op->size];
             break;
 
         case AR_OPCODE_DIVS: //REG = REG / REG (signed)
-            ireg[operands[2]] = (uint64_t)((int64_t)ireg[operands[1]] / (int64_t)ireg[operands[0]]);
-            ireg[operands[2]] &= sizemask[op->size];
+            reg[operands[2]] = (uint64_t)((int64_t)reg[operands[1]] / (int64_t)reg[operands[0]]);
+            reg[operands[2]] &= sizemask[op->size];
             break;
 
         case AR_OPCODE_DIVSI: //REG = REG / IMM (signed)
-            ireg[operands[2]] = (uint64_t)((int64_t)ireg[operands[1]] / (int64_t)operands[0]);
-            ireg[operands[2]] &= sizemask[op->size];
+            reg[operands[2]] = (uint64_t)((int64_t)reg[operands[1]] / (int64_t)operands[0]);
+            reg[operands[2]] &= sizemask[op->size];
             break;
 
         case AR_OPCODE_DIVSQ: //REG /= IMM (signed)
-            ireg[operands[2]] = (uint64_t)((int64_t)ireg[operands[2]] / (int64_t)operands[0]);
-            ireg[operands[2]] &= sizemask[op->size];
+            reg[operands[2]] = (uint64_t)((int64_t)reg[operands[2]] / (int64_t)operands[0]);
+            reg[operands[2]] &= sizemask[op->size];
             break;
 
         case AR_OPCODE_DIVU: //REG = REG / REG
-            ireg[operands[2]] = ireg[operands[1]] / ireg[operands[0]];
-            ireg[operands[2]] &= sizemask[op->size];
+            reg[operands[2]] = reg[operands[1]] / reg[operands[0]];
+            reg[operands[2]] &= sizemask[op->size];
             break;
 
         case AR_OPCODE_DIVUI: //REG = REG / IMM
-            ireg[operands[2]] = ireg[operands[1]] / operands[0];
-            ireg[operands[2]] &= sizemask[op->size];
+            reg[operands[2]] = reg[operands[1]] / operands[0];
+            reg[operands[2]] &= sizemask[op->size];
             break;
 
         case AR_OPCODE_DIVUQ: //REG /= IMM
-            ireg[operands[2]] /= operands[0];
-            ireg[operands[2]] &= sizemask[op->size];
+            reg[operands[2]] /= operands[0];
+            reg[operands[2]] &= sizemask[op->size];
             break;
 
         case AR_OPCODE_AND: //REG = REG & REG
-            ireg[operands[2]] = ireg[operands[1]] & ireg[operands[0]];
-            ireg[operands[2]] &= sizemask[op->size];
+            reg[operands[2]] = reg[operands[1]] & reg[operands[0]];
+            reg[operands[2]] &= sizemask[op->size];
             break;
 
         case AR_OPCODE_ANDI: //REG = REG & IMM
-            ireg[operands[2]] = ireg[operands[1]] & operands[0];
-            ireg[operands[2]] &= sizemask[op->size];
+            reg[operands[2]] = reg[operands[1]] & operands[0];
+            reg[operands[2]] &= sizemask[op->size];
             break;
 
         case AR_OPCODE_ANDQ: //REG &= IMM
-            ireg[operands[2]] &= operands[0];
-            ireg[operands[2]] &= sizemask[op->size];
+            reg[operands[2]] &= operands[0];
+            reg[operands[2]] &= sizemask[op->size];
             break;
 
         case AR_OPCODE_OR: //REG = REG | REG
-            ireg[operands[2]] = ireg[operands[1]] | ireg[operands[0]];
-            ireg[operands[2]] &= sizemask[op->size];
+            reg[operands[2]] = reg[operands[1]] | reg[operands[0]];
+            reg[operands[2]] &= sizemask[op->size];
             break;
 
         case AR_OPCODE_ORI: //REG = REG | IMM
-            ireg[operands[2]] = ireg[operands[1]] | operands[0];
-            ireg[operands[2]] &= sizemask[op->size];
+            reg[operands[2]] = reg[operands[1]] | operands[0];
+            reg[operands[2]] &= sizemask[op->size];
             break;
 
         case AR_OPCODE_ORQ: //REG |= IMM
-            ireg[operands[2]] |= operands[0];
-            ireg[operands[2]] &= sizemask[op->size];
+            reg[operands[2]] |= operands[0];
+            reg[operands[2]] &= sizemask[op->size];
             break;
 
         case AR_OPCODE_XOR: //REG = REG ^ REG
-            ireg[operands[2]] = ireg[operands[1]] ^ ireg[operands[0]];
-            ireg[operands[2]] &= sizemask[op->size];
+            reg[operands[2]] = reg[operands[1]] ^ reg[operands[0]];
+            reg[operands[2]] &= sizemask[op->size];
             break;
 
         case AR_OPCODE_XORI: //REG = REG ^ IMM
-            ireg[operands[2]] = ireg[operands[1]] ^ operands[0];
-            ireg[operands[2]] &= sizemask[op->size];
+            reg[operands[2]] = reg[operands[1]] ^ operands[0];
+            reg[operands[2]] &= sizemask[op->size];
             break;
 
         case AR_OPCODE_XORQ: //REG ^= IMM
-            ireg[operands[2]] ^= operands[0];
-            ireg[operands[2]] &= sizemask[op->size];
+            reg[operands[2]] ^= operands[0];
+            reg[operands[2]] &= sizemask[op->size];
             break;
 
         case AR_OPCODE_ASL: //REG = REG << REG (signed)
-            ireg[operands[2]] = (uint64_t)((int64_t)ireg[operands[1]] << (int64_t)ireg[operands[0]]);
-            ireg[operands[2]] &= sizemask[op->size];
+            reg[operands[2]] = (uint64_t)((int64_t)reg[operands[1]] << (int64_t)reg[operands[0]]);
+            reg[operands[2]] &= sizemask[op->size];
             break;
 
         case AR_OPCODE_ASLI: //REG = REG << IMM (signed)
-            ireg[operands[2]] = (uint64_t)((int64_t)ireg[operands[1]] << (int64_t)operands[0]);
-            ireg[operands[2]] &= sizemask[op->size];
+            reg[operands[2]] = (uint64_t)((int64_t)reg[operands[1]] << (int64_t)operands[0]);
+            reg[operands[2]] &= sizemask[op->size];
             break;
 
         case AR_OPCODE_ASLQ: //REG <<= IMM (signed)
-            ireg[operands[2]] = (uint64_t)((int64_t)ireg[operands[2]] << (int64_t)operands[0]);
-            ireg[operands[2]] &= sizemask[op->size];
+            reg[operands[2]] = (uint64_t)((int64_t)reg[operands[2]] << (int64_t)operands[0]);
+            reg[operands[2]] &= sizemask[op->size];
             break;
 
         case AR_OPCODE_LSL: //REG = REG << REG
-            ireg[operands[2]] = ireg[operands[1]] << ireg[operands[0]];
-            ireg[operands[2]] &= sizemask[op->size];
+            reg[operands[2]] = reg[operands[1]] << reg[operands[0]];
+            reg[operands[2]] &= sizemask[op->size];
             break;
 
         case AR_OPCODE_LSLI: //REG = REG << IMM
-            ireg[operands[2]] = ireg[operands[1]] << operands[0];
-            ireg[operands[2]] &= sizemask[op->size];
+            reg[operands[2]] = reg[operands[1]] << operands[0];
+            reg[operands[2]] &= sizemask[op->size];
             break;
 
         case AR_OPCODE_LSLQ: //REG <<= IMM
-            ireg[operands[2]] <<= operands[0];
-            ireg[operands[2]] &= sizemask[op->size];
+            reg[operands[2]] <<= operands[0];
+            reg[operands[2]] &= sizemask[op->size];
             break;
 
         case AR_OPCODE_ASR: //REG = REG >> REG (signed)
-            ireg[operands[2]] = (uint64_t)((int64_t)ireg[operands[1]] >> (int64_t)ireg[operands[0]]);
-            ireg[operands[2]] &= sizemask[op->size];
+            reg[operands[2]] = (uint64_t)((int64_t)reg[operands[1]] >> (int64_t)reg[operands[0]]);
+            reg[operands[2]] &= sizemask[op->size];
             break;
 
         case AR_OPCODE_ASRI: //REG = REG >> IMM (signed)
-            ireg[operands[2]] = (uint64_t)((int64_t)ireg[operands[1]] >> (int64_t)operands[0]);
-            ireg[operands[2]] &= sizemask[op->size];
+            reg[operands[2]] = (uint64_t)((int64_t)reg[operands[1]] >> (int64_t)operands[0]);
+            reg[operands[2]] &= sizemask[op->size];
             break;
 
         case AR_OPCODE_ASRQ: //REG >>= IMM (signed)
-            ireg[operands[2]] = (uint64_t)((int64_t)ireg[operands[2]] >> (int64_t)operands[0]);
-            ireg[operands[2]] &= sizemask[op->size];
+            reg[operands[2]] = (uint64_t)((int64_t)reg[operands[2]] >> (int64_t)operands[0]);
+            reg[operands[2]] &= sizemask[op->size];
             break;
 
         case AR_OPCODE_LSR: //REG = REG >> REG
-            ireg[operands[2]] = ireg[operands[1]] >> ireg[operands[0]];
-            ireg[operands[2]] &= sizemask[op->size];
+            reg[operands[2]] = reg[operands[1]] >> reg[operands[0]];
+            reg[operands[2]] &= sizemask[op->size];
             break;
 
         case AR_OPCODE_LSRI: //REG = REG >> IMM
-            ireg[operands[2]] = ireg[operands[1]] >> operands[0];
-            ireg[operands[2]] &= sizemask[op->size];
+            reg[operands[2]] = reg[operands[1]] >> operands[0];
+            reg[operands[2]] &= sizemask[op->size];
             break;
 
         case AR_OPCODE_LSRQ: //REG >>= IMM
-            ireg[operands[2]] >>= operands[0];
-            ireg[operands[2]] &= sizemask[op->size];
+            reg[operands[2]] >>= operands[0];
+            reg[operands[2]] &= sizemask[op->size];
             break;
 
         //CMP
 
         case AR_OPCODE_CMP: // REG <=> REG
         {
-            const uint64_t right = ireg[operands[0]] & sizemask[op->size];
-            const uint64_t left  = ireg[operands[1]] & sizemask[op->size];
+            const uint64_t right = reg[operands[0]] & sizemask[op->size];
+            const uint64_t left  = reg[operands[1]] & sizemask[op->size];
 
             graphicsProcessor->flags &= ZSUClearMask;
             graphicsProcessor->flags |= (left != right) << 1u;
@@ -360,7 +345,7 @@ ArResult executeInstruction(ArGraphicsProcessor AR_RESTRICT graphicsProcessor, u
         case AR_OPCODE_CMPI: // REG <=> IMM
         {
             const uint64_t right = operands[0] & sizemask[op->size];
-            const uint64_t left  = ireg[operands[1]] & sizemask[op->size];
+            const uint64_t left  = reg[operands[1]] & sizemask[op->size];
 
             graphicsProcessor->flags &= ZSUClearMask;
             graphicsProcessor->flags |= (left != right) << 1u;
@@ -393,7 +378,7 @@ ArResult executeInstruction(ArGraphicsProcessor AR_RESTRICT graphicsProcessor, u
         case AR_OPCODE_CALLR: //fallthrough
         case AR_OPCODE_RET:   //fallthrough
         case AR_OPCODE_SWT:
-            graphicsProcessor->delayedBits |= (1u << index);
+            graphicsProcessor->delayedBits |= (1ull << index);
             graphicsProcessor->delayed[index] = *op;
             break;
 
@@ -551,7 +536,7 @@ ArResult arExecuteInstruction(ArGraphicsProcessor graphicsProcessor)
 
     for(uint32_t i = 0; i < size; ++i)
     {
-        if(graphicsProcessor->delayedBits & (1u << i))
+        if(graphicsProcessor->delayedBits & (1ull << i))
         {
             ArResult result = executeDelayedInstruction(graphicsProcessor, i);
             if(result != AR_SUCCESS)
@@ -578,15 +563,15 @@ ArResult arExecuteInstruction(ArGraphicsProcessor graphicsProcessor)
 ArResult executeDMA(ArGraphicsProcessor AR_RESTRICT graphicsProcessor, int store)
 {/*
     //RAM -> SDRAM
-    uint64_t* AR_RESTRICT const ireg = graphicsProcessor->ireg;
+    uint64_t* AR_RESTRICT const reg = graphicsProcessor->reg;
 
     const ArOperation* AR_RESTRICT const op       = &graphicsProcessor->dmaOperation;
     const uint32_t*    AR_RESTRICT const operands = op->operands;
 
     const uint64_t sramb = (op->data)        & 0x0FFFu;
     const uint64_t ramb  = (op->data >> 12u) & 0x0FFFu;
-    const uint64_t sram  = (ireg[operands[0]] + sramb) * 32ull;
-    const uint64_t ram   = (ireg[operands[1]] + ramb)  * 32ull;
+    const uint64_t sram  = (reg[operands[0]] + sramb) * 32ull;
+    const uint64_t ram   = (reg[operands[1]] + ramb)  * 32ull;
     const size_t   size  = (op->size + 1u) * 32u;
 
     if(sram + size > AR_PROCESSOR_DSRAM_SIZE)
@@ -619,14 +604,14 @@ ArResult executeDMA(ArGraphicsProcessor AR_RESTRICT graphicsProcessor, int store
 ArResult executeDMAR(ArGraphicsProcessor AR_RESTRICT graphicsProcessor, int store)
 {
     //RAM -> SDRAM
-    uint64_t* AR_RESTRICT const ireg = graphicsProcessor->ireg;
+    uint64_t* AR_RESTRICT const reg = graphicsProcessor->reg;
 
     const ArOperation* AR_RESTRICT const op       = &graphicsProcessor->dmaOperation;
     const uint32_t*    AR_RESTRICT const operands = op->operands;
 
-    const size_t   size = ireg[operands[0]] * 32u;
-    const uint64_t ram  = ireg[operands[1]] * 32ull;
-    const uint64_t sram = ireg[operands[2]] * 32ull;
+    const size_t   size = reg[operands[0]] * 32u;
+    const uint64_t ram  = reg[operands[1]] * 32ull;
+    const uint64_t sram = reg[operands[2]] * 32ull;
 
     if(sram + size > AR_PROCESSOR_DSRAM_SIZE)
     {
@@ -674,13 +659,13 @@ ArResult executeDMAR(ArGraphicsProcessor AR_RESTRICT graphicsProcessor, int stor
 ArResult executeDMAIR(ArGraphicsProcessor AR_RESTRICT graphicsProcessor)
 {/*
     //RAM -> SDRAM
-    uint64_t* AR_RESTRICT const ireg = graphicsProcessor->ireg;
+    uint64_t* AR_RESTRICT const reg = graphicsProcessor->reg;
 
     const ArOperation* AR_RESTRICT const op       = &graphicsProcessor->dmaOperation;
     const uint32_t*    AR_RESTRICT const operands = op->operands;
 
-    const uint64_t sram = ireg[operands[0]] * 32ull;
-    const uint64_t ram  = ireg[operands[1]] * 32ull;
+    const uint64_t sram = reg[operands[0]] * 32ull;
+    const uint64_t ram  = reg[operands[1]] * 32ull;
     const size_t   size = op->size * 32u;
 
     if(sram + size > AR_PROCESSOR_ISRAM_SIZE)
@@ -705,13 +690,13 @@ ArResult executeDMAIR(ArGraphicsProcessor AR_RESTRICT graphicsProcessor)
 ArResult executeDMAL(ArGraphicsProcessor AR_RESTRICT graphicsProcessor, int store)
 {/*
     //RAM -> SDRAM
-    uint64_t* AR_RESTRICT const ireg = graphicsProcessor->ireg;
+    uint64_t* AR_RESTRICT const reg = graphicsProcessor->reg;
 
     const ArOperation* AR_RESTRICT const op       = &graphicsProcessor->dmaOperation;
     const uint32_t*    AR_RESTRICT const operands = op->operands;
 
-    const uint64_t sram = ireg[operands[0]] * 32ull;
-    const uint64_t ram  = ireg[operands[1]] * 32ull;
+    const uint64_t sram = reg[operands[0]] * 32ull;
+    const uint64_t ram  = reg[operands[1]] * 32ull;
     const size_t   size = op->size * 32u;
 
     if(sram + size > AR_PROCESSOR_DSRAM_SIZE)

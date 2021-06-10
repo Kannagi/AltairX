@@ -30,19 +30,3 @@ void arDestroyGraphicsProcessor(ArVirtualMachine virtualMachine, ArGraphicsProce
 
     delete graphicsProcessor;
 }
-
-uint32_t opcodeSetSize(ArGraphicsProcessor AR_RESTRICT graphicsProcessor)
-{
-    uint32_t size;
-    if (graphicsProcessor->flags & 0x01)
-    {
-        const uint32_t available = graphicsProcessor->pc - (AR_PROCESSOR_ISRAM_SIZE / 4u); //we may overflow otherwise
-        size = MIN(available, 4u);
-    }
-    else
-    {
-        size = 2;
-    }
-
-    return size;
-}
