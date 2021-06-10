@@ -8,16 +8,30 @@ Memory MAP
 0x8 0000 0000 - 0xF FFFF FFFF ------- RAM (32 GB max )
 36 bits
 
+TLB 32 entries
+X XXX0 0000 (bloc 1MB)
+
+I/O
+0x3 0000 0000 - 0x3 000F FFFF I/O core control
+0x3 0010 0000 - 0x3 001F FFFF I/O GPU
+0x3 0020 0000 - 0x3 002F FFFF I/O SOUND
+0x3 0030 0000 - 0x3 003F FFFF I/O USB/SD
+0x3 0040 0000 - 0x3 004F FFFF I/O SATA/NVME
+0x3 0050 0000 - 0x3 005F FFFF I/O ETHERNET/WIFI
+0x3 0060 0000 - 0x3 006F FFFF I/O EXTENSION
+0x3 0070 0000 - 0x3 007F FFFF I/O OTHER (DMA)
+
+
 
 I/O coproc
 
 I/O CPU
-FFFF 0100 - FFFF 0200 READ (0 start,1 stop ,2 stop MMU )
+0000 0100 - 0000 0200 READ (0 start,1 stop ,2 stop MMU )
 
 
-FFFF 0000 SRC
-FFFF 0008 DST
-FFFF 0010 CMD/CORE_SELECT/SIZE
+0000 0000 SRC
+0000 0008 DST
+0000 0010 CMD/CORE_SELECT/SIZE
 CMD | CS<<8 | SIZE<<16
 
 Write
@@ -30,14 +44,23 @@ CMD : 08 Start
 CMD : 09 Stop
 
 I/O GPU
-FFFF 1000 SRC
-FFFF 1008 DST
-FFFF 1010 CMD
-FFFF 1018 SIZE
+0000 1000 SRC
+0000 1008 DST
+0000 1010 CMD
+0000 1018 SIZE
 CMD : 00 NOP
 CMD : 01 RAM  -> VRAM
 CMD : 02 VRAM -> RAM
 CMD : 08 Start (command line adress)
 
 
+///----
+R0 register buffer
+R1 pointer
+R2 stack pointer SPM
+R3 stack pointer RAM
+R4 function argument/return value
+R5-R11 function argument
+R12-R19 saved register
+R20-R63 temporaries
 
