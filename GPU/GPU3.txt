@@ -12,58 +12,65 @@ while(1)
 
 
 }
-0xCCDD DDDD AAAA AAAA
+0xCDDD DDDD AAAA AAAA
 C = CMD
 D = Depend
 A = ADR or ID
 
 0 = Fbuffer_select
 1 = Zbuffer_select
-2 = Load_DATA (L2_SPM/RAM -> L1_SPM)
-3 = Store_DATA (L1_SPM -> L2_SPM/RAM )
-4 = flush cache buffer
-5 = flush cache texture
-6 = execute
-7 = end
+2 = execute
+3 = end
+4 = wait
+5 = flush cache buffer or texture
+6 = ---
+7 = ---
 
-0xCCDD Daaa AAAA AAAA (2kib)
-8 = RAM -> L2_SPM
-9 = L2_SPM -> RAM
+0xCSSS aaaa AAAA AAAA (Load_DATA /Store_DATA)
 
-0xCCDD Daaa AAAA AAAA (16kib)
-10 = RAM -> 1T-SRAM
-11 = 1T-SRAM -> RAM
+8 = L2_SPM -> L1_SPM
+9 = L1_SPM -> L2_SPM
+
+10 = RAM -> L2_SPM
+11 = L2_SPM -> RAM
+
+12 = RAM -> 1T-SRAM
+13 = 1T-SRAM -> RAM
+
+14 = RAM -> L1_SPM
+15 = L1_SPM -> RAM
 
 ------------------------------------
 
 CMD 0: select_Fbuffer
 CMD 1: select_Zbuffer
-CMD 8: Load_DATA vertexshader SPM2
-CMD 8: Load_DATA pixelshader SPM2
-CMD 8: Load_DATA gen SPM2 (texture select /matrix/other)
-CMD 8: Load_DATA Model
-CMD 10: Load_DATA texture
+CMD 10: Load_DATA vertexshader SPM2
+CMD 10: Load_DATA pixelshader SPM2
+CMD 10: Load_DATA gen SPM2 (texture select /matrix/other)
+CMD 10: Load_DATA Model
+CMD 12: Load_DATA texture
 
 
 -----
-CMD 2: Load_DATA vertexshader 1
-CMD 2: Load_DATA pixelshader 1
-CMD 2: Load_DATA gen(texture/vertex/pixel select /matrix/other)
-CMD 2: Load_DATA Model 1
-CMD 6: execute
+CMD 8: Load_DATA vertexshader 1
+CMD 8: Load_DATA pixelshader 1
+CMD 8: Load_DATA gen(texture/vertex/pixel select /matrix/other)
+CMD 8: Load_DATA Model 1
+CMD 2: execute
 
-CMD 2: Load_DATA gen(texture select /matrix/other)
-CMD 2: Load_DATA Model 2
-CMD 6: execute
+CMD 8: Load_DATA gen(texture select /matrix/other)
+CMD 8: Load_DATA Model 2
+CMD 2: execute
 
-CMD 2: Load_DATA pixelshader 2
-CMD 2: Load_DATA gen(texture select /matrix/other)
-CMD 2: Load_DATA Model 3
-CMD 6: execute
+CMD 8: Load_DATA pixelshader 2
+CMD 8: Load_DATA gen(texture select /matrix/other)
+CMD 8: Load_DATA Model 3
+CMD 2: execute
 
 etc etc
 
-CMD 7: end
+CMD 5: flush cache buffer
+CMD 3: end
 
 
 
