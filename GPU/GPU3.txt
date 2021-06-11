@@ -24,8 +24,8 @@ A = ADR or ID
 12 = RAM -> L1_SPM-I
 13 = RAM <- L1_SPM-I
 
-14 = L2_SPM -> L1_SPM
-15 = L2_SPM <- L1_SPM
+14 = L2_SPM -> L1_SPM-I
+15 = L2_SPM <- L1_SPM-I
 ------------------------------------
 
 CMD 0: select_Fbuffer
