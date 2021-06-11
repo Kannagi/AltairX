@@ -28,37 +28,25 @@ A = ADR or ID
 
 0xCSSS aaaa AAAA AAAA (Load_DATA /Store_DATA)
 
-8 = L2_SPM -> L1_SPM
-9 = L1_SPM -> L2_SPM
+8 = RAM -> L2_SPM
+9 = RAM <- L2_SPM
 
-10 = RAM -> L2_SPM
-11 = L2_SPM -> RAM
-
-12 = RAM -> 1T-SRAM
-13 = 1T-SRAM -> RAM
-
-14 = RAM -> L1_SPM
-15 = L1_SPM -> RAM
+10 = RAM -> 1T-SRAM
+11 = RAM <- 1T-SRAM
 
 ------------------------------------
 
 CMD 0: select_Fbuffer
 CMD 1: select_Zbuffer
-CMD 10: Load_DATA vertexshader SPM2
-CMD 10: Load_DATA pixelshader SPM2
-CMD 10: Load_DATA gen SPM2 (texture select /matrix/other)
-CMD 10: Load_DATA Model
-CMD 12: Load_DATA texture
-
-
------
 CMD 8: Load_DATA vertexshader 1
 CMD 8: Load_DATA pixelshader 1
-CMD 8: Load_DATA gen(texture/vertex/pixel select /matrix/other)
+CMD 8: Load_DATA gen 1 (texture select /matrix/other)
 CMD 8: Load_DATA Model 1
+CMD 10: Load_DATA texture 1
+
 CMD 2: execute
 
-CMD 8: Load_DATA gen(texture select /matrix/other)
+CMD 8: Load_DATA gen 2
 CMD 8: Load_DATA Model 2
 CMD 2: execute
 
@@ -67,9 +55,13 @@ CMD 8: Load_DATA gen(texture select /matrix/other)
 CMD 8: Load_DATA Model 3
 CMD 2: execute
 
+CMD 10: Load_DATA texture 2
+CMD 2: execute
+
 etc etc
 
 CMD 5: flush cache buffer
+CMD 11: Store_DATA buffer
 CMD 3: end
 
 
