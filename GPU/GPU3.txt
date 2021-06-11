@@ -10,7 +10,7 @@ A = ADR or ID
 3 = end
 4 = wait
 5 = flush cache buffer or texture
-6 = ---
+6 = buffer size init
 7 = ---
 
 0xCSSS aaaa AAAA AAAA (Load_DATA /Store_DATA)
@@ -30,6 +30,7 @@ A = ADR or ID
 
 CMD 0: select_Fbuffer
 CMD 1: select_Zbuffer
+CMD 6: size buffer
 CMD 8: Load_DATA vertexshader 0
 CMD 8: Load_DATA pixelshader 0
 CMD 14: Load_DATA shader 0
