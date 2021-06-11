@@ -26,7 +26,7 @@ A = ADR or ID
 
 14 = L2_SPM -> L1_SPM-I
 15 = L2_SPM <- L1_SPM-I
-------------------------------------
+-------------example-----------------------
 
 CMD 0: select_Fbuffer
 CMD 1: select_Zbuffer
@@ -34,7 +34,7 @@ CMD 6: size buffer
 CMD 8: Load_DATA vertexshader 0
 CMD 8: Load_DATA pixelshader 0
 CMD 14: Load_DATA shader 0
-CMD 2: execute
+CMD 2: execute //clear F/Z Buffer
 
 CMD 8: Load_DATA vertexshader 1
 CMD 8: Load_DATA pixelshader 1
@@ -42,23 +42,24 @@ CMD 8: Load_DATA gen 1 (texture select /matrix/other)
 CMD 8: Load_DATA Model 1
 CMD 10: Load_DATA texture 1
 CMD 14: Load_DATA shader 1
-CMD 2: execute
+CMD 2: execute (draw model 1)
 
 CMD 8: Load_DATA gen 2
 CMD 8: Load_DATA Model 2
-CMD 2: execute
+CMD 2: execute //(draw model 2)
 
 CMD 8: Load_DATA pixelshader 2
 CMD 8: Load_DATA gen(texture select /matrix/other)
 CMD 8: Load_DATA Model 3
 CMD 14: Load_DATA shader 2
-CMD 2: execute
+CMD 2: execute //(draw model 3)
 
 CMD 10: Load_DATA texture 2
-CMD 2: execute
+CMD 2: execute //(draw model 3)
 
 etc etc
 
+//end
 CMD 5: flush cache buffer
 CMD 11: Store_DATA buffer
 CMD 3: end
