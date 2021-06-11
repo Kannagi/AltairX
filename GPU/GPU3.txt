@@ -12,42 +12,58 @@ while(1)
 
 
 }
-0xCCDD DDDA AAAA AAAA
+0xCCDD DDDD AAAA AAAA
 C = CMD
 D = Depend
 A = ADR or ID
 
-0 = buffer_select
-1 = VDATA in for vertex shader
-2 = PDATA in for pixel shader
-3 = model data (vertex,normal,index,tc,id,,other)
-4 = texture
-5 draw
+0 = Fbuffer_select
+1 = Zbuffer_select
+2 = Load_DATA (L2_SPM/RAM -> L1_SPM)
+3 = Store_DATA (L1_SPM -> L2_SPM/RAM )
+4 = flush cache buffer
+5 = flush cache texture
+6 = execute
+7 = end
 
-select_buffer_A
-VDATA1
-vertex_shader1
-pixel_shader1
-Model_A
-texture1
-texture2
-texturenormal_map
-draw
+0xCCDD Daaa AAAA AAAA (2kib)
+8 = RAM -> L2_SPM
+9 = L2_SPM -> RAM
 
-DATA2
-Model_B
-draw
+0xCCDD Daaa AAAA AAAA (16kib)
+10 = RAM -> 1T-SRAM
+11 = 1T-SRAM -> RAM
 
-DATA3
-vertex_shader1
-pixel_shader1
-Model_A
-texture1
-texture2
-texturenormal_map
-draw
+------------------------------------
+
+CMD 0: select_Fbuffer
+CMD 1: select_Zbuffer
+CMD 8: Load_DATA vertexshader SPM2
+CMD 8: Load_DATA pixelshader SPM2
+CMD 8: Load_DATA gen SPM2 (texture select /matrix/other)
+CMD 8: Load_DATA Model
+CMD 10: Load_DATA texture
+
+
+-----
+CMD 2: Load_DATA vertexshader 1
+CMD 2: Load_DATA pixelshader 1
+CMD 2: Load_DATA gen(texture/vertex/pixel select /matrix/other)
+CMD 2: Load_DATA Model 1
+CMD 6: execute
+
+CMD 2: Load_DATA gen(texture select /matrix/other)
+CMD 2: Load_DATA Model 2
+CMD 6: execute
+
+CMD 2: Load_DATA pixelshader 2
+CMD 2: Load_DATA gen(texture select /matrix/other)
+CMD 2: Load_DATA Model 3
+CMD 6: execute
 
 etc etc
+
+CMD 7: end
 
 
 
