@@ -1,0 +1,65 @@
+#!/usr/bin/env bash
+
+# This bash script is used to check for
+# dependencies in order to run the simulation
+
+# Check if a program is installed
+# Argument 1: The program or file to search for
+function installed {
+        echo -ne " - Looking for $1..."
+
+        if [ ${1:0:1} == "/" ]
+        then
+                if [ ! -e "$1" ] # test if file exists
+                then
+                        echo " [x]"
+                        return 1
+                else
+                        echo " [v]"
+                        return 0
+                fi
+        else
+                # Look if an executable is in PATH
+                readarray -d ' ' -t tmp <<<"`whereis $1`"
+                if (( ${#tmp[*]} < 2 ))
+                then
+                        echo " [x]"
+                        return 1
+                else
+                        echo " [v]"
+                        return 0
+                fi
+        fi      
+}
+
+echo "[.] Scanning for dependencies..."
+
+if ! installed iverilog
+then
+        echo "[x] Cannot find Icarus verilog"
+        echo "       If you are using Ubuntu/Debian:   $ sudo apt install iverilog"
+        exit
+fi
+
+if ! installed cocotb-config
+then
+        echo "[x] Cannot find Cocotb"
+        echo "       Use pip to install it:   $ sudo python3 -m pip install cocotb"
+        exit
+fi
+
+if ! installed pytest
+then
+        echo "[x] Cannot find Cocotb"
+        echo "       Use pip to install it:   $ sudo python3 -m pip install pytest"
+        exit
+fi
+
+if ! installed verilator
+then
+        echo "[i] Optional: You can use Verilator to run simulations"
+        echo "      If you are using Ubuntu/Debian:   $ sudo apt install verilator"
+fi
+
+echo "[v] You are ready to go"
+echo "  > cd bram_dual_port/ && make"
