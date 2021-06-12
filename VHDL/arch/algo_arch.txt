@@ -1,0 +1,31 @@
+FETCH -> 
+2 Load
+IF 4eme instrution
+PC+8 or PC+16
+-4 opcode
+
+DECODE ->
+-IMMEDIATE 64 bits
+-3 index r (6 bits)
+-4 bits signal
+-2 bits read *(3*2) : no/read/write , (O/1/2)
+-1 bits type register
+-2 bits fct1
+-2 bits fct2
+
+
+READ REGISTER
+4 write R
+2 write VR
+
+10 read R
+6 read VR
+
+
+//IMM
+imm 10 bits (signed/unsigned)
+imm 16 bits (signed/unsigned)
+imm 20 bits (signed)
+imm 16 bits half(float/double)
+
+1 bits / 5 bits /10 bits

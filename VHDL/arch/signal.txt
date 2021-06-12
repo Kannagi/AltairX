@@ -1,0 +1,30 @@
+signal 
+fetch -> decode -> RR
+                -> NO Signal
+                -> NO Signal +WAIT
+
+RR/ISSUE
+00 -> No Signal
+01 -> ALU1 (64 bits) + mul/div
+02 -> ALU2 (64 bits)
+03 -> ALU3 (32 bits)
+04 -> ALU4 (32 bits)
+
+05 -> LSU1 -> MEMORY
+           -> CACHE
+06 -> LSU2 -> MEMORY
+           -> CACHE
+     
+07 -> VFPU1 (float/double/div)
+08 -> VFPU2 (float)
+
+09 -> CMP1 (64 bits)
+0A  -> CMP2 (32 bits)
+
+
+0D -> VCMP
+0E -> OTHER
+0F -> MMU -> DMA
+   -> MMU -> cache
+
+
