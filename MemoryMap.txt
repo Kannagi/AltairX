@@ -23,10 +23,9 @@ I/O
 
 
 
-I/O coproc
-
-I/O CPU
-0000 0100 - 0000 0200 READ (0 start,1 stop ,2 stop MMU )
+I/O core control
+0000 0000 - 0000 00FF WRITE control
+0000 0100 - 0000 0200 READ (0 nop,1 start,2 stop ,4 stop MMU )
 
 
 0000 0000 SRC
@@ -34,25 +33,38 @@ I/O CPU
 0000 0010 CMD/CORE_SELECT/SIZE
 CMD | CS<<8 | SIZE<<16
 
-Write
 CMD : 00 NOP
-CMD : 01 RAM -> SRAM cache
-CMD : 02 SRAM cache -> RAM
-CMD : 03 RAM -> MMU (8+8 * 8)
-CMD : 04 flush cache
-CMD : 08 Start
-CMD : 09 Stop
+CMD : 01 RAM -> SPM-I
+CMD : 02 RAM -> SPM-D
+CMD : 04 RAM <- SPM-I
+CMD : 05 RAM <- SPM-D
+CMD : 06 flush cache
+CMD : 07 Start
+CMD : 08 Stop
+
+0000 0040 READ version CPU /other info
 
 I/O GPU
-0000 1000 SRC
-0000 1008 DST
-0000 1010 CMD
-0000 1018 SIZE
-CMD : 00 NOP
-CMD : 01 RAM  -> VRAM
-CMD : 02 VRAM -> RAM
-CMD : 08 Start (command line adress)
+0010 0000 WRITE SRC Command list
+0010 0008 WRITE start
 
+0010 0040 READ version /other info
+
+I/O Sound
+0020 0000 Buffer1
+0020 0008 Buffer2
+0020 0010 freq
+0020 0012 size
+
+0020 0040 READ version /other info
+
+I/O DMA
+0030 0000 SRC
+0030 0008 DST
+0030 0010 size
+0030 0018 start
+
+0030 0040 info (busy etc etc)
 
 ///----
 R0 register buffer
