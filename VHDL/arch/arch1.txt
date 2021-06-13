@@ -1,0 +1,163 @@
+SPM-I:
+
+IN:
+DMA_DATA  64 bits x2
+DMA_ADDR 16 bits
+DMA_SIGNAL 2 bits (lecture/écriture DMA/rien faire)
+Fetch_ADDR 16 bits
+
+OUT:
+DATA 128 bits
+
+--------------
+PreFetch:
+IN:
+PC : 16 bits
+
+OUT:
+Fetch_ADDR 16 bits
+
+Fetch_ADDR = PC
++ signal
+
+Fetch:
+IN:
+DATA 128 bits
+
+OUT:
+Opcode 32 bits x4
+PC : 16 bits
+
+lis les 128 bits
+Lis la 4eme instructions (96 eme bits)
+si les 4 bits font 0011 alors 
+on fait PC+= 2 (1 PC = 8 bytes)
+sinon
+PC+=1
+opcode 3 et 4 font 01010000 .... (instruction nop)
+
+Prefetch -> SPM-I -> fetch
+
+-------------------------------
+Decode:
+IN:
+Opcode 32 bits x4
+PC : 16 bits
+FR : 8 bits
+LR : 16 bits
+BR : 16 bits
+
+OUT:
+PC : 16 bits
+LR : 16 bits
+BR : 16 bits
+
+Opcode 10 bits x4
+fct1 2 bits x4
+fct2 2 bits x4
+imm 64 bits x4
+vimm 128 bits
+
+reg1 6 bits x4
+reg2 6 bits x4
+reg3 6 bits x4
+
+vreg1 6 bits
+vreg2 6 bits
+vreg3 6 bits
+
+NT: LR peut etre une vairiable local , vu qu'elle n'est pas utilisé autre part.
+
+
+Decode les instructions (ne pas faire 120 "if" , juste décoder par gros bloc (ALU/FPU etc etc)
+et l'immediat /fct
+On peut decoder de façon constante
+les 3 registres et les 2 functions et l'immediatt, ils sont toujours à la meme place.
+
+le branchement se fait sur le decode donc il lit FR et suivant ce qu'il fait on a ceci :
+PC = IMM
+PC = BR + PC
+PC = PC + IMM
+Et save le registre avec ceci
+PC = LR
+LR = PC
+
+l'immediate et de 9,16 ou 20 bits
+le bit de fin indique le signe (donc rempli la partie haute de '1').
+le 9 bits peut etre unsigned dans certain cas
+Le 16 bits est un half quelque fois
+
+-------------------------------
+Internal register
+possede les registres suivant :
+PC/BR/FR/LR et une instruction de comptage de cycles et d'instructions.
+-------------------------------
+Register/Issue:
+IN:
+Opcode 10 bits x4
+fct1 2 bits x4
+fct2 2 bits x4
+imm 64 bits x4
+vimm 128 bits
+
+reg1 6 bits x4
+reg2 6 bits x4
+reg3 6 bits x4
+
+vreg1 6 bits
+vreg2 6 bits
+vreg3 6 bits
+
+regw 6 bits x4
+vregw 6 bits
+
+regwimm 64 bits x4
+vregwimm 128 bits
+
+OUT:
+fct1 2 bits x4
+fct2 2 bits x4
+regimm1 64 bits x4
+regimm2 64 bits x4
+regimm3 64 bits x4
+
+regw 6 bits x4
+vregw 6 bits
+
+exesignal 1 bits x16
+ACCUW 1 bits x 5
+ACCUR 1 bits x 5
+
+Opcode 4 bits x4
+
+variable
+REG[64] : 64 bits
+VREG[64] : 128 bits
+
+UREG[64] : 1 bits
+UVREG[64] : 1 bits
+
+
+
+;---
+On regarde les signaux de regw/vreg
+On écrit dans les registres correspondant à regw,vregw
+regwimm et vregwimm sont les valeurs
+on met à 0 UREG et UVREG par rapport à regw,vregw
+
+
+UREG/UVREG indique si le registre est en cours d'écriture ('1')
+si c'est le cas , il y'a pipeline stall
+sinon
+on le met à 1
+
+On lis les registres correspondants (reg1,vreg1) où on met immediate à la place (uniquement regimm3)
+
+Et on envoie un signal correspondant à l'opcode (qui indique Unit)
+
+Il y'a une gestion des registre spéciaux (61,62,63)
+le registre 61,62,63 ne lit/écrit pas sur le GPR
+le registre 62 et 63 lise deux registre spéciaux P et Q.
+Il y'a une pipeline stall , quand il y'a deux écriture demandé (+ si demande de lecture).
+
+

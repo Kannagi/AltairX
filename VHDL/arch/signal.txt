@@ -15,14 +15,8 @@ RR/ISSUE
 06 -> LSU2 -> MEMORY
            -> CACHE
      
-07 -> VFPU1 (float/double/div)
-08 -> VFPU2 (float)
+07 -> VFPU (float/double/div)
 
-09 -> CMP1 (64 bits)
-0A  -> CMP2 (32 bits)
-
-
-0D -> VCMP
 0E -> OTHER
 0F -> MMU -> DMA
    -> MMU -> cache
