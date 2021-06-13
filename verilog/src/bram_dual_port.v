@@ -39,22 +39,23 @@ reg [DATASIZE-1:0] mem [(2**ADDRSIZE)-1:0];
 
 always @ (posedge a_clk)
 begin
-    a_dout <= mem[a_addr];
     if (a_wr)
     begin
         a_dout <= a_din;
         mem[a_addr] <= a_din;
     end
+    else
+        a_dout <= mem[a_addr];
 end
 
 always @ (posedge b_clk)
 begin
-    b_dout <= mem[b_addr];
     if (b_wr)
     begin
         b_dout <= b_din;
         mem[b_addr] <= b_din;
-    end
+    end else
+        b_dout <= mem[b_addr];
 end
 
 // For simulation only
