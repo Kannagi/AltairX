@@ -28,6 +28,7 @@ async def test_ram(dut):
     await RisingEdge(dut.clk)
 
     dut.wr <= 0b0
-    assert dut.dout.value.binstr == "10101011101001000010011010001011", "Should be able to read 1 cycle after writing"
+    # Note: 0xaba4268b == 0b10101011101001000010011010001011
+    assert dut.dout.value.binstr == bin(0xaba4268b)[2:], "Should be able to read 1 cycle after writing"
 
     await RisingEdge(dut.clk)

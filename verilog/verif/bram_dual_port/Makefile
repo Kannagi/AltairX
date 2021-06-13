@@ -1,3 +1,4 @@
+export COCOTB_REDUCED_LOG_FMT=1
 SIM = icarus
 TOPLEVEL_LANG = verilog
 VERILOG_SOURCES = $(shell pwd)/../../src/bram_dual_port.v
