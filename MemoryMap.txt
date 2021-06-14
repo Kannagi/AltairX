@@ -59,10 +59,21 @@ I/O GPU (GIF)
 I/O Sound (SIF)
 0020 0000 READ version /other info
 
-0020 0040 Buffer1
-0020 0048 Buffer2
-0020 0050 freq
-0020 0052 size
+Channel 1
+0020 0100 Buffer1
+0020 0108 Buffer2
+
+Channel 2
+0020 0140 Buffer1
+0020 0148 Buffer2
+
+Channel 3
+0020 0180 Buffer1
+0020 0188 Buffer2
+
+Channel 4
+0020 01C0 Buffer1
+0020 01C8 Buffer2
 
 ;-------------------------
 I/O USB/SD
@@ -97,6 +108,8 @@ I/O EXTENSION
 
 0060 0040 INT (8 bits)
 
+0060 0080 Page adress
+
 0060 0100 PORT 0 COM R/W (64 bytes) (init adresse other info / free use)
 0060 0140 PORT 1 COM R/W (64 bytes) (init info hard/free use)
 0060 0180 PORT 2 COM R/W (64 bytes) free use
@@ -106,6 +119,10 @@ Port extension
 9 bits INT
 32 bits adresse
 128 bits data
+0x0000 0000 PORT COM
+0x0000 0100 INT
+
+0x8000 0000 RAM
 
 ;-------------------------
 I/O DMA
