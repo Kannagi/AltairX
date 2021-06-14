@@ -8,6 +8,9 @@ Memory MAP
 0x8 0000 0000 - 0xF FFFF FFFF ------- RAM (32 GB max )
 36 bits
 
+0x8XXX XXXX XXXX Uncached accelered (read)
+0x4XXX XXXX XXXX cached accelered (write)
+
 TLB 32 entries
 X XXX0 0000 (bloc 1MB)
 
@@ -22,16 +25,16 @@ I/O
 0x3 0070 0000 - 0x3 007F FFFF I/O OTHER (DMA)
 
 
+;-------------------------
+I/O core control (CCIF)
 
-I/O core control
-0000 0000 - 0000 00FF WRITE control
-0000 0100 - 0000 0200 READ (0 nop,1 start,2 stop ,4 stop MMU )
+0000 0000 READ version CPU /other info
 
-
-0000 0000 SRC
-0000 0008 DST
-0000 0010 CMD/CORE_SELECT/SIZE
-CMD | CS<<8 | SIZE<<16
+0000 0040 SRC
+0000 0048 DST
+0000 0050 CMD
+0000 0051 CORE_SELECT
+0000 0052 SIZE
 
 CMD : 00 NOP
 CMD : 01 RAM -> SPM-I
@@ -42,29 +45,78 @@ CMD : 06 flush cache
 CMD : 07 Start
 CMD : 08 Stop
 
-0000 0040 READ version CPU /other info
+0000 0100 - 0000 01FF WRITE control
+0000 0200 - 0000 0300 READ (0 nop,1 start,2 stop ,4 stop MMU )
 
-I/O GPU
-0010 0000 WRITE SRC Command list
-0010 0008 WRITE start
+;-------------------------
+I/O GPU (GIF)
+0010 0000 READ version /other info
 
-0010 0040 READ version /other info
+0010 0040 WRITE SRC Command list
+0010 0048 WRITE start
 
-I/O Sound
-0020 0000 Buffer1
-0020 0008 Buffer2
-0020 0010 freq
-0020 0012 size
+;-------------------------
+I/O Sound (SIF)
+0020 0000 READ version /other info
 
-0020 0040 READ version /other info
+0020 0040 Buffer1
+0020 0048 Buffer2
+0020 0050 freq
+0020 0052 size
 
+;-------------------------
+I/O USB/SD
+0030 0000 READ version /other info
+
+SD port
+0030 0040
+
+USB port 0
+0030 0100
+
+USB port 1
+0030 0140
+
+USB port 2
+0030 0180
+
+USB port 3
+0030 01C0
+
+;-------------------------
+I/O SATA/NVME
+0040 0000 READ version /other info
+
+;-------------------------
+I/O ETHERNET/WIFI
+0050 0000 READ version /other info
+
+;-------------------------
+I/O EXTENSION
+0060 0000 READ version /other info
+
+0060 0040 INT (8 bits)
+
+0060 0100 PORT 0 COM R/W (64 bytes) (init adresse other info / free use)
+0060 0140 PORT 1 COM R/W (64 bytes) (init info hard/free use)
+0060 0180 PORT 2 COM R/W (64 bytes) free use
+0060 01C0 PORT 3 COM R/W (64 bytes) free use
+
+Port extension
+9 bits INT
+32 bits adresse
+128 bits data
+
+;-------------------------
 I/O DMA
-0030 0000 SRC
-0030 0008 DST
-0030 0010 size
-0030 0018 start
+0070 0000 info (busy etc etc)
 
-0030 0040 info (busy etc etc)
+0070 0040 SRC
+0070 0048 DST
+0070 0040 size
+0070 0048 start
+
+
 
 ///----
 R0 register buffer

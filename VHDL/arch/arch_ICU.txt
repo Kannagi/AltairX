@@ -1,7 +1,6 @@
 IBU (Interconnect Bus Unit)
 
 
-sub1
 CORE 0
 CORE 1
 CORE 2
@@ -12,7 +11,6 @@ CORE 6
 IO/DMA
 L2 cache (CPU)
 
-sub2
 GIF
 CU 0
 CU 1
@@ -27,17 +25,37 @@ MEM (dual channel)
 SPM2 (CPU)
 SPM2 (GPU)
 
-algo pour la gestion du DMA
-on lit dans l'ordre pour MEMORY BUS 1
-on lit dans l'ordre pour MEMORY BUS 2
+BUS:
+BUS 0 MEMORY RAM 1
+BUS 1 MEMORY RAM 2
+BUS 2 INT sub core
+BUS 3 1T-SRAM
+BUS 4 SPM2
+BUS 5 L2 cache
+BUS 6 PPU
 
-exemple CORE 0 (aucune demande)
-exemple CORE 1 (aucune demande)
+BUS 0 & 1
+...
+----
+BUS 0 & 1 & 2 & 4 & 5
+CORE 1 à 6 
+if Core X send Core 0 (or SPM) (or MEMORY RAM)
+IBS2++
+if Core X send Core 0 (or SPM) (or MEMORY RAM)
+IBS2++
 
+-----
+BUS 0 & 1 & 3 & 4 & 5 & 6
+CU 0 à 3
 
-on lit dans l'ordre pour 1T-SRAM (seulement sub1)
+if CU X send PPU (or 1T-SRAM) (or SPM) (or MEMORY RAM)
+IBS3++
+if CU X send PPU (or 1T-SRAM) (or SPM) (or MEMORY RAM)
+IBS4++
 
-pour la gestion des caches :
-on lit dans l'ordre pour L2 cache CPU (seulement sub1)
-on lit dans l'ordre pour L2 cache (seulement sub1)
+L2 cache 
+if L2 X send PPU (or 1T-SRAM) (or SPM) (or MEMORY RAM)
+IBS3++
+if CU X send PPU (or 1T-SRAM) (or SPM) (or MEMORY RAM)
+IBS4++
 
