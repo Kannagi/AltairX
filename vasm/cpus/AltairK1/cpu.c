@@ -73,6 +73,13 @@ int parse_operand(char *p,int len,operand *op,int requires)
     char arg[32];
     int i;
 
+    if(requires == OP_DATA )
+    {
+        op->value = parse_expr(&p);
+
+        return 1;
+    }
+
 
     //rxx[rxx]
     if(requires == OP_RRG )
@@ -161,6 +168,8 @@ int parse_operand(char *p,int len,operand *op,int requires)
         if( !(p[1] == 'f' || p[1] == 'F') )
             return 0;
 
+        op->val = -1;
+
         
         arg[0] = p[2];
         if(len == 3)
@@ -231,6 +240,45 @@ int parse_operand(char *p,int len,operand *op,int requires)
     {
         if(len != 2) return 0;
         if( !(p[0] == 'b' || p[0] == 'B') )
+            return 0;
+
+        if( !(p[1] == 'r' || p[1] == 'R') )
+            return 0;
+        
+        return 1;
+    }
+
+    //Register FR
+    if(requires == OP_RFR )
+    {
+        if(len != 2) return 0;
+        if( !(p[0] == 'f' || p[0] == 'F') )
+            return 0;
+
+        if( !(p[1] == 'r' || p[1] == 'R') )
+            return 0;
+        
+        return 1;
+    }
+
+    //Register BR
+    if(requires == OP_RBR )
+    {
+        if(len != 2) return 0;
+        if( !(p[0] == 'b' || p[0] == 'B') )
+            return 0;
+
+        if( !(p[1] == 'r' || p[1] == 'R') )
+            return 0;
+        
+        return 1;
+    }
+
+    //Register IR
+    if(requires == OP_RIR )
+    {
+        if(len != 2) return 0;
+        if( !(p[0] == 'i' || p[0] == 'I') )
             return 0;
 
         if( !(p[1] == 'r' || p[1] == 'R') )
@@ -324,18 +372,15 @@ dblock *eval_instruction(instruction *p,section *sec,taddr pc)
     
     dblock *db=new_dblock();
 
-
     unsigned char *d;
     int opcode = (mnemonics[p->code].ext.opcode);
-    int val,val2,ret,byte = 0,plus = 0,type;
+    int val;
     operand operand1,operand2,operand3;
 
     //printf("%d\n",pc);
 
 
     int k1ext = 0x00;
-    int inst = opcode&0x3;
-
 
     if(p->qualifiers[0] != 0)
     {
@@ -373,18 +418,10 @@ dblock *eval_instruction(instruction *p,section *sec,taddr pc)
     else
         operand3.type = OP_VOID;
 
-    if(operand1.type&0x100) plus |= 1;
-    if(operand2.type&0x100) plus |= 1;
-
-    operand1.type &= 0xFF;
-    operand2.type &= 0xFF;
-
-
-
     opcode |= (k1ext<<8);
 
-    //-------------
-    if(operand1.type == OP_REG)
+    //------------- OPERAND 1 -------------
+    if( (operand1.type == OP_REG) || (operand1.type == OP_VP) )
     {
         opcode |= (operand1.reg<<26);
     }
@@ -393,8 +430,10 @@ dblock *eval_instruction(instruction *p,section *sec,taddr pc)
     {
         eval_expr(operand1.value,&val,sec,pc);
         val = (val-pc-4-1)>>3;
-        val++;
+        val--;
+
         operand1.val = val&0xFFFF;
+
         opcode |= (operand1.val<<10);
     }
 
@@ -414,8 +453,22 @@ dblock *eval_instruction(instruction *p,section *sec,taddr pc)
         opcode |= (operand1.val<<10);
     }
 
-    //-------------
-    if(operand2.type == OP_REG)
+    if(operand1.type == OP_IMR)
+    {
+        opcode |= (operand1.reg<<20);
+
+        eval_expr(operand1.value,&val,sec,pc);
+        opcode |= ( (val & 0xFFFF)<<10);
+    }
+
+    if(operand1.type == OP_RRG)
+    {
+        opcode |= (operand1.reg<<20);
+        opcode |= (operand1.reg2<<14);
+    }
+
+    //------------- OPERAND 2 -------------
+    if( (operand2.type == OP_REG) || (operand2.type == OP_VP) )
     {
         opcode |= (operand2.reg<<20);
     }
@@ -449,7 +502,7 @@ dblock *eval_instruction(instruction *p,section *sec,taddr pc)
         opcode |= (operand2.reg<<20);
 
         eval_expr(operand2.value,&val,sec,pc);
-        opcode |= ( (val & 0xFFFF)<<10);
+        opcode |= ( (val & 0x3FF)<<10);
     }
 
     if(operand2.type == OP_IMF)
@@ -476,8 +529,8 @@ dblock *eval_instruction(instruction *p,section *sec,taddr pc)
     }
 
 
-    //-------------
-    if(operand3.type == OP_REG)
+    //------------- OPERAND 3 -------------
+    if( (operand3.type == OP_REG) || (operand3.type == OP_VP) )
     {
         opcode |= (operand3.reg<<14);
     }
@@ -519,16 +572,22 @@ dblock *eval_data(operand *op,taddr bitsize,section *sec,taddr pc)
 
     eval_expr(operand1.value,&val,sec,pc);
 
-    db->size = 4;
+    db->size = bitsize>>3;
     d = db->data = mymalloc(db->size);
-
     
-
+    int shift = 8,i;
+    for(i = 0;i < db->size;i++)
+    {
+       *d++ = (val)&0xFF;
+        val = val>>shift;
+        shift+= 8;
+    }
+    /*
     *d++ = (val)&0xFF;
-	*d++ = (val>>8)&0xFF;
-	*d++ = (val>>16)&0xFF;
-	*d++ = (val>>24)&0xFF;
-    
+    *d++ = (val>>8)&0xFF;
+    *d++ = (val>>16)&0xFF;
+    *d++ = (val>>24)&0xFF;
+    */
 
     return db;
 }
@@ -539,8 +598,7 @@ dblock *eval_data(operand *op,taddr bitsize,section *sec,taddr pc)
    to the data created by eval_instruction. */
 taddr instruction_size(instruction *p,section *sec,taddr pc)
 {
-    //printf("ok\n",len);
-    return 1;
+    return 4;
 }
 
 operand *new_operand()

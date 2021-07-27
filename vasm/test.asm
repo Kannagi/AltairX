@@ -1,38 +1,63 @@
 
-	movei r0,-1
-	movei r1,$20
+	include "macro.asm"
+	org $0
 	
-	add r5,r4,r20 
-	addi r1,r3,56
+	movei r0,$00
+	movei r1,$400
+	
+	
+	movei r8,$00
+	lddmai r0,r1,1
+	
+	ldml r1,$0
+	nop
+	
+	
+	
+	call lfunc
+	nop
 
-	xor r5,r4,r20 
-	xori r1,r3,56
+	int r1,0
+	nop
+	
+	
+	movei r0,$00
+	nop
+	
+	cmpi r0,0
+	nop
+	
+	beq test
+	nop
+	
+	nop
+	nop
+	
+	int r1,0
+	nop
+	
+	
+test:
+	
 
-	move r4,r5
-	or r4,r5,r5
-
+	endp
+	nop
+	
+	nop
+	nop
+	
+lfunc:
 	nop
 	nop
 
-	move LR,r0
-	move BR,r1
-
-	move r1,LR
-	mulu P,r3,r1
-
-
-	ldmi r0,50[r3]
-	ldm r1,r3[r5]
-
-
-	ldml r3,500
-	stml r1,500
-
-	fcmpi vf01,-1.5
-	move r5,r6
+	ret
+	nop
+	
+	nop
+	nop
 
 	org $400
-	dc.b "Hello World",0
+	dc.b "Hello World",$A,0
 	
 	org $480
 	

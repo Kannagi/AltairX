@@ -5,6 +5,8 @@ Memory MAP
 0x2 0000 0000 - 0xF FFFF FFFF ------- SPM L2
 0x3 0000 0000 - 0x0 FFFF FFFF ------- I/O(DMA)
 
+0x4 0000 0000 - 0x7 FFFF FFFF ------- (VRAM) (16 GB max )
+
 0x8 0000 0000 - 0xF FFFF FFFF ------- RAM (32 GB max )
 36 bits
 
@@ -13,6 +15,15 @@ Memory MAP
 
 TLB 32 entries
 X XXX0 0000 (bloc 1MB)
+
+
+-------------------
+0x80 0000 0000 - 0xFF FFFF FFFF ------- RAM (512 GB max )
+40 bits
+
+0x1000 0000 0000 - 0x1FFF FFFF FFFF ------- RAM (16 384 GB max )
+48 bits
+-----------------
 
 I/O
 0x3 0000 0000 - 0x3 000F FFFF I/O core control
@@ -132,6 +143,11 @@ I/O DMA
 0070 0048 DST
 0070 0040 size
 0070 0048 start
+
+
+;-------------------------
+I/O Motherboard
+00F0 0000 info 
 
 
 

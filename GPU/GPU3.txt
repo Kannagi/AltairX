@@ -10,8 +10,13 @@ A = ADR or ID
 3 = end
 4 = wait
 5 = flush cache buffer or texture
-6 = buffer size init
-7 = ---
+6 = PPU info
+
+0xCSSS Xaaa AAAA AAAA (Load_DATA)
+7  = CLUT <- X(RAM/1T-SRAM/SPM2)
+XL = SRC
+XH = NCLUT
+
 
 0xCSSS aaaa AAAA AAAA (Load_DATA /Store_DATA)
 
@@ -65,4 +70,11 @@ CMD 11: Store_DATA buffer
 CMD 3: end
 
 
+Info PPU :
+-Alpha blending
+-pixel format
+-size buffer
+-Z-buffer (info + Depth Method)
+-AntiAliasing E/D
 
+CLUT 4ko
