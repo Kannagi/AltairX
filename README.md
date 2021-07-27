@@ -67,6 +67,9 @@ Aldebaran G1 ISA : https://docs.google.com/spreadsheets/d/1LiSZbdd6wCpa-sZZ9uLg5
 ## Pipeline
 <img src="Pipeline4.png?raw=true" alt="Pipeline">
 
+## Architecture intern 
+<img src="arch_hard.png?raw=true" alt="arch">
+
 ## APU Die (700-900 MT) 40-50 mm² , 28 nm FD-SOI
 <img src="APU.png?raw=true" alt="APU">
 
