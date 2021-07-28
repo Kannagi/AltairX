@@ -41,7 +41,7 @@ typedef struct {
 #define OP_VOID            0x00
 
 #define OP_REG             0x01
-#define OP_VP              0x02
+#define OP_VRG             0x02
 #define OP_VPI             0x03
 
 #define OP_RFR             0x04

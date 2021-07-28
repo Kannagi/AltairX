@@ -137,10 +137,13 @@ static int decodeCMP(ArProcessor processor,ArExecute_T *output,uint32_t unit,uin
         else if(unit == 6) //FCMPI
         {
             output->id = (output->size+1)&0x3;
+
+            output->fopA[output->size] = processor->vreg[(output->opA*4)+output->size];
             output->fopB[output->id] = convertImmFloat(imm);
         }
         else if(unit == 7) //DCMPI
         {
+            output->dopA = processor->dreg[(output->opA*2)];
             output->dopB = convertImmDouble(imm);
         }
 
@@ -238,8 +241,6 @@ static int decodeVFPU(ArProcessor processor,ArExecute_T *output,uint32_t unit1,u
     output->unit1 = AK1_EXE_VFPU;
     output->unit2 = unit2 + (unit1<<4);
 
-    
-
     if(output->unit2 == 0x0F) //VFSHUFFLE
     {
         output->opC = imm&0x3FF;
@@ -286,6 +287,9 @@ static int decode(ArProcessor processor,uint32_t id)
     processor->operations[id].opA = regA;
     processor->operations[id].opB = processor->ireg[regB];
     processor->operations[id].opC = processor->ireg[regC];
+
+
+    //printf("opcode %x\n",opcode);
 
     ArExecute_T *output = &processor->operations[id];
 
@@ -341,6 +345,15 @@ static int decode(ArProcessor processor,uint32_t id)
     }
     else //VFPU
     {
+        for(int i = 0;i < 4;i++)
+        {
+            processor->operations[id].fopB[i] = processor->vreg[(regB*4)+i];
+            processor->operations[id].fopC[i] = processor->vreg[(regC*4)+i];
+        }
+
+        processor->operations[id].dopB = processor->dreg[(regB*2)];
+        processor->operations[id].dopC = processor->dreg[(regC*2)];
+        
         return decodeVFPU(processor,output,unit1,unit2,imm);
     }
 

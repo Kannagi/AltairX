@@ -2,6 +2,17 @@
 	include "macro.asm"
 	org $0
 	
+	fmovei v0,1.5
+	fmovei v1,1.0
+	
+	fadd v0,v0,v1
+	nop
+	
+	
+	int r0,1
+	nop
+	
+lab2:
 	movei r0,$00
 	movei r1,$400
 	

@@ -158,36 +158,33 @@ int parse_operand(char *p,int len,operand *op,int requires)
     }
     
     //Register VF0-VF63
-    if(requires == OP_VP )
+    if(requires == OP_VRG )
     {
         
-        if( (len < 3) || (len > 5) ) return 0;
+        if( (len < 2) || (len > 4) ) return 0;
         if( !(p[0] == 'v' || p[0] == 'V') )
-            return 0;
-
-        if( !(p[1] == 'f' || p[1] == 'F') )
             return 0;
 
         op->val = -1;
 
         
-        arg[0] = p[2];
+        arg[0] = p[1];
         if(len == 3)
         {
             arg[1] = 0;
         }
         {
-        	if( (p[3] >= '0') && (p[3] <= '9') )
-            	arg[1] = p[3];
+        	if( (p[2] >= '0') && (p[2] <= '9') )
+            	arg[1] = p[2];
             else
             {
-            	op->val = 'x'-p[3]+1;
+            	op->val = 'x'-p[2]+1;
             	arg[1] = 0;
             }
 
             arg[2] = 0;
 
-            if(!( (p[4] >= '0') && (p[4] <= '9') ))
+            if(!( (p[3] >= '0') && (p[3] <= '9') ))
             {
             	op->val = 'x'-p[3]+1;            	
             }
@@ -324,9 +321,7 @@ int parse_operand(char *p,int len,operand *op,int requires)
     {
         //op->val = atoi(p);
         op->fval = atof(p);
-
-        int *tmp = (void*)&op->fval;
-        op->val = *tmp;
+        memcpy(&op->val, &op->fval, 4);
         //printf("%d\n",op->val);
         
         return 1;
@@ -421,7 +416,7 @@ dblock *eval_instruction(instruction *p,section *sec,taddr pc)
     opcode |= (k1ext<<8);
 
     //------------- OPERAND 1 -------------
-    if( (operand1.type == OP_REG) || (operand1.type == OP_VP) )
+    if( (operand1.type == OP_REG) || (operand1.type == OP_VRG) )
     {
         opcode |= (operand1.reg<<26);
     }
@@ -468,7 +463,7 @@ dblock *eval_instruction(instruction *p,section *sec,taddr pc)
     }
 
     //------------- OPERAND 2 -------------
-    if( (operand2.type == OP_REG) || (operand2.type == OP_VP) )
+    if( (operand2.type == OP_REG) || (operand2.type == OP_VRG) )
     {
         opcode |= (operand2.reg<<20);
     }
@@ -507,8 +502,6 @@ dblock *eval_instruction(instruction *p,section *sec,taddr pc)
 
     if(operand2.type == OP_IMF)
     {
-        opcode |= (operand2.reg<<20);
-
         unsigned int tmp,sign,exp,mant,texp;
 
         tmp = operand2.val;
@@ -524,13 +517,12 @@ dblock *eval_instruction(instruction *p,section *sec,taddr pc)
 
         val = sign+mant+exp;
 
-        //printf("%x\n",exp);
         opcode |= ( (val & 0xFFFF)<<10);
     }
 
 
     //------------- OPERAND 3 -------------
-    if( (operand3.type == OP_REG) || (operand3.type == OP_VP) )
+    if( (operand3.type == OP_REG) || (operand3.type == OP_VRG) )
     {
         opcode |= (operand3.reg<<14);
     }
@@ -542,6 +534,31 @@ dblock *eval_instruction(instruction *p,section *sec,taddr pc)
         opcode |= (operand3.val<<10);
     }
 
+    //----------------------
+    /*
+    if( (operand1.val == -1) && (operand1.type == OP_VRG) )
+    {
+         opcode |= (operand1.val<<8);
+    }
+
+    if( (operand2.val == -1)  && (operand2.type == OP_VRG) )
+    {
+        
+        if( (operand3.type == OP_VOID) )
+        {
+            opcode |= (operand2.val<<8);
+        }
+        else
+        {
+            opcode |= (operand2.val<<10);
+        }
+    }
+
+    if( (operand3.val == -1) && (operand3.type == OP_VRG) )
+    {
+         opcode |= (operand1.val<<10);
+    }
+*/
     //-------------
     //printf("%x\n",opcode);
     //printbin(opcode);
@@ -549,13 +566,11 @@ dblock *eval_instruction(instruction *p,section *sec,taddr pc)
     val = opcode;
     db->size = 4;
     
-
 	d = db->data = mymalloc(db->size);
 	*d++ = (val)&0xFF;
 	*d++ = (val>>8)&0xFF;
 	*d++ = (val>>16)&0xFF;
     *d++ = (val>>24)&0xFF;
-
 
     return db;
 }
@@ -582,12 +597,6 @@ dblock *eval_data(operand *op,taddr bitsize,section *sec,taddr pc)
         val = val>>shift;
         shift+= 8;
     }
-    /*
-    *d++ = (val)&0xFF;
-    *d++ = (val>>8)&0xFF;
-    *d++ = (val>>16)&0xFF;
-    *d++ = (val>>24)&0xFF;
-    */
 
     return db;
 }

@@ -369,34 +369,24 @@ static ArResult executeInstruction(ArProcessor restrict processor, uint32_t inde
             break;
 
             case AK1_OPCODE_FCMP:
+
                 ftmp = fopA[size]-fopB[id];
 
-                if(ftmp == 0)
-                    processor->flags |= Z_MASK;
-                else
-                {
-                    processor->flags &= 0xFF-Z_MASK;
-                    if(ftmp < 0)
-                        processor->flags |= U_MASK;
-                    else
-                        processor->flags &= 0xFF-U_MASK;
-                }
+                processor->flags &= ZSUClearMask;
+                processor->flags |= (ftmp != 0.0f) << 1u;
+                processor->flags |= (ftmp <  0.0f) << 2u;
+                processor->flags |= (ftmp <  0.0f) << 3u;
 
             break;
 
             case AK1_OPCODE_DCMP:
+            
                 dtmp = dopA-dopB;
 
-                if(dtmp == 0)
-                    processor->flags |= Z_MASK;
-                else
-                {
-                    processor->flags &= 0xFF-Z_MASK;
-                    if(dtmp < 0)
-                        processor->flags |= U_MASK;
-                    else
-                        processor->flags &= 0xFF-U_MASK;
-                }
+                processor->flags &= ZSUClearMask;
+                processor->flags |= (dtmp != 0.0f) << 1u;
+                processor->flags |= (dtmp <  0.0f) << 2u;
+                processor->flags |= (dtmp <  0.0f) << 3u;
             break;
 
 
@@ -455,6 +445,7 @@ static ArResult executeInstruction(ArProcessor restrict processor, uint32_t inde
                 return AR_ERROR_ILLEGAL_INSTRUCTION;
 
             case AK1_OPCODE_INT:
+
                 if(opB == 0)
                     printf("%c\n",ireg[opA]);
                 else if(opB == 1)
@@ -474,7 +465,6 @@ static ArResult executeInstruction(ArProcessor restrict processor, uint32_t inde
         uint32_t unit3 = unit2>>4;
         unit2 &= 0xF;
 
-        fopA = processor->operations[index].fopA;
         fopB = processor->operations[index].fopB;
         fopC = processor->operations[index].fopC;
 
@@ -574,6 +564,7 @@ static ArResult executeInstruction(ArProcessor restrict processor, uint32_t inde
         else if(unit3 == 1) //VFMOVE
         {
             opA *= 4;
+
             switch(unit2)
             {
                 default:

@@ -25,25 +25,25 @@
   "ldci",     {OP_REG,OP_IMR,      },  {K1,(0b10100001)},
   "stci",     {OP_REG,OP_IMR,      },  {K1,(0b10110001)},
   
-  "ldmv",     {OP_VP ,OP_RRG,      },  {K1,(0b01000001)},
-  "stmv",     {OP_VP ,OP_RRG,      },  {K1,(0b01010001)},
-  "ldcv",     {OP_VP ,OP_RRG,      },  {K1,(0b01100001)},
-  "stcv",     {OP_VP ,OP_RRG,      },  {K1,(0b01110001)},
+  "ldmv",     {OP_VRG,OP_RRG,      },  {K1,(0b01000001)},
+  "stmv",     {OP_VRG,OP_RRG,      },  {K1,(0b01010001)},
+  "ldcv",     {OP_VRG,OP_RRG,      },  {K1,(0b01100001)},
+  "stcv",     {OP_VRG,OP_RRG,      },  {K1,(0b01110001)},
 
-  "ldmvi",    {OP_VP ,OP_IMR,      },  {K1,(0b11000001)},
-  "stmvi",    {OP_VP ,OP_IMR,      },  {K1,(0b11010001)},
-  "ldcvi",    {OP_VP ,OP_IMR,      },  {K1,(0b11100001)},
-  "stcvi",    {OP_VP ,OP_IMR,      },  {K1,(0b11110001)},
+  "ldmvi",    {OP_VRG,OP_IMR,      },  {K1,(0b11000001)},
+  "stmvi",    {OP_VRG,OP_IMR,      },  {K1,(0b11010001)},
+  "ldcvi",    {OP_VRG,OP_IMR,      },  {K1,(0b11100001)},
+  "stcvi",    {OP_VRG,OP_IMR,      },  {K1,(0b11110001)},
 
   "ldml",     {OP_REG,OP_IMM,      },  {K1,(0b00000101)},
   "stml",     {OP_REG,OP_IMM,      },  {K1,(0b00010101)},
   "ldcl",     {OP_REG,OP_IMM,      },  {K1,(0b00100101)},
   "stcl",     {OP_REG,OP_IMM,      },  {K1,(0b00110101)},
 
-  "ldmvl",    {OP_VP ,OP_IMM,      },  {K1,(0b01000101)},
-  "stmvl",    {OP_VP ,OP_IMM,      },  {K1,(0b01010101)},
-  "ldcvl",    {OP_VP ,OP_IMM,      },  {K1,(0b01100101)},
-  "stcvl",    {OP_VP ,OP_IMM,      },  {K1,(0b01110101)}, 
+  "ldmvl",    {OP_VRG,OP_IMM,      },  {K1,(0b01000101)},
+  "stmvl",    {OP_VRG,OP_IMM,      },  {K1,(0b01010101)},
+  "ldcvl",    {OP_VRG,OP_IMM,      },  {K1,(0b01100101)},
+  "stcvl",    {OP_VRG,OP_IMM,      },  {K1,(0b01110101)}, 
 
   "prefetch", {OP_IMR,             },  {K1,(0b10000101)},
   "clearc",   {OP_IMR,             },  {K1,(0b10010101)},
@@ -127,10 +127,10 @@
   //CMP
   "cmp",      {OP_REG,OP_REG,      },  {K1,(0b00000100)},
 
-  "fcmp",     {OP_VP ,OP_VP ,      },  {K1,(0b01000100)},
-  "dcmp",     {OP_VP ,OP_VP ,      },  {K1,(0b01010100)},
-  "fcmpi",    {OP_VP ,OP_IMF,      },  {K1,(0b01100100)},
-  "dcmpi",    {OP_VP ,OP_IMF,      },  {K1,(0b01110100)},
+  "fcmp",     {OP_VRG,OP_VRG,      },  {K1,(0b01000100)},
+  "dcmp",     {OP_VRG,OP_VRG,      },  {K1,(0b01010100)},
+  "fcmpi",    {OP_VRG,OP_IMF,      },  {K1,(0b01100100)},
+  "dcmpi",    {OP_VRG,OP_IMF,      },  {K1,(0b01110100)},
 
   "endp",     {                    },  {K1,(0b10000100)},
   "ret",      {                    },  {K1,(0b10010100)},
@@ -141,87 +141,87 @@
   "cmpi",     {OP_REG,OP_IMH,      },  {K1,(0b00001100)},
 
   //VFPU
-  "fadd",     {OP_VP ,OP_VP ,OP_VP },  {K1,(0b00000011)},
-  "fsub",     {OP_VP ,OP_VP ,OP_VP },  {K1,(0b00010011)},
-  "fmul",     {OP_VP ,OP_VP ,OP_VP },  {K1,(0b00100011)},
-  "fmadd",    {OP_VP ,OP_VP ,OP_VP },  {K1,(0b00110011)},
+  "fadd",     {OP_VRG,OP_VRG,OP_VRG},  {K1,(0b00000011)},
+  "fsub",     {OP_VRG,OP_VRG,OP_VRG},  {K1,(0b00010011)},
+  "fmul",     {OP_VRG,OP_VRG,OP_VRG},  {K1,(0b00100011)},
+  "fmadd",    {OP_VRG,OP_VRG,OP_VRG},  {K1,(0b00110011)},
 
-  "vfadd",    {OP_VP ,OP_VP ,OP_VP },  {K1,(0b01000011)},
-  "vfsub",    {OP_VP ,OP_VP ,OP_VP },  {K1,(0b01010011)},
-  "vfmul",    {OP_VP ,OP_VP ,OP_VP },  {K1,(0b01100011)},
-  "vfmadd",   {OP_VP ,OP_VP ,OP_VP },  {K1,(0b01110011)},
+  "vfadd",    {OP_VRG,OP_VRG,OP_VRG},  {K1,(0b01000011)},
+  "vfsub",    {OP_VRG,OP_VRG,OP_VRG},  {K1,(0b01010011)},
+  "vfmul",    {OP_VRG,OP_VRG,OP_VRG},  {K1,(0b01100011)},
+  "vfmadd",   {OP_VRG,OP_VRG,OP_VRG},  {K1,(0b01110011)},
 
-  "vfadds",   {OP_VP ,OP_VP ,OP_VP },  {K1,(0b10000011)},
-  "vfsubs",   {OP_VP ,OP_VP ,OP_VP },  {K1,(0b10010011)},
-  "vfmuls",   {OP_VP ,OP_VP ,OP_VP },  {K1,(0b10100011)},
-  "vfmadds",  {OP_VP ,OP_VP ,OP_VP },  {K1,(0b10110011)},
+  "vfadds",   {OP_VRG,OP_VRG,OP_VRG},  {K1,(0b10000011)},
+  "vfsubs",   {OP_VRG,OP_VRG,OP_VRG},  {K1,(0b10010011)},
+  "vfmuls",   {OP_VRG,OP_VRG,OP_VRG},  {K1,(0b10100011)},
+  "vfmadds",  {OP_VRG,OP_VRG,OP_VRG},  {K1,(0b10110011)},
 
-  "fmsub",    {OP_VP ,OP_VP ,OP_VP },  {K1,(0b11000011)},
-  "vfmsub",   {OP_VP ,OP_VP ,OP_VP },  {K1,(0b11010011)},
-  "vfmsubs",  {OP_VP ,OP_VP ,OP_VP },  {K1,(0b11100011)},
-  "vfshuffle",{OP_VP ,OP_VP ,OP_VP },  {K1,(0b11110011)},
-
-  //-----------------------
-  "fmove",    {OP_VP ,OP_VP ,      },  {K1,(0b00000111)},
-  "vmove",    {OP_VP ,OP_VP ,      },  {K1,(0b00010111)},
-  "fmovei",   {OP_VP ,OP_IMF,      },  {K1,(0b00100111)},
-  "vfmovei",  {OP_VP ,OP_IMF,      },  {K1,(0b00110111)},
-
-  "fneg",     {OP_VP ,OP_VP ,      },  {K1,(0b01000111)},
-  "fabs",     {OP_VP ,OP_VP ,      },  {K1,(0b01010111)},
-  "vfneg",    {OP_VP ,OP_VP ,      },  {K1,(0b01100111)},
-  "vfabs",    {OP_VP ,OP_VP ,      },  {K1,(0b01110111)},
-
-  "vftoh",    {OP_VP ,OP_VP ,      },  {K1,(0b10000111)},
-  "vhtof",    {OP_VP ,OP_VP ,      },  {K1,(0b10010111)},
-  "vftoi",    {OP_VP ,OP_VP ,      },  {K1,(0b10100111)},
-  "vitof",    {OP_VP ,OP_VP ,      },  {K1,(0b10110111)},
-
-  "vftod",    {OP_VP ,OP_VP ,      },  {K1,(0b11000111)},
-  "vdtof",    {OP_VP ,OP_VP ,      },  {K1,(0b11010111)},
-  "fmin",     {OP_VP ,OP_VP ,OP_VP },  {K1,(0b11100111)},
-  "fmax",     {OP_VP ,OP_VP ,OP_VP },  {K1,(0b11110111)},
-  //-----------------------
-  "fdiv",     {OP_RGQ,OP_VP ,OP_VP },  {K1,(0b00001011)},
-  "fsqrt",    {OP_RGQ,OP_VP ,      },  {K1,(0b00011011)},
-  //"____",   {OP_VP ,OP_VP ,OP_VP },  {K1,(0b00101011)},
-  //"____",   {OP_VP ,OP_VP ,OP_VP },  {K1,(0b00111011)},
-
-  "fatan",    {OP_RGQ,OP_VP ,      },  {K1,(0b01001011)},
-  "fatan2",   {OP_RGQ,OP_VP ,OP_VP },  {K1,(0b01011011)},
-  "fexp",     {OP_RGQ,OP_VP ,      },  {K1,(0b01101011)},
-  //"____",   {OP_VP ,OP_VP ,OP_VP },  {K1,(0b01111011)},
-
-  "fsum",     {OP_RGP,OP_VP ,OP_VP },  {K1,(0b10001011)},
-  "fipr",     {OP_RGP,OP_VP ,OP_VP },  {K1,(0b10011011)},
-  "fsin",     {OP_RGP,OP_VP ,      },  {K1,(0b10101011)},
-  //"____",   {OP_VP ,OP_VP ,OP_VP },  {K1,(0b10111011)},
-
-  //"____",   {OP_VP ,OP_VP ,OP_VP },  {K1,(0b11001011)},
-  //"____",   {OP_VP ,OP_VP ,OP_VP },  {K1,(0b11011011)},
-  //"____",   {OP_VP ,OP_VP ,OP_VP },  {K1,(0b11101011)},
-  //"____",   {OP_VP ,OP_VP ,OP_VP },  {K1,(0b11111011)},
+  "fmsub",    {OP_VRG,OP_VRG,OP_VRG},  {K1,(0b11000011)},
+  "vfmsub",   {OP_VRG,OP_VRG,OP_VRG},  {K1,(0b11010011)},
+  "vfmsubs",  {OP_VRG,OP_VRG,OP_VRG},  {K1,(0b11100011)},
+  "vfshuffle",{OP_VRG,OP_VRG,OP_VRG},  {K1,(0b11110011)},
 
   //-----------------------
-  "dmovei",   {OP_VP ,OP_IMF,      },  {K1,(0b00001111)},
-  "dadd",     {OP_VP ,OP_VP ,OP_VP },  {K1,(0b00011111)},
-  "dsub",     {OP_VP ,OP_VP ,OP_VP },  {K1,(0b00101111)},
-  "dmul",     {OP_VP ,OP_VP ,OP_VP },  {K1,(0b00111111)},
+  "fmove",    {OP_VRG,OP_VRG,      },  {K1,(0b00000111)},
+  "vmove",    {OP_VRG,OP_VRG,      },  {K1,(0b00010111)},
+  "fmovei",   {OP_VRG,OP_IMF,      },  {K1,(0b00100111)},
+  "vfmovei",  {OP_VRG,OP_IMF,      },  {K1,(0b00110111)},
 
-  "dabs",     {OP_VP ,OP_VP ,      },  {K1,(0b01001111)},
-  "dneg",     {OP_VP ,OP_VP ,      },  {K1,(0b01011111)},
-  "dmin",     {OP_VP ,OP_VP ,OP_VP },  {K1,(0b01101111)},
-  "dmax",     {OP_VP ,OP_VP ,OP_VP },  {K1,(0b01111111)},
+  "fneg",     {OP_VRG,OP_VRG,      },  {K1,(0b01000111)},
+  "fabs",     {OP_VRG,OP_VRG,      },  {K1,(0b01010111)},
+  "vfneg",    {OP_VRG,OP_VRG,      },  {K1,(0b01100111)},
+  "vfabs",    {OP_VRG,OP_VRG,      },  {K1,(0b01110111)},
 
-  "ddiv",     {OP_RGQ,OP_VP ,OP_VP },  {K1,(0b10001111)},
-  "dsqrt",    {OP_RGQ,OP_VP ,      },  {K1,(0b10011111)},
-  "dsin",     {OP_RGP,OP_VP ,      },  {K1,(0b10101111)},
-  //"____",   {OP_VP ,OP_VP ,OP_VP },  {K1,(0b10111111)},
+  "vftoh",    {OP_VRG,OP_VRG,      },  {K1,(0b10000111)},
+  "vhtof",    {OP_VRG,OP_VRG,      },  {K1,(0b10010111)},
+  "vftoi",    {OP_VRG,OP_VRG,      },  {K1,(0b10100111)},
+  "vitof",    {OP_VRG,OP_VRG,      },  {K1,(0b10110111)},
 
-  //"____",   {OP_VP ,OP_VP ,OP_VP },  {K1,(0b11001111)},
-  //"____",   {OP_VP ,OP_VP ,OP_VP },  {K1,(0b11011111)},
-  //"____",   {OP_VP ,OP_VP ,OP_VP },  {K1,(0b11101111)},
-  //"____",   {OP_VP ,OP_VP ,OP_VP },  {K1,(0b11111111)},
+  "vftod",    {OP_VRG,OP_VRG,      },  {K1,(0b11000111)},
+  "vdtof",    {OP_VRG,OP_VRG,      },  {K1,(0b11010111)},
+  "fmin",     {OP_VRG,OP_VRG,OP_VRG},  {K1,(0b11100111)},
+  "fmax",     {OP_VRG,OP_VRG,OP_VRG},  {K1,(0b11110111)},
+  //-----------------------
+  "fdiv",     {OP_RGQ,OP_VRG,OP_VRG},  {K1,(0b00001011)},
+  "fsqrt",    {OP_RGQ,OP_VRG,      },  {K1,(0b00011011)},
+  //"____",   {OP_VRG,OP_VRG,OP_VRG},  {K1,(0b00101011)},
+  //"____",   {OP_VRG,OP_VRG,OP_VRG},  {K1,(0b00111011)},
+
+  "fatan",    {OP_RGQ,OP_VRG,      },  {K1,(0b01001011)},
+  "fatan2",   {OP_RGQ,OP_VRG,OP_VRG},  {K1,(0b01011011)},
+  "fexp",     {OP_RGQ,OP_VRG,      },  {K1,(0b01101011)},
+  //"____",   {OP_VRG,OP_VRG,OP_VRG},  {K1,(0b01111011)},
+
+  "fsum",     {OP_RGP,OP_VRG,OP_VRG},  {K1,(0b10001011)},
+  "fipr",     {OP_RGP,OP_VRG,OP_VRG},  {K1,(0b10011011)},
+  "fsin",     {OP_RGP,OP_VRG,      },  {K1,(0b10101011)},
+  //"____",   {OP_VRG,OP_VRG,OP_VRG},  {K1,(0b10111011)},
+
+  //"____",   {OP_VRG,OP_VRG,OP_VRG},  {K1,(0b11001011)},
+  //"____",   {OP_VRG,OP_VRG,OP_VRG},  {K1,(0b11011011)},
+  //"____",   {OP_VRG,OP_VRG,OP_VRG},  {K1,(0b11101011)},
+  //"____",   {OP_VRG,OP_VRG,OP_VRG},  {K1,(0b11111011)},
+
+  //-----------------------
+  "dmovei",   {OP_VRG,OP_IMF,      },  {K1,(0b00001111)},
+  "dadd",     {OP_VRG,OP_VRG,OP_VRG},  {K1,(0b00011111)},
+  "dsub",     {OP_VRG,OP_VRG,OP_VRG},  {K1,(0b00101111)},
+  "dmul",     {OP_VRG,OP_VRG,OP_VRG},  {K1,(0b00111111)},
+
+  "dabs",     {OP_VRG,OP_VRG,      },  {K1,(0b01001111)},
+  "dneg",     {OP_VRG,OP_VRG,      },  {K1,(0b01011111)},
+  "dmin",     {OP_VRG,OP_VRG,OP_VRG},  {K1,(0b01101111)},
+  "dmax",     {OP_VRG,OP_VRG,OP_VRG},  {K1,(0b01111111)},
+
+  "ddiv",     {OP_RGQ,OP_VRG,OP_VRG},  {K1,(0b10001111)},
+  "dsqrt",    {OP_RGQ,OP_VRG,      },  {K1,(0b10011111)},
+  "dsin",     {OP_RGP,OP_VRG,      },  {K1,(0b10101111)},
+  //"____",   {OP_VRG,OP_VRG,OP_VRG},  {K1,(0b10111111)},
+
+  //"____",   {OP_VRG,OP_VRG,OP_VRG},  {K1,(0b11001111)},
+  //"____",   {OP_VRG,OP_VRG,OP_VRG},  {K1,(0b11011111)},
+  //"____",   {OP_VRG,OP_VRG,OP_VRG},  {K1,(0b11101111)},
+  //"____",   {OP_VRG,OP_VRG,OP_VRG},  {K1,(0b11111111)},
 
 
   //-----------------------
