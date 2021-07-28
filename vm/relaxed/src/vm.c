@@ -69,6 +69,14 @@ ArResult arCreateProcessor(ArVirtualMachine virtualMachine, const ArProcessorCre
     insertProcessor(virtualMachine, output);
     *pProcessor = output;
 
+    //init
+    ArProcessor processor = output;
+    processor->delay = 0;
+    processor->dreg = (double*)processor->vreg;
+
+    processor->ram = virtualMachine->ram->memory;
+    processor->rom = virtualMachine->rom->memory;
+
     return AR_SUCCESS;
 }
 
@@ -134,10 +142,9 @@ void arGetProcessorMemoryInfo(ArProcessor processor, ArProcessorMemoryInfo* pOut
 
     pOutput->dsram  = processor->dsram;
     pOutput->isram  = processor->isram;
-    pOutput->cache  = processor->cache;
-    pOutput->iosram = processor->iosram;
+    //pOutput->cache  = processor->cache;
     pOutput->ireg   = processor->ireg;
-    pOutput->vreg   = processor->vreg;
+    //pOutput->vreg   = processor->vreg;
 }
 
 void arDestroyVirtualMachine(ArVirtualMachine virtualMachine)

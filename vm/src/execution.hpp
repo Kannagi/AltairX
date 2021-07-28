@@ -17,9 +17,9 @@ inline void execute(ar::processor& processor)
             break;
         }
 
-        processor.direct_memory_access();
+        //processor.direct_memory_access();
 
-        run_io(memory_info.iosram);
+        //run_io(memory_info.iosram);
     }
 }
 
