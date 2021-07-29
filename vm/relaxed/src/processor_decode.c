@@ -311,13 +311,13 @@ static int decode(ArProcessor processor,uint32_t id)
             }
             else if(unit1 == 2)
             {
-            	return 1;
+                return 1;
             }
             else //CMPI
             {
-            	output->unit1 = AK1_EXE_CMP;
-            	output->unit2 = AK1_OPCODE_CMP;
-        		output->opB   = extendSign(imm,20);
+                output->unit1 = AK1_EXE_CMP;
+                output->unit2 = AK1_OPCODE_CMP;
+                output->opB   = extendSign(imm,20);
                 output->opA   = processor->ireg[regA];
             }
         }
