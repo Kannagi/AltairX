@@ -101,41 +101,41 @@
   "remui",    {OP_RGQ,OP_REG,OP_IMM},  {K1,(0b11010110)},
 
   //BRU
-  "bne",      {OP_IMB,             },  {K1,(0b00000000)},
-  "beq",      {OP_IMB,             },  {K1,(0b00010000)},
+  "bne",      {OP_IMB,             },  {K1,(0b00000100)},
+  "beq",      {OP_IMB,             },  {K1,(0b00010100)},
 
-  "bl",       {OP_IMB,             },  {K1,(0b00100000)},
-  "ble",      {OP_IMB,             },  {K1,(0b00110000)},
+  "bl",       {OP_IMB,             },  {K1,(0b00100100)},
+  "ble",      {OP_IMB,             },  {K1,(0b00110100)},
 
-  "bg",       {OP_IMB,             },  {K1,(0b01000000)},
-  "bge",      {OP_IMB,             },  {K1,(0b01010000)},
+  "bg",       {OP_IMB,             },  {K1,(0b01000100)},
+  "bge",      {OP_IMB,             },  {K1,(0b01010100)},
 
-  "bls",      {OP_IMB,             },  {K1,(0b01100000)},
-  "bles",     {OP_IMB,             },  {K1,(0b01110000)},
+  "bls",      {OP_IMB,             },  {K1,(0b01100100)},
+  "bles",     {OP_IMB,             },  {K1,(0b01110100)},
 
-  "bgs",      {OP_IMB,             },  {K1,(0b10000000)},
-  "bges",     {OP_IMB,             },  {K1,(0b10010000)},
+  "bgs",      {OP_IMB,             },  {K1,(0b10000100)},
+  "bges",     {OP_IMB,             },  {K1,(0b10010100)},
 
-  "bra",      {OP_IMB,             },  {K1,(0b10100000)},
+  "bra",      {OP_IMB,             },  {K1,(0b10100100)},
 
-  "jmp",      {OP_IMM,             },  {K1,(0b10110000)},
-  "jmpbr",    {OP_IMM,             },  {K1,(0b11000000)},
-  "call",     {OP_IMM,             },  {K1,(0b11010000)},
-  "callbr",   {OP_IMM,             },  {K1,(0b11100000)},
+  "jmp",      {OP_IMM,             },  {K1,(0b10110100)},
+  "jmpbr",    {OP_IMM,             },  {K1,(0b11000100)},
+  "call",     {OP_IMM,             },  {K1,(0b11010100)},
+  "callbr",   {OP_IMM,             },  {K1,(0b11100100)},
 
 
   //CMP
-  "cmp",      {OP_REG,OP_REG,      },  {K1,(0b00000100)},
+  "cmp",      {OP_REG,OP_REG,      },  {K1,(0b00000000)},
 
-  "fcmp",     {OP_VRG,OP_VRG,      },  {K1,(0b01000100)},
-  "dcmp",     {OP_VRG,OP_VRG,      },  {K1,(0b01010100)},
-  "fcmpi",    {OP_VRG,OP_IMF,      },  {K1,(0b01100100)},
-  "dcmpi",    {OP_VRG,OP_IMF,      },  {K1,(0b01110100)},
+  "fcmp",     {OP_VRG,OP_VRG,      },  {K1,(0b01000000)},
+  "dcmp",     {OP_VRG,OP_VRG,      },  {K1,(0b01010000)},
+  "fcmpi",    {OP_VRG,OP_IMF,      },  {K1,(0b01100000)},
+  "dcmpi",    {OP_VRG,OP_IMF,      },  {K1,(0b01110000)},
 
-  "endp",     {                    },  {K1,(0b10000100)},
-  "ret",      {                    },  {K1,(0b10010100)},
-  "int",      {OP_REG,OP_IMM,      },  {K1,(0b10100100)},
-  "waiti",    {                    },  {K1,(0b10110100)},
+  "endp",     {                    },  {K1,(0b10000000)},
+  "ret",      {                    },  {K1,(0b10010000)},
+  "int",      {OP_REG,OP_IMM,      },  {K1,(0b10100000)},
+  "waiti",    {                    },  {K1,(0b10110000)},
   
 
   "cmpi",     {OP_REG,OP_IMH,      },  {K1,(0b00001100)},

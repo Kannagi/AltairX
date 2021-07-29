@@ -303,11 +303,11 @@ static int decode(ArProcessor processor,uint32_t id)
         {
             if(unit1 == 0)
             {
-                return decodeBRU(processor,output,unit2,imm);
+                return decodeCMP(processor,output,unit2,imm);
             }
             else if(unit1 == 1)
             {
-                return decodeCMP(processor,output,unit2,imm);
+                return decodeBRU(processor,output,unit2,imm);
             }
             else if(unit1 == 2)
             {
