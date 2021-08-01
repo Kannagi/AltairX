@@ -123,7 +123,6 @@ static ArResult executeDelayedInstruction(ArProcessor restrict processor, uint16
 static void executeLS(ArProcessor processor,void *reg,uint64_t offset,uint32_t size,uint32_t store)
 {
     void *address;
-    uint64_t mmap = offset & MEMORY_MAP_OTHER;
 
     if(offset&MEMORY_MAP_RAM_BEGIN)
     {
@@ -136,19 +135,19 @@ static void executeLS(ArProcessor processor,void *reg,uint64_t offset,uint32_t s
             return;
         }else
         {
-            if(mmap == MEMORY_MAP_IO_BEGIN)
+            if(offset == MEMORY_MAP_IO_BEGIN)
             {
                 address = processor->io;
-                offset &= 0xFFFFF; //Max bloc 1Mio
+                offset &= 0x7FFFFF; //Max bloc 8Mio
 
             }
-            else if(mmap == MEMORY_MAP_SPM2_BEGIN)
+            else if(offset == MEMORY_MAP_SPM2_BEGIN)
             {
                 address = processor->spm2;
                 offset &= 0xFFFFFFF; //Max 256 Mio
 
             }
-            else if(mmap == MEMORY_MAP_ROM_BEGIN)
+            else if(offset == MEMORY_MAP_ROM_BEGIN)
             {
                 address = processor->rom;
                 offset &= 0xFFFFFFFF; //Max 4 Gio
@@ -194,6 +193,7 @@ static ArResult executeInstruction(ArProcessor restrict processor, uint32_t inde
     uint64_t* restrict const ireg = processor->ireg;
     float*    restrict const freg = processor->vreg;
     double*   restrict const dreg = processor->dreg;
+    int32_t*  restrict const vireg = processor->vireg;
     
     uint32_t unit1 = processor->operations[index].unit1;
     uint32_t unit2 = processor->operations[index].unit2;
@@ -407,7 +407,6 @@ static ArResult executeInstruction(ArProcessor restrict processor, uint32_t inde
 
             case AK1_OPCODE_LDDMA:
                 executeLS(processor,addressA,opB,opC*64,1);
-
             break;
 
 
@@ -427,7 +426,7 @@ static ArResult executeInstruction(ArProcessor restrict processor, uint32_t inde
 
             case AK1_OPCODE_DMAI:
                 addressA = processor->isram + ireg[opA];
-                executeLS(processor,addressA,opB|MEMORY_MAP_RAM_BEGIN,opC*64,0);
+                executeLS(processor,addressA,opB,opC*64,0);
 
             break;
 
@@ -565,6 +564,8 @@ static ArResult executeInstruction(ArProcessor restrict processor, uint32_t inde
         {
             opA *= 4;
 
+            int32_t* viregB = (int32_t*)processor->operations[index].fopB;
+
             switch(unit2)
             {
                 default:
@@ -602,9 +603,18 @@ static ArResult executeInstruction(ArProcessor restrict processor, uint32_t inde
                     
                 break;
 
+                case AK1_OPCODE_VFTOI:
+                    for(int i = 0;i < size;i++)
+                        vireg[opA+i] = fopB[i];
+                break;
+
+                case AK1_OPCODE_VITOF:
+                    for(int i = i;i < size;i++)
+                        freg[opA] = viregB[i];
+                break;
 
                 case AK1_OPCODE_VFTOD:
-                    dreg[opA>>1] = fopB[opA];
+                    dreg[opA>>1] = fopB[0];
                 break;
 
                 case AK1_OPCODE_VDTOF:

@@ -54,17 +54,17 @@
   "nop",      {                    },  {K1,(0b00001010)},
 
 
-  "moveins",  {OP_REG,             },  {K1,(0b01101010)},
-  "movecyc",  {OP_REG,             },  {K1,(0b01111010)},
+  "moveins",  {OP_REG,             },  {K1,(0b11001010)},
+  "movecyc",  {OP_REG,             },  {K1,(0b11011010)},
 
-  "move",     {OP_REG,OP_RFR,      },  {K1,(0b10001010)},
-  "move",     {OP_REG,OP_RBR,      },  {K1,(0b10011010)},
-  "move",     {OP_REG,OP_RLR,      },  {K1,(0b10101010)},
-  "move",     {OP_REG,OP_RIR,      },  {K1,(0b10111010)},
+  "move",     {OP_REG,OP_RFR,      },  {K1,(0b11101010)},
+  "move",     {OP_REG,OP_RBR,      },  {K1,(0b11101010)},
+  "move",     {OP_REG,OP_RLR,      },  {K1,(0b11101010)},
+  "move",     {OP_REG,OP_RIR,      },  {K1,(0b11101010)},
 
-  "move",     {OP_RFR,OP_REG,      },  {K1,(0b11001010)},
-  "move",     {OP_RBR,OP_REG,      },  {K1,(0b11011010)},
-  "move",     {OP_RLR,OP_REG,      },  {K1,(0b11101010)},
+  "move",     {OP_RFR,OP_REG,      },  {K1,(0b11111010)},
+  "move",     {OP_RBR,OP_REG,      },  {K1,(0b11111010)},
+  "move",     {OP_RLR,OP_REG,      },  {K1,(0b11111010)},
   "move",     {OP_RIR,OP_REG,      },  {K1,(0b11111010)},
 
   "move",     {OP_REG,OP_REG,      },  {K1,(0b00110010)},

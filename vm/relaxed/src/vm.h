@@ -90,6 +90,7 @@ typedef struct ArProcessor_T
     uint64_t ireg[AR_PROCESSOR_IREG_COUNT];
     float vreg[AR_PROCESSOR_VREG_COUNT*4];
     double *dreg;
+    int32_t *vireg;
 
     uint64_t instruction;;
     uint64_t cycle;
@@ -255,7 +256,11 @@ enum {
     AK1_OPCODE_VFNEG,
     AK1_OPCODE_VFABS,
 
-    AK1_OPCODE_VFTOD = 0x0C,
+    AK1_OPCODE_VFTOH = 0x08,
+    AK1_OPCODE_VHTOF,
+    AK1_OPCODE_VFTOI,
+    AK1_OPCODE_VITOF,
+    AK1_OPCODE_VFTOD,
     AK1_OPCODE_VDTOF,
 
     AK1_OPCODE_DMOVE = 0x00,

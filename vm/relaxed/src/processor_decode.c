@@ -168,9 +168,16 @@ static int decodeALU(ArProcessor processor,ArExecute_T *output,uint32_t unit1,ui
     else if(unit1 == 2) //other
     {
         if(unit2 == 0)
+        {
             output->unit1 = AK1_EXE_NOP;
+        }
         else
-            output->unit2 = AK1_OPCODE_MOVE+0x10;
+        {
+            if(unit2&0xF)
+                output->unit2 = AK1_OPCODE_MOVESP;
+            else
+                output->unit2 = AK1_OPCODE_MOVE;
+        }
     }
     else //MOVEI
     {
@@ -278,12 +285,15 @@ static int decode(ArProcessor processor,uint32_t id)
     const uint32_t unit1 = readbits(opcode, 2, 2);
     const uint32_t unit2 = readbits(opcode, 4, 4);
     
-    //Read Register
+    
     processor->operations[id].size = readbits(opcode, 8, 2);
     processor->operations[id].id   = readbits(opcode, 10, 2);
     uint64_t regA = readbits(opcode, 26, 6);
     uint64_t regB = readbits(opcode, 20, 6);
     uint64_t regC = readbits(opcode, 14, 6);
+
+
+    //Read Register
     processor->operations[id].opA = regA;
     processor->operations[id].opB = processor->ireg[regB];
     processor->operations[id].opC = processor->ireg[regC];
@@ -330,7 +340,7 @@ static int decode(ArProcessor processor,uint32_t id)
         {
             return decodeALU(processor,output,unit1,unit2,imm);
         }
-        else if(id ==3) //...
+        else if(id ==3) //SWT +...
         {
             
         }
@@ -345,6 +355,7 @@ static int decode(ArProcessor processor,uint32_t id)
     }
     else //VFPU
     {
+        //Read Register
         for(int i = 0;i < 4;i++)
         {
             processor->operations[id].fopB[i] = processor->vreg[(regB*4)+i];

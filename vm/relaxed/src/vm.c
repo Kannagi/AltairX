@@ -73,6 +73,7 @@ ArResult arCreateProcessor(ArVirtualMachine virtualMachine, const ArProcessorCre
     ArProcessor processor = output;
     processor->delay = 0;
     processor->dreg = (double*)processor->vreg;
+    processor->vireg = (int32_t*)processor->vreg;
 
     processor->ram = virtualMachine->ram->memory;
     processor->rom = virtualMachine->rom->memory;
