@@ -63,6 +63,8 @@ ALTAIR Executable Header : https://docs.google.com/spreadsheets/d/1g7mEhaBIVBJ75
 
 Aldebaran G1 ISA : https://docs.google.com/spreadsheets/d/1LiSZbdd6wCpa-sZZ9uLg5eAyGxdpMl363waUP927xS4/edit?usp=sharing  
 
+GPU todo list : https://docs.google.com/spreadsheets/d/1eRX1vLHEJdrAsx2u1OiycSSz82G3cboVMcu8gBYkgGA/edit?usp=sharing  
+
 
 ## Pipeline
 <img src="Pipeline4.png?raw=true" alt="Pipeline">
