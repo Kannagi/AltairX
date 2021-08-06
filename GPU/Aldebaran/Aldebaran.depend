@@ -1,0 +1,30 @@
+# depslib dependency file v1.0
+1628076829 source:/home/kannagi/Documents/Kutaragi CPU/VMGPU/Aldebaran/main.c
+	<stdio.h>
+	<stdlib.h>
+
+1628265783 source:/home/kannagi/Documents/Kutaragi CPU/VMGPU/Aldebaran/processor_decode.c
+	<assert.h>
+	<string.h>
+	<math.h>
+	<stdio.h>
+	<stdint.h>
+	"vm.h"
+
+1628266097 /home/kannagi/Documents/Kutaragi CPU/VMGPU/Aldebaran/vm.h
+
+1628200102 source:/home/kannagi/Documents/Kutaragi CPU/VMGPU/Aldebaran/processor_execution.c
+	<assert.h>
+	<string.h>
+	<math.h>
+	<stdio.h>
+	<stdint.h>
+	"vm.h"
+
+1628265783 source:/home/kannagi/Documents/Kutaragi CPU/VMGPU/Aldebaran/vm.c
+	<stdlib.h>
+	<assert.h>
+	<string.h>
+	<stdint.h>
+	"vm.h"
+
