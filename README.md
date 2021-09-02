@@ -8,7 +8,7 @@ It has 3 internal memory:
 32 KiB  L1 data cache (Set-associative 2/4 ways).  
   
 1 MiB L2 cache (Set-associative 4/8 ways).  
-1 MiB L2 cache Scratchpad memory.  
+1 MiB L2 Scratchpad memory.  
 
 The processor has no branch prediction, it will be based on the delay slot (1 cycle for Fetch) and 1 decode cycle + Jump (Delay)
 
