@@ -22,7 +22,9 @@ For this, the compiler will have to do two things:
 - preload the data in advance with a DMA
 
 This is a technique used on consoles like the Playstation 2 and 3, we have to make a double buffer, and therefore execute and read our data in buffer 1, while we preload our data in buffer 2.  
-Then we execute the buffer 2 and we preload the buffer 1 and so on.
+Then we execute the buffer 2 and we preload the buffer 1 and so on.  
+
+<img src="Single-and-Double-Buffering.png?raw=true" alt="arch">  
 
 To resolve pipeline conflicts, it has an accumulator internal to the ALU and to the VFPU which is register 61.  
 To avoid multiple writes to registers due to unsynchronized pipeline, there are two special registers P and Q (Product and Quotient) which are registers 62 and 63, to handle mul / div / sqrt etc etc.  
