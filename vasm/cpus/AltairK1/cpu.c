@@ -306,7 +306,7 @@ int parse_operand(char *p,int len,operand *op,int requires)
 
    
     //Immediate
-    if( (requires >= OP_IMM) && (requires <= OP_IMH) )
+    if( (requires >= OP_IMM) && (requires <= OP_IML) )
     {
         //op->val = atoi(p);
         //op->fval = atof(p);
@@ -377,6 +377,9 @@ dblock *eval_instruction(instruction *p,section *sec,taddr pc)
 
     int k1ext = 0x00;
 
+    if( (opcode&0x0F) == 0b0010 )
+        k1ext = 0x02;
+
     if(p->qualifiers[0] != 0)
     {
         char *ext = p->qualifiers[0];
@@ -396,6 +399,11 @@ dblock *eval_instruction(instruction *p,section *sec,taddr pc)
         if( (n == 3) && (ext[2] == 'z') ) k1ext = 2;
         if( (n == 4) && (ext[3] == 'w') ) k1ext = 3;
 
+        if(ext[0] == 'p') opcode |= 1;
+        if( (n == 2) && (ext[1] == 'p') ) opcode |= 1;
+        if( (n == 3) && (ext[2] == 'p') ) opcode |= 1;
+        if( (n == 4) && (ext[3] == 'p') ) opcode |= 1;
+        if( (n == 5) && (ext[4] == 'p') ) opcode |= 1;
     } 
     
     if(p->op[0] != NULL)
@@ -462,6 +470,12 @@ dblock *eval_instruction(instruction *p,section *sec,taddr pc)
         opcode |= (operand1.reg2<<14);
     }
 
+
+    if( (operand1.type >= OP_RLR) && (operand1.type <= OP_RIR ) && (operand2.type == OP_REG) )
+    {
+        opcode |= (operand1.type&0x3)<<26;
+    }
+
     //------------- OPERAND 2 -------------
     if( (operand2.type == OP_REG) || (operand2.type == OP_VRG) )
     {
@@ -475,16 +489,12 @@ dblock *eval_instruction(instruction *p,section *sec,taddr pc)
         opcode |= (operand2.val<<10);
     }
 
-    if(operand2.type == OP_IMH)
+    if(operand2.type == OP_IML)
     {
         eval_expr(operand2.value,&val,sec,pc);
-        operand2.val = val&0xFFFF;
-        opcode |= (operand2.val<<10);
-
-        operand2.val = (val&0xF0000)>>16;
-        opcode |= (operand2.val<<4);
+        operand2.val = val&0x3FFFF;
+        opcode |= (operand2.val<<8);
     }
-
 
     if(operand2.type == OP_RRG)
     {
@@ -521,6 +531,12 @@ dblock *eval_instruction(instruction *p,section *sec,taddr pc)
     }
 
 
+    if( (operand2.type >= OP_RLR) && (operand2.type <= OP_RIR ) )
+    {
+        opcode |= (operand2.type&0x3)<<20;
+    }
+
+
     //------------- OPERAND 3 -------------
     if( (operand3.type == OP_REG) || (operand3.type == OP_VRG) )
     {
@@ -534,31 +550,13 @@ dblock *eval_instruction(instruction *p,section *sec,taddr pc)
         opcode |= (operand3.val<<10);
     }
 
-    //----------------------
-    /*
-    if( (operand1.val == -1) && (operand1.type == OP_VRG) )
+    if(operand3.type == OP_IMS)
     {
-         opcode |= (operand1.val<<8);
+        eval_expr(operand3.value,&val,sec,pc);
+        operand3.val = val&0x1FF;
+        opcode |= (operand3.val<<11);
     }
 
-    if( (operand2.val == -1)  && (operand2.type == OP_VRG) )
-    {
-        
-        if( (operand3.type == OP_VOID) )
-        {
-            opcode |= (operand2.val<<8);
-        }
-        else
-        {
-            opcode |= (operand2.val<<10);
-        }
-    }
-
-    if( (operand3.val == -1) && (operand3.type == OP_VRG) )
-    {
-         opcode |= (operand1.val<<10);
-    }
-*/
     //-------------
     //printf("%x\n",opcode);
     //printbin(opcode);

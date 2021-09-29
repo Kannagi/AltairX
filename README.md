@@ -6,15 +6,16 @@ It has 3 internal memory:
 128 KiB L1 data Scratchpad memory.  
 128 KiB L1 instruction Scratchpad memory.  
 32 KiB  L1 data cache (Set-associative 2/4 ways).  
-  
+16 KiB  L1 data instruction (Set-associative 2 ways).  
+
 1 MiB L2 cache (Set-associative 4/8 ways).  
 1 MiB L2 Scratchpad memory.  
 
 The processor has no branch prediction, it will be based on the delay slot (1 cycle for Fetch) and 1 decode cycle + Jump (Delay)
 
-He can also change the number of instructions with an swt instruction.  
-Which allows you to switch to 2 or 4 instructions / cycle mode.  
-all this to avoid too many "nop" and therefore not waste unnecessary space in the SRAM.
+The number of instructions is done via a "Pairing" bit, when it is equal to 1, there is another instruction to be executed in parallel, 0 indicates the end of the bundle.  
+
+<img src="Decode.png?raw=true" alt="arch">   
 
 The goal of this processor is to reach the minimum of latency, and to solve the problem of latency of the RAM.  
 For this, the compiler will have to do two things:  

@@ -44,10 +44,12 @@ typedef struct {
 #define OP_VRG             0x02
 #define OP_VPI             0x03
 
-#define OP_RFR             0x04
-#define OP_RBR             0x05
-#define OP_RLR             0x06
-#define OP_RIR             0x07
+
+
+#define OP_RLR             0x20
+#define OP_RBR             0x21
+#define OP_RFR             0x22
+#define OP_RIR             0x23
 
 #define OP_RGP             0x08
 #define OP_RGQ             0x09
@@ -55,10 +57,11 @@ typedef struct {
 #define OP_RFF             0x0A
 
 #define OP_IMM             0x10
-#define OP_IMB             0x11
-#define OP_IMH             0x12
-#define OP_IMF             0x13
-#define OP_IMD             0x14
+#define OP_IMS             0x11 //9 bits
+#define OP_IMB             0x12 //16 bits branch
+#define OP_IML             0x13 //20 bits
+#define OP_IMF             0x14 //Float/half
+
 
 #define OP_IMR             0x15
 #define OP_RRG             0x16

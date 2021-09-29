@@ -1,9 +1,14 @@
 Memory MAP
 
-0x0 0000 0000 - 0x0 FFFF FFFF ------- ROM
+0x0 0000 0000 - 0x0 3FFF FFFF ------- ROM
+0x0 4000 0000 - 0x0 7FFF FFFF ------- SPM Thread
+0x0 8000 0000 - 0x0 BFFF FFFF ------- SPM L2
+0x0 C000 0000 - 0x0 FFFF FFFF ------- I/O
+
 0x1 0000 0000 - 0x1 FFFF FFFF ------- 1T-SRAM Graphic/Program
-0x2 0000 0000 - 0xF FFFF FFFF ------- SPM L2
-0x3 0000 0000 - 0x0 FFFF FFFF ------- I/O(DMA)
+
+0x2 0000 0000 - 0x2 FFFF FFFF ------- SPM RAM
+0x3 0000 0000 - 0x3 FFFF FFFF ------- RO Data/Program
 
 0x4 0000 0000 - 0x7 FFFF FFFF ------- (VRAM) (16 GB max )
 
