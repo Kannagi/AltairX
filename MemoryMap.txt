@@ -57,9 +57,9 @@ CMD : 01 RAM -> SPM-I
 CMD : 02 RAM -> SPM-D
 CMD : 04 RAM <- SPM-I
 CMD : 05 RAM <- SPM-D
-CMD : 06 flush cache
-CMD : 07 Start
-CMD : 08 Stop
+CMD : 06 flush cache-i
+CMD : 07 flush cache-d
+CMD : 08 Start
 
 0000 0100 - 0000 01FF WRITE control
 0000 0200 - 0000 0300 READ (0 nop,1 start,2 stop ,4 stop MMU )
@@ -155,7 +155,22 @@ I/O Motherboard
 00F0 0000 info 
 
 
+//---32 bit version:
+Memory MAP
 
+0x0000 0000 - 0x0 3FFF FFFF ------- ROM
+0x0400 0000 - 0x0 7FFF FFFF ------- SPM Thread
+0x0800 0000 - 0x0 BFFF FFFF ------- SPM L2
+0x0C00 0000 - 0x0 FFFF FFFF ------- I/O
+
+0x1000 0000 - 0x1FFF FFFF ------- 1T-SRAM Graphic/Program
+
+0x2000 0000 - 0x2FFF FFFF ------- SPM RAM
+0x3000 0000 - 0x3FFF FFFF ------- RO Data/Program
+
+0x4000 0000 - 0x7FFF FFFF ------- (VRAM) (1 GB max )
+
+0x8000 0000 - 0xFFFF FFFF ------- RAM (2 GB max )
 ///----
 R0 register buffer
 R1 pointer
