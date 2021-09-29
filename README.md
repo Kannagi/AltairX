@@ -40,10 +40,10 @@ For floating point numbers in Altair , it will not be 100% compatible with the s
 -Exceptions are not handled   
 
 For the calculation unit it has:  
-2ALU+2ALU(32 bits) 2LSU 1VFPU/FDIV 1DIV/MUL BRU/CMP  
+2ALU+2ALU(32 bits) 2+2LSU 1VFPU/FDIV 1DIV/MUL BRU/CMP  
 
 
-The advantage of this processor is that it has a simple design, and requires little transistor for "high performance" and therefore consume / cost less than RISC Out Of Order processors.
+The advantage of this processor is that it has a simple design, and requires little transistor for "high performance" and therefore consume / cost less than CISC/RISC Out Of Order processors.
 
 ### Todo list
 - Finish the assembler program
