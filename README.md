@@ -42,6 +42,11 @@ For floating point numbers in Altair , it will not be 100% compatible with the s
 For the calculation unit it has:  
 2ALU+2ALU(32 bits) 2+2LSU 1VFPU/FDIV 1DIV/MUL BRU/CMP  
 
+For the 32-bits version:  
+-there will only be 2 ALUs  
+-no Double  
+-no EFU   
+
 
 The advantage of this processor is that it has a simple design, and requires little transistor for "high performance" and therefore consume / cost less than CISC/RISC Out Of Order processors.
 
@@ -64,7 +69,7 @@ ALTAIR K1 Pipeline : https://docs.google.com/spreadsheets/d/1u-XBjAyq8LOzAFcWMXs
 
 ALTAIR K1 Memory Map : https://docs.google.com/spreadsheets/d/1UQ15KpRRWncc_Ouzhas0W1uWuSIfjAODw8KD-2-AoDA/edit?usp=sharing  
 
-ALTAIR IR ISA : https://docs.google.com/spreadsheets/d/1AmdMslRcXIX9pKGBSRJJcx2IvRyzBLjA61SzxmlEYf8/edit?usp=sharing  
+ALTAIR IR ISA : https://docs.google.com/spreadsheets/d/19nOBbH_4KWaXxDSNA4JuZjaBble0VRrBxcVlEjTZ3iI/edit?usp=sharing
 
 ALTAIR Executable Header : https://docs.google.com/spreadsheets/d/1g7mEhaBIVBJ75-5gJ_TrYiVJVTZHEJQnqN0XXUBX57g/edit?usp=sharing
 
