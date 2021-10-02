@@ -61,24 +61,24 @@ begin
 		elsif i_unit="00100" then 
 			regw := regr AND i_register_r2;
 			
-		elsif i_unit="00101" then 
+		elsif i_unit="00101" then --LSL
 			--regw := reg1 << i_register_r2;
 			
-		elsif i_unit="00110" then 
+		elsif i_unit="00110" then --ASR
 			--regw := reg1 >> i_register_r2;
 			
-		elsif i_unit="00111" then 
+		elsif i_unit="00111" then --LSR
 			--regw := reg1 >> i_register_r2;
 			
 			
 		elsif i_unit="10001" then --SEXT
 		
-			if i_size=x"00" then 
+			if i_size="00" then 
 				if regr(7)='1' then
 					regw(31 downto 8) := x"111111";
 				end if; 
 	
-			elsif  i_size=x"01" then 
+			elsif  i_size="01" then 
 				if regr(15)='1' then
 					regw(31 downto 16) := x"1111";
 				end if; 
@@ -96,13 +96,26 @@ begin
 			
 			
 		elsif i_unit="10100" then --SLTS
-			--regw := reg1 < i_register_r2;
+		
 			
 		elsif i_unit="10101" then --SLTU
-			--regw := reg1 < i_register_r2;
+			if regr < i_register_r2 then
+				regw := x"00000000";
+			else
+				regw := x"00000001";
+			end if; 
 			
 		elsif i_unit="10110" then --SMOVE
-			--regw := reg1 < i_register_r2;
+			
+			if i_size=x"00" then 
+				regw(15 downto 0) := regr(15 downto 0);
+	
+			elsif  i_size=x"01" then 
+				regw(31 downto 16) := regr(15 downto 0);
+			
+			else
+				
+			end if; 
 			
 		elsif i_unit="10111" then --MOVE
 			regw := regr;
