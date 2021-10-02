@@ -6,10 +6,10 @@ entity div_loop is
 	port(
 		
 		
-		tdiv	: inout std_logic_vector(63 downto 0);
-		tmp	: inout std_logic_vector(31 downto 0);
+		tdiv	:	inout std_logic_vector(63 downto 0);
+		tmp	:	inout std_logic_vector(31 downto 0);
 		
-		div1	: inout std_logic_vector(31 downto 0);
+		div1	:	inout std_logic_vector(31 downto 0);
 		result	: inout std_logic_vector(31 downto 0);
 		
 		
@@ -25,7 +25,7 @@ begin
 	
 	
 	if div1 >= tdiv then 
-		--div1 <= div1 + tdiv;
+		--div1 <= div1 - tdiv;
 		--result <= result + tmp;
 	end if; 
 	

@@ -8,8 +8,8 @@ entity mul_loop is
 		bits		: inout  std_logic_vector(31 downto 0);
 		mul2	: inout std_logic_vector(31 downto 0);
 		
-		mul	: inout std_logic_vector(31 downto 0);
-		mult	: inout std_logic_vector(31 downto 0);
+		mul	:	inout std_logic_vector(31 downto 0);
+		mult	:	inout std_logic_vector(31 downto 0);
 		
 		I1	:  in  std_logic
 		);

@@ -12,16 +12,18 @@ entity fetch is
 		o_opcode2		: out  std_logic_vector(31 downto 0);
 		o_opcode3		: out  std_logic_vector(31 downto 0);
 		o_opcode4		: out  std_logic_vector(31 downto 0);
-		
-		o_s_fetch	: out std_logic;
-		
+				
+				
+		---var
 		io_opcode1		: inout  std_logic_vector(31 downto 0);
 		io_opcode2		: inout  std_logic_vector(31 downto 0);
 		io_opcode3		: inout  std_logic_vector(31 downto 0);
 		io_opcode4		: inout  std_logic_vector(31 downto 0);
 		
-		var_PC			: inout  std_logic_vector(15 downto 0);
+		io_PC			: inout  std_logic_vector(15 downto 0);
 		io_pairing			: inout  std_logic_vector(3 downto 0);
+		
+		---
 
 		o_PC				: out  std_logic_vector(15 downto 0)
 		);
@@ -48,27 +50,27 @@ begin
 		io_pairing(3) <= io_opcode4(0);
 		
 		if io_pairing(0)='0' then 
-			var_PC <= x"0001";
+			io_PC <= x"0001";
 			io_opcode2 <= x"00000000";
 			io_opcode3 <= x"00000000";
 			io_opcode4 <= x"00000000";
 			
 		elsif  io_pairing(1 downto 0)="01" then 
-			var_PC <= x"0002";
+			io_PC <= x"0002";
 			io_opcode3 <= x"00000000";
 			io_opcode4 <= x"00000000";
 			
 		elsif   io_pairing(2 downto 0)="011" then 
-			var_PC <= x"0003";
+			io_PC <= x"0003";
 			io_opcode4 <= x"00000000";
 		
 		elsif   io_pairing(3 downto 0)="0111" then 
-			var_PC <= x"0004";
+			io_PC <= x"0004";
 		else --error
 			
 		end if; 
 		
-		o_PC <= var_PC;
+		o_PC <= io_PC;
 		
 	end process;
 
