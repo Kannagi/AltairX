@@ -15,7 +15,7 @@ The processor has no branch prediction, it will be based on the delay slot (1 cy
 
 The number of instructions is done via a "Pairing" bit, when it is equal to 1, there is another instruction to be executed in parallel, 0 indicates the end of the bundle.  
 
-<img src="Decode.png?raw=true" alt="arch">   
+<img src="Altair_instruction.png?raw=true" alt="arch">   
 
 The goal of this processor is to reach the minimum of latency, and to solve the problem of latency of the RAM.  
 For this, the compiler will have to do two things:  
