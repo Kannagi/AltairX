@@ -79,10 +79,13 @@ GPU todo list : https://docs.google.com/spreadsheets/d/1eRX1vLHEJdrAsx2u1OiycSSz
 
 
 ## Pipeline
-<img src="Pipeline4.png?raw=true" alt="Pipeline">
+<img src="AltairE0_diagram.png?raw=true" alt="Pipeline">
 
 ## Architecture intern 
-<img src="arch_hard.png?raw=true" alt="arch">
+<img src="Altair_arch_Intern.png?raw=true" alt="arch">
+
+## Architecture Bus 
+<img src="Altair_Bus2.png?raw=true" alt="arch">
 
 ## APU Die (700-900 MT) 40-50 mm² , 28 nm FD-SOI
 <img src="APU.png?raw=true" alt="APU">
