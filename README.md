@@ -5,8 +5,6 @@ The main processor of the Altair K1 is a VLIW In Order CPU.
 It has 3 internal memory:  
 128 KiB L1 data Scratchpad memory.  
 128 KiB L1 instruction Scratchpad memory.  
-32 KiB  L1 data cache (Set-associative 2/4 ways).  
-16 KiB  L1 data instruction (Set-associative 2 ways).  
 
 1 MiB L2 cache (Set-associative 4/8 ways).  
 1 MiB L2 Scratchpad memory.  
@@ -40,13 +38,7 @@ For floating point numbers in Altair , it will not be 100% compatible with the s
 -Exceptions are not handled   
 
 For the calculation unit it has:  
-2ALU+2ALU(32 bits) 2+2LSU 1VFPU/FDIV 1DIV/MUL BRU/CMP  
-
-For the 32-bits version:  
--there will only be 2 ALUs  
--no Double  
--no EFU   
-
+2ALU+4LSU 1VFPU/FDIV 1DIV/MUL BRU/CMP  
 
 The advantage of this processor is that it has a simple design, and requires little transistor for "high performance" and therefore consume / cost less than CISC/RISC Out Of Order processors.
 
