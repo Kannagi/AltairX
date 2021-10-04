@@ -5,6 +5,7 @@ The main processor of the Altair K1 is a VLIW In Order CPU.
 It has 3 internal memory:  
 128 KiB L1 data Scratchpad memory.  
 128 KiB L1 instruction Scratchpad memory.  
+32 KiB L1 data Cache 4-way.  
 
 1 MiB L2 cache (Set-associative 4/8 ways).  
 1 MiB L2 Scratchpad memory.  
