@@ -1,9 +1,0 @@
-
-
-//IMM
-imm 10 bits (signed/unsigned)
-imm 16 bits (signed/unsigned)
-imm 20 bits (signed)
-imm 16 bits half(float/double)
-
-
