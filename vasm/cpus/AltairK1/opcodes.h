@@ -46,6 +46,11 @@
   "ldcvl",    {OP_VRG,OP_IMM,      },  {K1,(0b10100110)},
   "stcvl",    {OP_VRG,OP_IMM,      },  {K1,(0b10110110)},
 
+  "ldcl2",    {OP_REG,OP_IMM,      },  {K1,(0b11000110)},
+  "stcl2",    {OP_REG,OP_IMM,      },  {K1,(0b11010110)},
+  "ldcvl2",   {OP_VRG,OP_IMM,      },  {K1,(0b11100110)},
+  "stcvl2",   {OP_VRG,OP_IMM,      },  {K1,(0b11110110)},
+
 
   "prefetch", {OP_IMR,             },  {K1,(0b11000110)},
   "clearc",   {OP_IMR,             },  {K1,(0b11010110)},
@@ -60,12 +65,12 @@
 
   "slts",     {OP_REG,OP_REG,OP_REG},  {K1,(0b01000000)},
   "sltu",     {OP_REG,OP_REG,OP_REG},  {K1,(0b01010000)},
-  "sltsi",    {OP_REG,OP_REG,OP_IMM},  {K1,(0b01100000)},
-  "sltui",    {OP_REG,OP_REG,OP_IMM},  {K1,(0b01110000)},
+  "smove",    {OP_REG,OP_IMM,      },  {K1,(0b01100000)},
+  "movei",    {OP_REG,OP_IML,      },  {K1,(0b01110000)},
 
-  "smove",    {OP_REG,OP_IMM,      },  {K1,(0b10000000)},
-  "smoveu",   {OP_REG,OP_IMM,      },  {K1,(0b10010000)},
-  "movei",    {OP_REG,OP_IML,      },  {K1,(0b10100000)},
+  "sltsi",    {OP_REG,OP_REG,OP_IMM},  {K1,(0b10000000)},
+  "sltui",    {OP_REG,OP_REG,OP_IMM},  {K1,(0b10010000)},
+  //"___",    {OP_REG,OP_IMM,      },  {K1,(0b10100000)},
   "moveiu",   {OP_REG,OP_IML,      },  {K1,(0b10110000)},
 
   "moveins",  {OP_REG,             },  {K1,(0b11000000)},
@@ -74,12 +79,12 @@
   "move",     {OP_REG,OP_RFR,      },  {K1,(0b11100000)},
   "move",     {OP_REG,OP_RBR,      },  {K1,(0b11100000)},
   "move",     {OP_REG,OP_RLR,      },  {K1,(0b11100000)},
-  "move",     {OP_REG,OP_RIR,      },  {K1,(0b11100000)},
+  "move",     {OP_REG,OP_RPC,      },  {K1,(0b11100000)},
 
   "move",     {OP_RFR,OP_REG,      },  {K1,(0b11110000)},
   "move",     {OP_RBR,OP_REG,      },  {K1,(0b11110000)},
   "move",     {OP_RLR,OP_REG,      },  {K1,(0b11110000)},
-  "move",     {OP_RIR,OP_REG,      },  {K1,(0b11110000)},
+  "move",     {OP_RPC,OP_REG,      },  {K1,(0b11110000)},
 
   //ALU-B Unit 1 (001)
   "move",     {OP_REG,OP_REG,      },  {K1,(0b10000110010)},
@@ -130,34 +135,35 @@
   "bgs",      {OP_IMB,             },  {K1,(0b10001010)},
   "bges",     {OP_IMB,             },  {K1,(0b10011010)},
 
-  "bra",      {OP_IMB,             },  {K1,(0b10100100)},
+  "bra",      {OP_IMB,             },  {K1,(0b10101010)},
 
   "jmp",      {OP_IMM,             },  {K1,(0b10111010)},
   "jmpbr",    {OP_IMM,             },  {K1,(0b11001010)},
   "call",     {OP_IMM,             },  {K1,(0b11011010)},
   "callbr",   {OP_IMM,             },  {K1,(0b11101010)},
+  "loop",     {OP_IMB,             },  {K1,(0b11111010)},
 
 
-  //CMP Unit 4 (010)
-  "cmp",      {OP_REG,OP_REG,      },  {K1,(0b00000100)},
-  "cmp",      {OP_RFR,OP_IMM,      },  {K1,(0b00010100)},
-  "cmpi",     {OP_REG,OP_IML,      },  {K1,(0b00100100)},
-  "cmpiu",    {OP_REG,OP_IML,      },  {K1,(0b00110100)},
+  //CMP Unit 4 (100)
+  "cmp",      {OP_REG,OP_REG,      },  {K1,(0b00001000)},
+  "cmp",      {OP_RFR,OP_IMM,      },  {K1,(0b00011000)},
+  "cmpi",     {OP_REG,OP_IML,      },  {K1,(0b00101000)},
+  "cmpiu",    {OP_REG,OP_IML,      },  {K1,(0b00111000)},
 
-  "fcmp",     {OP_VRG,OP_VRG,      },  {K1,(0b01000100)},
-  "dcmp",     {OP_VRG,OP_VRG,      },  {K1,(0b01010100)},
-  "fcmpi",    {OP_VRG,OP_IMF,      },  {K1,(0b01100100)},
-  "dcmpi",    {OP_VRG,OP_IMF,      },  {K1,(0b01110100)},
+  "fcmp",     {OP_VRG,OP_VRG,      },  {K1,(0b01001000)},
+  "dcmp",     {OP_VRG,OP_VRG,      },  {K1,(0b01011000)},
+  "fcmpi",    {OP_VRG,OP_IMF,      },  {K1,(0b01101000)},
+  "dcmpi",    {OP_VRG,OP_IMF,      },  {K1,(0b01111000)},
 
-  "endp",     {                    },  {K1,(0b10000100)},
-  "syscall",  {OP_IMM,             },  {K1,(0b10010100)},
-  "int",      {OP_IMM,             },  {K1,(0b10100100)},
-  //"__",     {OP_IMM,             },  {K1,(0b10110100)},
+  "endp",     {                    },  {K1,(0b10001000)},
+  "syscall",  {                    },  {K1,(0b10011000)},
+  "int",      {                    },  {K1,(0b10101000)},
+  //"__",     {OP_IMM,             },  {K1,(0b10111000)},
 
-  "ret",      {                    },  {K1,(0b11000100)},
-  "reti",     {                    },  {K1,(0b11010100)},
-  "retc",     {                    },  {K1,(0b11100100)},
-  //"__",     {                    },  {K1,(0b11110100)},
+  "ret",      {                    },  {K1,(0b11001000)},
+  "reti",     {                    },  {K1,(0b11011000)},
+  //"___",    {                    },  {K1,(0b11101000)},
+  //"__",     {                    },  {K1,(0b11111000)},
 
   //VFPU-A Unit 6 (110)
   "fadd",     {OP_VRG,OP_VRG,OP_VRG},  {K1,(0b00001100)},

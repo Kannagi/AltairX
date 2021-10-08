@@ -49,7 +49,7 @@ typedef struct {
 #define OP_RLR             0x20
 #define OP_RBR             0x21
 #define OP_RFR             0x22
-#define OP_RIR             0x23
+#define OP_RPC             0x23
 
 #define OP_RGP             0x08
 #define OP_RGQ             0x09
@@ -59,7 +59,7 @@ typedef struct {
 #define OP_IMM             0x10
 #define OP_IMS             0x11 //9 bits
 #define OP_IMB             0x12 //16 bits branch
-#define OP_IML             0x13 //20 bits
+#define OP_IML             0x13 //18 bits
 #define OP_IMF             0x14 //Float/half
 
 
