@@ -1,0 +1,114 @@
+# depslib dependency file v1.0
+1634887362 source:/home/kannagi/Documents/Kutaragi CPU/VM/altairk1/main.c
+	<stdio.h>
+	<stdlib.h>
+	<time.h>
+	<string.h>
+	<stdint.h>
+	"src/vm.h"
+
+1633796952 /home/kannagi/Documents/Kutaragi CPU/VM/altairk1/src/vm.h
+
+1633792816 source:/home/kannagi/Documents/Kutaragi CPU/VM/altairk1/src/decode.c
+	<stdio.h>
+	<stdlib.h>
+	<assert.h>
+	<string.h>
+	<math.h>
+	<stdint.h>
+	"vm.h"
+
+1633795693 source:/home/kannagi/Documents/Kutaragi CPU/VM/altairk1/src/execute.c
+	<stdio.h>
+	<stdlib.h>
+	<assert.h>
+	<string.h>
+	<math.h>
+	<stdint.h>
+	"vm.h"
+
+1634890960 source:/home/kannagi/Documents/Kutaragi CPU/VM/altairk1/src/vm.c
+	<stdio.h>
+	<stdlib.h>
+	<time.h>
+	<string.h>
+	<stdint.h>
+	"vm.h"
+
+1633796963 source:/home/kannagi/Documents/Kutaragi CPU/VM/altairk1/src/syscall.c
+	<stdio.h>
+	<stdlib.h>
+	<time.h>
+	<string.h>
+	<stdint.h>
+	"vm.h"
+
+1634890861 source:/home/kannagi/Documents/Kutaragi CPU/VM/altairk1/src/debug.c
+	<stdio.h>
+	<stdlib.h>
+	<assert.h>
+	<string.h>
+	<math.h>
+	<stdint.h>
+	"vm.h"
+
+1633817820 source:/home/kannagi/Documents/Kutaragi CPU/VM/altairk1/src/OS/xstar_loop.c
+	<stdio.h>
+	<stdlib.h>
+	<time.h>
+	<string.h>
+	<stdint.h>
+
+1634891002 source:/home/kannagi/Documents/Kutaragi CPU/VM/altairx/main.c
+	<stdio.h>
+	<stdlib.h>
+	<time.h>
+	<string.h>
+	<stdint.h>
+	"src/vm.h"
+
+1633796952 /home/kannagi/Documents/Kutaragi CPU/VM/altairx/src/vm.h
+
+1634890861 source:/home/kannagi/Documents/Kutaragi CPU/VM/altairx/src/debug.c
+	<stdio.h>
+	<stdlib.h>
+	<assert.h>
+	<string.h>
+	<math.h>
+	<stdint.h>
+	"vm.h"
+
+1633792816 source:/home/kannagi/Documents/Kutaragi CPU/VM/altairx/src/decode.c
+	<stdio.h>
+	<stdlib.h>
+	<assert.h>
+	<string.h>
+	<math.h>
+	<stdint.h>
+	"vm.h"
+
+1634892769 source:/home/kannagi/Documents/Kutaragi CPU/VM/altairx/src/execute.c
+	<stdio.h>
+	<stdlib.h>
+	<assert.h>
+	<string.h>
+	<math.h>
+	<stdint.h>
+	"vm.h"
+
+1634890960 source:/home/kannagi/Documents/Kutaragi CPU/VM/altairx/src/vm.c
+	<stdio.h>
+	<stdlib.h>
+	<time.h>
+	<string.h>
+	<stdint.h>
+	"vm.h"
+
+1634892908 source:/home/kannagi/Documents/Kutaragi CPU/VM/altairx/src/syscall.c
+	<stdio.h>
+	<stdlib.h>
+	<time.h>
+	<string.h>
+	<stdint.h>
+	"vm.h"
+

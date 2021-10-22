@@ -5,7 +5,7 @@ TARGETEXTENSION =
 
 CC = gcc -s
 CCOUT = -o 
-COPTS = -c -O3 
+COPTS = -c -O2 
 
 LD = $(CC)
 LDOUT = $(CCOUT)

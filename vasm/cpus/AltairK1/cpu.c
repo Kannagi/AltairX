@@ -271,19 +271,32 @@ int parse_operand(char *p,int len,operand *op,int requires)
         return 1;
     }
 
+    //Register IR
+    if(requires == OP_RIR )
+    {
+        if(len != 2) return 0;
+        if( !(p[0] == 'i' || p[0] == 'I') )
+            return 0;
+
+        if( !(p[1] == 'r' || p[1] == 'R') )
+            return 0; 
+        
+        return 1;
+    }
+/*
     //Register PC
     if(requires == OP_RPC )
     {
         if(len != 2) return 0;
-        if( !(p[0] == 'p' || p[0] == 'p') )
+        if( !(p[0] == 'p' || p[0] == 'P') )
             return 0;
 
         if( !(p[1] == 'c' || p[1] == 'C') )
-            return 0;
+            return 0; 
         
         return 1;
     }
-
+*/
     //Register Q
     if(requires == OP_RGQ )
     {
@@ -469,7 +482,7 @@ dblock *eval_instruction(instruction *p,section *sec,taddr pc)
     }
 
 
-    if( (operand1.type >= OP_RLR) && (operand1.type <= OP_RPC ) && (operand2.type == OP_REG) )
+    if( (operand1.type >= OP_RLR) && (operand1.type <= OP_RIR ) && (operand2.type == OP_REG) )
     {
         opcode |= (operand1.type&0x3)<<26;
     }
@@ -528,8 +541,7 @@ dblock *eval_instruction(instruction *p,section *sec,taddr pc)
         opcode |= ( (val & 0xFFFF)<<10);
     }
 
-
-    if( (operand2.type >= OP_RLR) && (operand2.type <= OP_RPC ) )
+    if( (operand2.type >= OP_RLR) && (operand2.type <= OP_RIR ) )
     {
         opcode |= (operand2.type&0x3)<<20;
     }

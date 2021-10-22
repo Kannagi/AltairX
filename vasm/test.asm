@@ -21,6 +21,10 @@
 	include "macro.asm"
 	org $0
 	
+	
+	move IR,r0
+	move r0,IR
+	
 	nop.p
 	fmovei v0,1.5
 

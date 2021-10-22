@@ -1,7 +1,7 @@
-# Altair
+# AltairX
 New computer and new CPU PoC
 
-The main processor of the Altair K1 is a VLIW In Order CPU.  
+The main processor of the AltairX K1 is a VLIW In Order CPU.  
 It has 3 internal memory:  
 128 KiB L1 data Scratchpad memory.  
 128 KiB L1 instruction Scratchpad memory.  
@@ -31,7 +31,7 @@ To avoid multiple writes to registers due to unsynchronized pipeline, there are 
 
 It also has the uncached accelerated to speed up reads only (cache miss lasts half the time).
 
-For floating point numbers in Altair , it will not be 100% compatible with the standard with IEEE 754  
+For floating point numbers in AltairX , it will not be 100% compatible with the standard with IEEE 754  
 -Non-normalized numbers are not handled (they are equal to zero).  
 -Infinite numbers cannot be handled (they are worth the max value).  
 -NaN values are not manage (they are worth the max value).  
@@ -46,25 +46,25 @@ The advantage of this processor is that it has a simple design, and requires lit
 ### Todo list
 - Finish the assembler program
 - Make documentation (pdf / html) (ISA and hardware)
-- Translate the IR code (Clang) for Altair
+- Translate the IR code (Clang) for AltairX
 - Make the virtual machine
 
 ## Target configuration
-Main core : Altair K1 2.5 GHz  
-Sub  core : Altair K1 2.5 GHz , 6 cores   
+Main core : AltairX K1 2.5 GHz  
+Sub  core : AltairX K1 2.5 GHz , 6 cores   
 LPDDR4 3200 MHz , 8GB in a unified memory  
 GPU Aldebaran G1 1 GHz , 4 CU , 512 GFlops  
 
 ## Link
-Altair K1 ISA : https://docs.google.com/spreadsheets/d/1AmdMslRcXIX9pKGBSRJJcx2IvRyzBLjA61SzxmlEYf8/edit?usp=sharing   
+AltairX K1 ISA : https://docs.google.com/spreadsheets/d/1AmdMslRcXIX9pKGBSRJJcx2IvRyzBLjA61SzxmlEYf8/edit?usp=sharing   
 
-ALTAIR K1 Pipeline : https://docs.google.com/spreadsheets/d/1u-XBjAyq8LOzAFcWMXsdAChMMzbmTIuZtzWQ7XDTRdk/edit?usp=sharing  
+AltairX K1 Pipeline : https://docs.google.com/spreadsheets/d/1u-XBjAyq8LOzAFcWMXsdAChMMzbmTIuZtzWQ7XDTRdk/edit?usp=sharing  
 
-ALTAIR K1 Memory Map : https://docs.google.com/spreadsheets/d/1UQ15KpRRWncc_Ouzhas0W1uWuSIfjAODw8KD-2-AoDA/edit?usp=sharing  
+AltairX K1 Memory Map : https://docs.google.com/spreadsheets/d/1UQ15KpRRWncc_Ouzhas0W1uWuSIfjAODw8KD-2-AoDA/edit?usp=sharing  
 
-ALTAIR IR ISA : https://docs.google.com/spreadsheets/d/19nOBbH_4KWaXxDSNA4JuZjaBble0VRrBxcVlEjTZ3iI/edit?usp=sharing
+AltairX IR ISA : https://docs.google.com/spreadsheets/d/19nOBbH_4KWaXxDSNA4JuZjaBble0VRrBxcVlEjTZ3iI/edit?usp=sharing
 
-ALTAIR Executable Header : https://docs.google.com/spreadsheets/d/1g7mEhaBIVBJ75-5gJ_TrYiVJVTZHEJQnqN0XXUBX57g/edit?usp=sharing
+AltairX Executable Header : https://docs.google.com/spreadsheets/d/1g7mEhaBIVBJ75-5gJ_TrYiVJVTZHEJQnqN0XXUBX57g/edit?usp=sharing
 
 Aldebaran G1 ISA : https://docs.google.com/spreadsheets/d/1LiSZbdd6wCpa-sZZ9uLg5eAyGxdpMl363waUP927xS4/edit?usp=sharing  
 

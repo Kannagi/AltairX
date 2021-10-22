@@ -4,13 +4,20 @@
   "stdma",    {OP_REG,OP_REG,OP_REG},  {K1,(0b00011000)},
   "lddmacl",  {OP_REG,OP_REG,      },  {K1,(0b00101000)},
   "stdmacl",  {OP_REG,OP_REG,      },  {K1,(0b00111000)},
-  "dmai",     {OP_REG,OP_REG,OP_REG},  {K1,(0b01001000)},
+
+  "dmaidi",   {OP_REG,OP_REG,OP_REG},  {K1,(0b01001000)},
+  "dmadii",   {OP_REG,OP_REG,OP_REG},  {K1,(0b01011000)},
+  "dmai",     {OP_REG,OP_REG,OP_REG},  {K1,(0b01101000)},
+  //"wait",     {                    },  {K1,(0b01111000)},
 
   "lddmai",   {OP_REG,OP_REG,OP_IMM},  {K1,(0b10001000)},
   "stdmai",   {OP_REG,OP_REG,OP_IMM},  {K1,(0b10011000)},
   "lddmacli", {OP_REG,OP_IMM,      },  {K1,(0b10101000)},
   "stdmacli", {OP_REG,OP_IMM,      },  {K1,(0b10111000)},
-  "dmaii",    {OP_REG,OP_REG,OP_IMM},  {K1,(0b11001000)},
+
+  "dmaidi",   {OP_REG,OP_REG,OP_REG},  {K1,(0b11001000)},
+  "dmadii",   {OP_REG,OP_REG,OP_REG},  {K1,(0b11011000)},
+  "dmai",     {OP_REG,OP_REG,OP_REG},  {K1,(0b11101000)},
 
   "wait",     {                    },  {K1,(0b11111000)},
 
@@ -29,6 +36,11 @@
   "stml",     {OP_REG,OP_IMM,      },  {K1,(0b10010100)},
   "ldmvl",    {OP_VRG,OP_IMM,      },  {K1,(0b10100100)},
   "stmvl",    {OP_VRG,OP_IMM,      },  {K1,(0b10110100)},
+
+  "ldml2",    {OP_REG,OP_IMM,      },  {K1,(0b11000100)},
+  "stml2",    {OP_REG,OP_IMM,      },  {K1,(0b11010100)},
+  "ldmvl2",   {OP_VRG,OP_IMM,      },  {K1,(0b11100100)},
+  "stmvl2",   {OP_VRG,OP_IMM,      },  {K1,(0b11110100)},
 
   //LSU Cache Unit 3 (011)
   "ldc",      {OP_REG,OP_RRG,      },  {K1,(0b00000110)},
@@ -53,19 +65,19 @@
 
 
   "prefetch", {OP_IMR,             },  {K1,(0b11000110)},
-  "clearc",   {OP_IMR,             },  {K1,(0b11010110)},
+  "flush",    {OP_IMR,             },  {K1,(0b11010110)},
   "prefetch", {OP_RRG,             },  {K1,(0b11100110)},
-  "clearc",   {OP_RRG,             },  {K1,(0b11110110)},
+  "flush",    {OP_RRG,             },  {K1,(0b11110110)},
 
   //ALU-A Unit 0 (000)
   "nop",      {                    },  {K1,(0b00000000)},
   "sext",     {OP_REG,OP_REG,      },  {K1,(0b00010000)},
   "bool",     {OP_REG,OP_REG,      },  {K1,(0b00100000)},
-  //"___",     {OP_REG,      ,      },  {K1,(0b00110000)},
+  "smove",    {OP_REG,OP_IMM,      },  {K1,(0b00110000)},
 
   "slts",     {OP_REG,OP_REG,OP_REG},  {K1,(0b01000000)},
   "sltu",     {OP_REG,OP_REG,OP_REG},  {K1,(0b01010000)},
-  "smove",    {OP_REG,OP_IMM,      },  {K1,(0b01100000)},
+  //"___",    {OP_REG,OP_IMM,      },  {K1,(0b01100000)},
   "movei",    {OP_REG,OP_IML,      },  {K1,(0b01110000)},
 
   "sltsi",    {OP_REG,OP_REG,OP_IMM},  {K1,(0b10000000)},
@@ -79,12 +91,12 @@
   "move",     {OP_REG,OP_RFR,      },  {K1,(0b11100000)},
   "move",     {OP_REG,OP_RBR,      },  {K1,(0b11100000)},
   "move",     {OP_REG,OP_RLR,      },  {K1,(0b11100000)},
-  "move",     {OP_REG,OP_RPC,      },  {K1,(0b11100000)},
+  "move",     {OP_REG,OP_RIR,      },  {K1,(0b11100000)},
 
   "move",     {OP_RFR,OP_REG,      },  {K1,(0b11110000)},
   "move",     {OP_RBR,OP_REG,      },  {K1,(0b11110000)},
   "move",     {OP_RLR,OP_REG,      },  {K1,(0b11110000)},
-  "move",     {OP_RPC,OP_REG,      },  {K1,(0b11110000)},
+  "move",     {OP_RIR,OP_REG,      },  {K1,(0b11110000)},
 
   //ALU-B Unit 1 (001)
   "move",     {OP_REG,OP_REG,      },  {K1,(0b10000110010)},
