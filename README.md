@@ -70,18 +70,27 @@ Aldebaran G1 ISA : https://docs.google.com/spreadsheets/d/1LiSZbdd6wCpa-sZZ9uLg5
 
 GPU todo list : https://docs.google.com/spreadsheets/d/1eRX1vLHEJdrAsx2u1OiycSSz82G3cboVMcu8gBYkgGA/edit?usp=sharing  
 
+### AltairX K1  
+
+## Pipeline
+<img src="AltairK1_diagram.png?raw=true" alt="Pipeline">
+
+## Architecture intern 
+<img src="Altair_arch_Intern.png?raw=true" alt="arch">
+
+## APU Die (700-900 MT) 40-50 mm² , 28 nm FD-SOI
+<img src="APU_AX-K1.png?raw=true" alt="APU">
+
+### AltairX E0  
 
 ## Pipeline
 <img src="AltairE0_diagram.png?raw=true" alt="Pipeline">
 
 ## Architecture intern 
-<img src="Altair_arch_Intern.png?raw=true" alt="arch">
+<img src="Altair_arch_Intern2.png?raw=true" alt="arch">
 
 ## Architecture Bus 
 <img src="Altair_Bus2.png?raw=true" alt="arch">
-
-## APU Die (700-900 MT) 40-50 mm² , 28 nm FD-SOI
-<img src="APU_AX-K1.png?raw=true" alt="APU">
 
 ## APU Die (300 MT) 20 mm² , 28 nm FD-SOI
 <img src="APU_AX-E0.png?raw=true" alt="APU">
