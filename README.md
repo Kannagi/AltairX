@@ -81,6 +81,7 @@ GPU todo list : https://docs.google.com/spreadsheets/d/1eRX1vLHEJdrAsx2u1OiycSSz
 <img src="Altair_Bus2.png?raw=true" alt="arch">
 
 ## APU Die (700-900 MT) 40-50 mm² , 28 nm FD-SOI
-<img src="APU.png?raw=true" alt="APU">
+<img src="APU_AX-K1.png?raw=true" alt="APU">
 
-
+## APU Die (300-400 MT) 20-25 mm² , 28 nm FD-SOI
+<img src="APU_AX-E0.png?raw=true" alt="APU">
