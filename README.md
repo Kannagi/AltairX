@@ -76,6 +76,9 @@ GPU todo list : https://docs.google.com/spreadsheets/d/1eRX1vLHEJdrAsx2u1OiycSSz
 ## Architecture intern 
 <img src="Altair_arch_Intern.png?raw=true" alt="arch">
 
+## Architecture Bus 
+<img src="diagram_busK1.png?raw=true" alt="arch">
+
 ## APU Die (700-900 MT) 40-50 mm² , 28 nm FD-SOI
 <img src="APU_AX-K1.png?raw=true" alt="APU">
 
