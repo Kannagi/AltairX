@@ -44,10 +44,8 @@ For the calculation unit it has:
 The advantage of this processor is that it has a simple design, and requires little transistor for "high performance" and therefore consume / cost less than CISC/RISC Out Of Order processors.
 
 ### Todo list
-- Finish the assembler program
-- Make documentation (pdf / html) (ISA and hardware)
 - Translate the IR code (Clang) for AltairX
-- Make the virtual machine
+- Terminate virtual machine (cycle emulation and device management) 
 
 ## Target configuration
 Main core : AltairX K1 2.5 GHz  
