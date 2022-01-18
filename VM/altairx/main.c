@@ -82,7 +82,7 @@ int main(int argc, char** argv)
     {
         printf("Enter a program\n");
         printf("option numbre core  : -ncore \n");
-        printf("option size memory : -wram -vram -spmram -vspmt -vspm2 -vspm3\n");
+        printf("option size memory : -wram -vram -spmram -spmt -spm2 -spm3\n");
         printf("option mode  : -mode\n");
         printf("mode 0 console,syscall emulate ,1 core only\n");
         printf("mode 1 same mode 0 and debug\n");

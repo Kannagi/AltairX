@@ -1,6 +1,24 @@
 
 	include "macro.asm"
 	org $0
+
+
+
+	do
+		moveiu r59,0x3FFFF
+		cmpi r3,0
+
+		if_ne 
+		nop
+		
+		    addi r3,r3,5
+
+		endi
+		ldcl r3,0
+		addi r4,r5,60
+	while _wh
+	addi r4,r5,5
+
 	movei r0,$00
 
 	

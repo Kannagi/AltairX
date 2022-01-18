@@ -112,3 +112,109 @@
 	<stdint.h>
 	"vm.h"
 
+1642257149 source:/home/Kannagi/Documents/AltairX/Git_AX/VM/altairx/src/debug.c
+	<stdio.h>
+	<stdlib.h>
+	<assert.h>
+	<string.h>
+	<math.h>
+	<stdint.h>
+	"vm.h"
+
+1642257149 /home/Kannagi/Documents/AltairX/Git_AX/VM/altairx/src/vm.h
+
+1642257149 source:/home/Kannagi/Documents/AltairX/Git_AX/VM/altairx/src/decode.c
+	<stdio.h>
+	<stdlib.h>
+	<assert.h>
+	<string.h>
+	<math.h>
+	<stdint.h>
+	"vm.h"
+
+1642257149 source:/home/Kannagi/Documents/AltairX/Git_AX/VM/altairx/src/execute.c
+	<stdio.h>
+	<stdlib.h>
+	<assert.h>
+	<string.h>
+	<math.h>
+	<stdint.h>
+	"vm.h"
+
+1642425117 source:/home/Kannagi/Documents/AltairX/Git_AX/VM/altairx/src/syscall.c
+	<stdio.h>
+	<stdlib.h>
+	<time.h>
+	<string.h>
+	<stdint.h>
+	"vm.h"
+
+1642257149 source:/home/Kannagi/Documents/AltairX/Git_AX/VM/altairx/src/vm.c
+	<stdio.h>
+	<stdlib.h>
+	<time.h>
+	<string.h>
+	<stdint.h>
+	"vm.h"
+
+1642425081 source:/home/Kannagi/Documents/AltairX/Git_AX/VM/altairx/main.c
+	<stdio.h>
+	<stdlib.h>
+	<time.h>
+	<string.h>
+	<stdint.h>
+	"src/vm.h"
+
+1642425081 source:/home/Kannagi/Documents/Projet/AltairX/Git_AX/VM/altairx/main.c
+	<stdio.h>
+	<stdlib.h>
+	<time.h>
+	<string.h>
+	<stdint.h>
+	"src/vm.h"
+
+1642257149 /home/Kannagi/Documents/Projet/AltairX/Git_AX/VM/altairx/src/vm.h
+
+1642257149 source:/home/Kannagi/Documents/Projet/AltairX/Git_AX/VM/altairx/src/debug.c
+	<stdio.h>
+	<stdlib.h>
+	<assert.h>
+	<string.h>
+	<math.h>
+	<stdint.h>
+	"vm.h"
+
+1642444188 source:/home/Kannagi/Documents/Projet/AltairX/Git_AX/VM/altairx/src/decode.c
+	<stdio.h>
+	<stdlib.h>
+	<assert.h>
+	<string.h>
+	<math.h>
+	<stdint.h>
+	"vm.h"
+
+1642444188 source:/home/Kannagi/Documents/Projet/AltairX/Git_AX/VM/altairx/src/execute.c
+	<stdio.h>
+	<stdlib.h>
+	<assert.h>
+	<string.h>
+	<math.h>
+	<stdint.h>
+	"vm.h"
+
+1642425117 source:/home/Kannagi/Documents/Projet/AltairX/Git_AX/VM/altairx/src/syscall.c
+	<stdio.h>
+	<stdlib.h>
+	<time.h>
+	<string.h>
+	<stdint.h>
+	"vm.h"
+
+1642257149 source:/home/Kannagi/Documents/Projet/AltairX/Git_AX/VM/altairx/src/vm.c
+	<stdio.h>
+	<stdlib.h>
+	<time.h>
+	<string.h>
+	<stdint.h>
+	"vm.h"
+

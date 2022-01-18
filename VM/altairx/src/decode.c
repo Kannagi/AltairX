@@ -80,6 +80,8 @@ static double convertImmDouble(uint32_t imm)
     return dval;
 }
 
+//--------------------------------------------------------
+
 static int decode(Core *core,uint32_t id)
 {
     const uint32_t opcode = core->opcodes[id];

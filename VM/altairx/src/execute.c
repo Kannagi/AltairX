@@ -55,6 +55,8 @@ static float HalftoFloat(uint32_t half)
     return fval;
 }
 
+//--------------------------------------------------------
+
 static void executeDelayedInstruction(Core *core, uint16_t imm)
 {
     switch(core->delayop)
@@ -820,11 +822,11 @@ static int executeInstruction(Core *core, uint32_t index)
                     dreg[opA] = dopB*dopC;
                 break;
 
-                case AX_OPCODE_FNEG:
+                case AX_OPCODE_DNEG:
                     dreg[opA] = -dopB;
                 break;
 
-                case AX_OPCODE_FABS:
+                case AX_OPCODE_DABS:
                     if(dopB < 0)
                         dreg[opA] = -dopB;
                 break;

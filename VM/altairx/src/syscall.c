@@ -40,7 +40,7 @@ int AX_syscall_emul(Core *core)
 		switch(regB)
 		{
 			case 0:
-				printf("Altair E0 , VM Machine \n");
+				printf("Altair K1 , VM Machine \n");
 			break;
 
 			case 1:

@@ -3,7 +3,7 @@ New computer and new CPU PoC
 
 The main processor of the AltairX K1 is a VLIW In Order CPU.  
 It has 3 internal memory:  
-128 KiB L1 data Scratchpad memory.  
+64 KiB L1 data Scratchpad memory.  
 128 KiB L1 instruction Scratchpad memory.  
 32 KiB L1 data Cache 4-way.  
 
