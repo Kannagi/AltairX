@@ -68,7 +68,7 @@ Aldebaran G1 ISA : https://docs.google.com/spreadsheets/d/1LiSZbdd6wCpa-sZZ9uLg5
 
 GPU todo list : https://docs.google.com/spreadsheets/d/1eRX1vLHEJdrAsx2u1OiycSSz82G3cboVMcu8gBYkgGA/edit?usp=sharing  
 
-# AltairX Pipeline  
+## AltairX Pipeline  
 <img src="Pipeline.png?raw=true" alt="Pipeline">
 
 # AltairX K1  
