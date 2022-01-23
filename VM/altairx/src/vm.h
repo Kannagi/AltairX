@@ -47,6 +47,7 @@
 #define AX_core_VREG_COUNT 64
 #define AX_core_DSRAM_SIZE 0x10000 //(64 KiB)
 #define AX_core_ISRAM_SIZE 0x20000 //(128 KiB)
+#define AR_core_CACHE_SIZE (0x8000/(64/4))  //(32 KiB , 4-way)
 
 typedef struct
 {
@@ -87,6 +88,9 @@ typedef struct MMAP
 
 typedef struct core
 {
+	MMAP mmap;
+	Execute operations[AX_core_MAX_OPERATIONS];
+
     uint64_t instruction;
     uint64_t cycle;
 
@@ -106,13 +110,9 @@ typedef struct core
     /// Bit 3: U flag, 1 if lesser, 0 if greater (unsigned comparison)
     uint16_t flags;
 
-    MMAP mmap;
-
-    Execute operations[AX_core_MAX_OPERATIONS];
-
     uint8_t dsram [AX_core_DSRAM_SIZE];
     uint8_t isram [AX_core_ISRAM_SIZE];
-    //uint8_t cache [AR_core_CACHE_SIZE];
+    uint8_t cache [AR_core_CACHE_SIZE];
 
     uint64_t ireg[AX_core_IREG_COUNT];
     union
