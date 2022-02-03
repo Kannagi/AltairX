@@ -34,16 +34,16 @@ The processor has 60 general registers of 64 bits, and 61 registers of 128 bits 
 The processor only has SIMD instructions for the FPU.  
 
 
-It has 170 instructions distributed like this:
-ALU : 42
-LSU : 36
-CMP : 8
-Other : 1
-BRU : 20
-VFPU : 32
-EFU : 9
-FPU-D : 8
-DMA : 14
+It has 170 instructions distributed like this:  
+ALU : 42  
+LSU : 36  
+CMP : 8  
+Other : 1  
+BRU : 20  
+VFPU : 32  
+EFU : 9  
+FPU-D : 8  
+DMA : 14  
 
 For floating point numbers in AltairX , it will not be 100% compatible with the standard with IEEE 754  
 -Non-normalized numbers are not handled (they are equal to zero).  
