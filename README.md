@@ -28,8 +28,22 @@ Then we execute the buffer 2 and we preload the buffer 1 and so on.
 
 To resolve pipeline conflicts, it has an accumulator internal to the ALU and to the VFPU which is register 61.  
 To avoid multiple writes to registers due to unsynchronized pipeline, there are two special registers P and Q (Product and Quotient) which are registers 62 and 63, to handle mul / div / sqrt etc etc.  
+There is also a specific register for loops (register 60).  
 
-It also has the uncached accelerated to speed up reads only (cache miss lasts half the time).
+The processor has 60 general registers of 64 bits, and 61 registers of 128 bits for the FPU.  
+The processor only has SIMD instructions for the FPU.  
+
+
+It has 170 instructions distributed like this:
+ALU : 42
+LSU : 36
+CMP : 8
+Other : 1
+BRU : 20
+VFPU : 32
+EFU : 9
+FPU-D : 8
+DMA : 14
 
 For floating point numbers in AltairX , it will not be 100% compatible with the standard with IEEE 754  
 -Non-normalized numbers are not handled (they are equal to zero).  
