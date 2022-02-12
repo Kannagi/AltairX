@@ -1,67 +1,84 @@
+;syscall
+;0x00
+;kernel console ,read/write file
 
-	movei.q r0,$00
-	movei.q r1,$20
+;0x01
+;GIF
+
+;0x02
+;SIF
+
+;0x03
+;input (clavier/souris/joypad)
+
+;0x04
+;Net
+
+;0x05
+;GUI
+
+
+	include "macro.asm"
+	org $0
 	
-	nop
-	lddmar r0,r1,1
-
-	movei.q r0,0
-	movei.q r1,$20
-	;--------------------
 	
-	call print
+	move IR,r0
+	move r0,IR
+	
+	nop.p
+	fmovei v0,1.5
+
+	fmovei v1,1.0
+
+	move FR,r5
+
+	nop
+	addi r63,r63,5
+
+	fadd.p v0,v0,v1
 	nop
 	
+	
+	syscall 0x00
 	nop
+	
+lab2:
+	movei r0,$00
+	movei r1,$400
+	
+	movei r8,$00
+	lddmai r0,r1,1
+	
+	ldml r1,$0	
+	syscall 0x00
+	
+	
+	call lfunc
 	nop
-
-
+	
+	
+	movei r0,$00	
+	cmpi r0,0
+	beq test
+	nop
+	
+	syscall 0x00
+	
+	
+test:
+	
 	endp
 	nop
 	
-	nop
-	nop
-	
-	org $100
-print:
-
-	Loop:
-
-	ldm.b r1,$0[r0]
-	nop
-	
-	cmpi r1,0
-	nop
-	
-	beq Label
-	addq r0,1
-	
-	outi.b 1,1 ;fputc = 1
-	nop
-	
-	out.b 32,r1 ; data = r0
-	nop
-	
-	bra Loop
-	nop
-	
-	outi.b 0,1 ;control = 1
+lfunc:
 	nop
 
-Label:
-	;-------------------------------
-	outi.b 32,$A
-	nop
-	
 	ret
-	nop
-	
-	outi.b 0,1
 	nop
 
 
 	org $400
-	dc.b "Hello World",0
+	dc.b "Hello World",$A,0
 	
 	org $480
 	

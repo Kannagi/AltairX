@@ -4,7 +4,7 @@
 #include <stdlib.h>
 #include "vasm.h"
 
-char *cpu_copyright="vasm Altair K1 cpu backend 0.1 (c) 2020 Samy Meguenoun";
+char *cpu_copyright="vasm Altair cpu backend 1.0 (c) 2020 Samy Mahjid Meguenoun";
 
 
 char *cpuname="AltairK1";
@@ -73,6 +73,52 @@ int parse_operand(char *p,int len,operand *op,int requires)
     char arg[32];
     int i;
 
+    if(requires == OP_DATA )
+    {
+        op->value = parse_expr(&p);
+
+        return 1;
+    }
+
+
+    //rxx[rxx]
+    if(requires == OP_RRG )
+    {
+        if( (len < 6) || (len > 8) ) return 0;
+        if( !(p[0] == 'r' || p[0] == 'R') )
+            return 0;
+        
+        int a2 = 0;
+        arg[0] = p[1];
+        if(p[2] == '[')
+        {
+            arg[1] = 0;
+            a2 = 3;
+        }else
+        {
+            arg[1] = p[2];
+            arg[2] = 0;
+            a2 = 4;
+        }
+        op->reg = atoi(arg);
+        if(op->reg > 63) return 0;
+
+        arg[0] = p[a2+1];
+        if(p[a2+2] == ']')
+        {
+            arg[1] = 0;
+        }else
+        {
+            arg[1] = p[a2+2];
+            arg[2] = 0;
+        }
+        op->reg2 = atoi(arg);
+
+        if(op->reg2 > 63) return 0;
+
+        return 1;
+    }
+
     //imm[rxx]
     if(requires == OP_IMR )
     {
@@ -91,17 +137,6 @@ int parse_operand(char *p,int len,operand *op,int requires)
         if( !(p[i+1] == 'r' || p[i+1] == 'R') )
             return 0;
 
-
-        if( (len == 5) && (p[i+3] == '+') )
-        {
-            op->type |= 0x100;
-            len--;
-        }
-
-        if( (len == 6) && (p[i+4] == '+') )
-        {
-            op->type |= 0x100;
-        }
 
         arg[0] = p[i+2];
         if(len == 4)
@@ -122,35 +157,34 @@ int parse_operand(char *p,int len,operand *op,int requires)
         return 1;
     }
     
-    //Register VP0-VP63
-    if(requires == OP_VP )
+    //Register VF0-VF63
+    if(requires == OP_VRG )
     {
         
-        if( (len < 3) || (len > 5) ) return 0;
+        if( (len < 2) || (len > 4) ) return 0;
         if( !(p[0] == 'v' || p[0] == 'V') )
             return 0;
 
-        if( !(p[1] == 'p' || p[1] == 'P') )
-            return 0;
+        op->val = -1;
 
         
-        arg[0] = p[2];
+        arg[0] = p[1];
         if(len == 3)
         {
             arg[1] = 0;
         }
         {
-        	if( (p[3] >= '0') && (p[3] <= '9') )
-            	arg[1] = p[3];
+        	if( (p[2] >= '0') && (p[2] <= '9') )
+            	arg[1] = p[2];
             else
             {
-            	op->val = 'x'-p[3]+1;
+            	op->val = 'x'-p[2]+1;
             	arg[1] = 0;
             }
 
             arg[2] = 0;
 
-            if(!( (p[4] >= '0') && (p[4] <= '9') ))
+            if(!( (p[3] >= '0') && (p[3] <= '9') ))
             {
             	op->val = 'x'-p[3]+1;            	
             }
@@ -211,14 +245,96 @@ int parse_operand(char *p,int len,operand *op,int requires)
         return 1;
     }
 
+    //Register FR
+    if(requires == OP_RFR )
+    {
+        if(len != 2) return 0;
+        if( !(p[0] == 'f' || p[0] == 'F') )
+            return 0;
+
+        if( !(p[1] == 'r' || p[1] == 'R') )
+            return 0;
+        
+        return 1;
+    }
+
+    //Register BR
+    if(requires == OP_RBR )
+    {
+        if(len != 2) return 0;
+        if( !(p[0] == 'b' || p[0] == 'B') )
+            return 0;
+
+        if( !(p[1] == 'r' || p[1] == 'R') )
+            return 0;
+        
+        return 1;
+    }
+
+    //Register IR
+    if(requires == OP_RIR )
+    {
+        if(len != 2) return 0;
+        if( !(p[0] == 'i' || p[0] == 'I') )
+            return 0;
+
+        if( !(p[1] == 'r' || p[1] == 'R') )
+            return 0; 
+        
+        return 1;
+    }
+/*
+    //Register PC
+    if(requires == OP_RPC )
+    {
+        if(len != 2) return 0;
+        if( !(p[0] == 'p' || p[0] == 'P') )
+            return 0;
+
+        if( !(p[1] == 'c' || p[1] == 'C') )
+            return 0; 
+        
+        return 1;
+    }
+*/
+    //Register Q
+    if(requires == OP_RGQ )
+    {
+        if(len != 1) return 0;
+        if( !(p[0] == 'q' || p[0] == 'Q') )
+            return 0;
+        
+        return 1;
+    }
+
+    //Register P
+    if(requires == OP_RGP )
+    {
+        if(len != 1) return 0;
+        if( !(p[0] == 'p' || p[0] == 'P') )
+            return 0;
+        
+        return 1;
+    }
+
    
     //Immediate
-    if( (requires >= OP_IMM) && (requires <= OP_IM4) )
+    if( (requires >= OP_IMM) && (requires <= OP_IML) )
     {
-        op->val = atoi(p);
-        op->fval = atof(p);
+        //op->val = atoi(p);
+        //op->fval = atof(p);
         op->value = parse_expr(&p);
 
+        //printf("%d\n",op->val);
+        
+        return 1;
+    }
+
+    if(requires == OP_IMF)
+    {
+        //op->val = atoi(p);
+        op->fval = atof(p);
+        memcpy(&op->val, &op->fval, 4);
         //printf("%d\n",op->val);
         
         return 1;
@@ -264,18 +380,18 @@ dblock *eval_instruction(instruction *p,section *sec,taddr pc)
     
     dblock *db=new_dblock();
 
-
     unsigned char *d;
     int opcode = (mnemonics[p->code].ext.opcode);
-    int val,val2,ret,byte = 0,plus = 0,type;
+    int val;
     operand operand1,operand2,operand3;
 
     //printf("%d\n",pc);
 
 
-    int k1ext = 0x02;
-    int inst = opcode&0x3;
+    int k1ext = 0x00;
 
+    if( (opcode&0x0F) == 0b0010 )
+        k1ext = 0x02;
 
     if(p->qualifiers[0] != 0)
     {
@@ -285,26 +401,23 @@ dblock *eval_instruction(instruction *p,section *sec,taddr pc)
         while(p->qualifiers[0][i]) i++;
         n = i;
 
-        if(ext[0] == 'a') k1ext = 0;
-        if(ext[0] == '1') k1ext = 1;
-        if(ext[0] == '2') k1ext = 2;
-        if(ext[0] == '3') k1ext = 3;
-
-
         if(ext[0] == 'b') k1ext = 0;
         if(ext[0] == 'w') k1ext = 1;
         if(ext[0] == 'l') k1ext = 2;
         if(ext[0] == 'q') k1ext = 3;
 
-        if(ext[0] == 'h') k1ext = 0;
-        if(ext[0] == 's') k1ext = 1;
         
         if(ext[0] == 'x') k1ext = 0;
         if( (n == 2) && (ext[1] == 'y') ) k1ext = 1;
         if( (n == 3) && (ext[2] == 'z') ) k1ext = 2;
         if( (n == 4) && (ext[3] == 'w') ) k1ext = 3;
 
-    }
+        if(ext[0] == 'p') opcode |= 1;
+        if( (n == 2) && (ext[1] == 'p') ) opcode |= 1;
+        if( (n == 3) && (ext[2] == 'p') ) opcode |= 1;
+        if( (n == 4) && (ext[3] == 'p') ) opcode |= 1;
+        if( (n == 5) && (ext[4] == 'p') ) opcode |= 1;
+    } 
     
     if(p->op[0] != NULL)
         operand1 = *(p->op[0]);
@@ -321,387 +434,151 @@ dblock *eval_instruction(instruction *p,section *sec,taddr pc)
     else
         operand3.type = OP_VOID;
 
-    if(operand1.type&0x100) plus |= 1;
-    if(operand2.type&0x100) plus |= 1;
+    opcode |= (k1ext<<8);
 
-    operand1.type &= 0xFF;
-    operand2.type &= 0xFF;
-
-
-    //IMR1,IMR2 AGU
-    if(operand1.type == OP_IMR && operand2.type == OP_IMR && operand3.type == OP_VOID)
+    //------------- OPERAND 1 -------------
+    if( (operand1.type == OP_REG) || (operand1.type == OP_VRG) )
     {
-        eval_expr(operand1.value,&val,sec,pc);
-        operand1.val = val&0xFFF;
-
-        eval_expr(operand2.value,&val,sec,pc);
-        operand2.val = val&0xFFF;
-
-        if(inst == 0x00)
-        {
-            operand1.reg -= 58;
-            operand2.reg -= 60;
-            operand1.reg &= 1;
-            operand2.reg &= 3;
-        }
-
-        opcode |= (operand1.val<<20) + (operand2.val<<8) + (operand1.reg<<5) + (operand2.reg<<7) + ( (k1ext&1) << 4);
+        opcode |= (operand1.reg<<26);
     }
 
-    //REG,IMR (LSU)
-    if(operand1.type == OP_REG && operand2.type == OP_IMR && operand3.type == OP_VOID)
+    if(operand1.type == OP_IMB)
+    { 
+        eval_expr(operand1.value,&val,sec,pc);
+        val = (val-pc-4-1)>>2;
+
+        operand1.val = val&0xFFFF;
+
+        opcode |= (operand1.val<<10);
+    }
+
+    if(operand1.type == OP_IMM)
+    {
+        eval_expr(operand1.value,&val,sec,pc);
+        if(val == 0)
+        {
+            operand1.val = 0;
+        }else
+        {
+            val = (val+4-1)>>2;
+            operand1.val = val&0xFFFF;
+        }
+
+        opcode |= (operand1.val<<10);
+    }
+
+    if(operand1.type == OP_IMR)
+    {
+        opcode |= (operand1.reg<<20);
+
+        eval_expr(operand1.value,&val,sec,pc);
+        opcode |= ( (val & 0xFFFF)<<10);
+    }
+
+    if(operand1.type == OP_RRG)
+    {
+        opcode |= (operand1.reg<<20);
+        opcode |= (operand1.reg2<<14);
+    }
+
+
+    if( (operand1.type >= OP_RLR) && (operand1.type <= OP_RIR ) && (operand2.type == OP_REG) )
+    {
+        opcode |= (operand1.type&0x3)<<26;
+    }
+
+    //------------- OPERAND 2 -------------
+    if( (operand2.type == OP_REG) || (operand2.type == OP_VRG) )
+    {
+        opcode |= (operand2.reg<<20);
+    }
+
+    if(operand2.type == OP_IMM)
     {
         eval_expr(operand2.value,&val,sec,pc);
         operand2.val = val&0xFFFF;
-
-        type = (opcode>>2)&0x3;
-
-        if(inst == 1) //LSU
-        {
-        	if(type == 0) //LDM/STM
-	        {
-	            operand2.val &= 0x7FFF;
-	            opcode |= (plus<<5) + ( (k1ext&3)<<6);
-	            opcode |= (operand1.reg<<26) + (operand2.reg<<20) + (operand2.val<<8);
-	        }else
-	        {
-	
-                if(type == 1)//LDC/STC
-                {
-                    operand2.val &= 0x7FFF;
-                    opcode |= (plus<<4) + ( (k1ext&3)<<6);
-                    opcode |= (operand1.reg<<26) + (operand2.reg<<20) + (operand2.val<<8);
-                }else //LDMV/STMV ,LDCV/STCV
-                {
-                	operand2.val &= 0x1FFF;
-                    opcode |= (plus<<6) + ( (k1ext&3)<<8);
-                    opcode |= (operand1.reg<<26) + (operand2.reg<<20) + (operand2.val<<10);
-
-                }
-	            
-	        }
-
-        }
+        opcode |= (operand2.val<<10);
     }
 
-
-    //REG,RLR (Move LRL)
-    if(operand1.type == OP_REG && operand2.type == OP_RLR && operand3.type == OP_VOID)
-    {
-        opcode |= (operand1.reg<<26);
-    }
-
-    //RLR,REG (Move SRL)
-    if(operand1.type == OP_RLR && operand2.type == OP_REG && operand3.type == OP_VOID)
-    {
-        opcode |= (operand1.reg<<26);
-    }
-
-    //BLR,REG (Move SRL)
-    if(operand1.type == OP_RBR && operand2.type == OP_REG && operand3.type == OP_VOID)
-    {
-        opcode |= (operand1.reg<<26);
-    }
-
-    //REG,REG (CMP/MOVE)
-    if(operand1.type == OP_REG && operand2.type == OP_REG && operand3.type == OP_VOID)
-    {
-        if(inst == 2)
-    	   opcode |= (operand1.reg<<26) + (operand2.reg<<20) + ( (k1ext&3)<<6);
-        else
-            opcode |= (operand1.reg<<26) + (operand2.reg<<20) + ( (k1ext&3)<<8);
-    }
-
-
-    //REG,REG,REG (ALU)
-    if(operand1.type == OP_REG && operand2.type == OP_REG && operand3.type == OP_REG)
-    {
-        opcode |= (operand1.reg<<26) + (operand2.reg<<20) + (operand3.reg<<14) + ( (k1ext&3)<<12);
-    }
-
-    //REG,REG,IMM (ALU)
-    if(operand1.type == OP_REG && operand2.type == OP_REG && operand3.type == OP_IMM)
-    {
-    	eval_expr(operand3.value,&val,sec,pc);
-        operand3.val = val&0xFFFF;
-
-        if(inst == 2)
-        {
-            /*
-        	type = (opcode>>2)&0xF;
-	        if(type > 9)
-	        	operand3.val = val&0x3F;
-            */
-
-            operand3.val = val&0x3FF;
-
-	        opcode |= (operand1.reg<<26) + (operand2.reg<<20) + (operand3.val<<10) + ( (k1ext&3)<<8);
-        }else
-        {
-        	if(inst == 0)
-        	{
-        		type = (opcode>>4)&0xF;
-
-        		operand3.val = val&0xFFF;
-        	    opcode |= (operand1.reg<<26) + (operand2.reg<<20) + (operand3.val<<8);
-
-        	}
-        }
-        
-    }
-
-    //IMM,REG (IN/OUT)
-    if(operand1.type == OP_IMM && operand2.type == OP_REG && operand3.type == OP_VOID)
-    {
-        eval_expr(operand1.value,&val,sec,pc);
-
-        //type = (opcode>>2)&0x3;
-        //printf("ok %d\n",type);
-        if(inst == 1)
-        {
-            operand1.val = val&0xFF;
-            opcode |= ( (k1ext&3)<<8);
-            opcode |= (operand1.val<<18) + (operand2.reg<<26);
-
-        }
-
-    }
-
-    //IMM,IMM 
-    if(operand1.type == OP_IMM && operand2.type == OP_IMM && operand3.type == OP_VOID)
-    {
-    	if(inst == 1) //(OUTI)
-    	{
-    		eval_expr(operand1.value,&val,sec,pc);
-	        operand1.val = val&0xFF;
-
-	        eval_expr(operand2.value,&val,sec,pc);
-	        operand2.val = val&0xFFFF;
-
-	        opcode |= ( (k1ext&1)<<4);
-	        opcode |= (operand1.val<<24) + (operand2.val<<8);
-    	}
-    }
-
-    //REG,IMM
-    if(operand1.type == OP_REG && operand2.type == OP_IMM && operand3.type == OP_VOID)
+    if(operand2.type == OP_IML)
     {
         eval_expr(operand2.value,&val,sec,pc);
-        if(inst == 2) //ALU
-        {
-            type = (opcode>>2)&0x3;
-            if(type == 2)
-            {
-                operand2.val = val&0xFFFF;
-                /*
-                type = (opcode>>2)&0xF;
-                if(type > 9)
-        			operand2.val = val&0x3F;*/
-                
-        		opcode |= (operand1.reg<<26) + (operand2.val<<10) + ( (k1ext&3)<<8);
-            }else
-            {
-            	if(type == 3) //movei
-            	{
-        			operand2.val = val&0xFFFFF;
-                	opcode |= (operand1.reg<<26) + (operand2.val<<6)+ ( (k1ext&3)<<4);
-            	}
-                
-            } 
-        }
-
-        type = (opcode>>2)&0x3;
-
-        if(inst == 1) //LSU
-        {
-        	if(type == 0) //LDM/STM
-	        {
-	            operand2.val &= 0x7FFF;
-	            opcode |= ( (k1ext&3)<<6);
-	            opcode |= (operand1.reg<<26) + (operand2.reg<<20) + (operand2.val<<8);
-	        }else
-	        {
-	
-                if(type == 1)//LDC/STC
-                {
-                    operand2.val &= 0x7FFF;
-                    opcode |= ( (k1ext&3)<<6);
-                    opcode |= (operand1.reg<<26) + (operand2.reg<<20) + (operand2.val<<8);
-                }else //LDMV/STMV ,LDCV/STCV
-                {
-                	operand2.val &= 0x1FFF;
-                    opcode |= ( (k1ext&3)<<8);
-                    opcode |= (operand1.reg<<26) + (operand2.reg<<20) + (operand2.val<<10);
-
-                }
-	            
-	        }
-
-        }
-
-        if(inst == 0) //CMP
-        {
-            //cmpi
-            operand2.val = val&0xFFFFF;
-            opcode |= (operand1.reg<<26) + (operand2.val<<6)+ ( (k1ext&3)<<4);
-
-        }
-    }
-
-    //--------------------------------------------------------------
-    //VP,IMM
-    if(operand1.type == OP_VP && operand2.type == OP_IMM && operand3.type == OP_VOID)
-    {
-        float fval;
-        eval_expr(operand2.value,&val,sec,pc);
-
-        
-        //printf("%f\n",operand2.fval);
-        if(inst == 0) //VF
-        {
-            
-        }
-
-        if(inst == 3) //BRU
-        {
-        	//printf("%d\n",val);
-            operand2.val = val&0xFFFF;
-            opcode |= (operand1.val<<25) + (operand2.val<<9) + (k1ext&3);
-
-        }
-    }
-
-    //VP,IMR
-    if(operand1.type == OP_VP && operand2.type == OP_IMR && operand3.type == OP_VOID)
-    {
-        eval_expr(operand2.value,&val,sec,pc);
-        operand2.val = val&0xFFFF;
-
-        type = (opcode>>2)&0xF;
-
-        if(type == 0)
-        {
-            //operand2.reg -= 58;
-            //operand2.reg &= 1;
-
-            opcode |= (operand1.val<<8) + (operand2.reg<<15) + (operand2.val<<16) + (k1ext&3);
-        }else
-        {
-            operand2.val = val&0x7FF;
-            opcode |= (operand1.val<<25) + (operand2.reg<<19) + (operand2.val<<8) + (k1ext&3) + (plus<<7);
-        }
-    }
-
-
-    //VP,VP,VP
-    if(operand1.type == OP_VP && operand2.type == OP_VP && operand3.type == OP_VP)
-    {
-        opcode |= (operand1.val<<25) + (operand2.val<<19) + (k1ext&3);
-    }
-
-    //VP,VP
-    if(operand1.type == OP_VP && operand2.type == OP_VP && operand3.type == OP_VOID)
-    {
-    	if(inst == 0)
-        {
-        	int tmp = 1<<4;
-        	if(k1ext == 1)
-            	tmp = 1<<5;
-            
-            opcode |= (operand1.reg<<26) + (operand2.reg<<20) + tmp;
-        }
-        else
-        {
-
-        }
-        
-    }
-    //--------------------------------------------------------------
-    //REG
-    if(operand1.type == OP_REG && operand2.type == OP_VOID && operand3.type == OP_VOID)
-    {
-        opcode |= (operand1.val<<26);
-    }
-
-    //IMM
-    if(operand1.type == OP_IMM && operand2.type == OP_VOID && operand3.type == OP_VOID)
-    {
-        eval_expr(operand1.value,&val,sec,pc);
-
-
-        if(inst == 0) //Delay instruction
-        {
-        	type = (opcode>>6)&3;
-	        if(type == 0) //Bcc
-	        {
-	        	val = (val-pc-4-1)>>3;
-	        	val++;
-		        operand1.val = val&0x3FFF;
-		        //printf("%d %x\n",operand1.val,operand1.val);
-		        //printf("%d %x\n",val,val);
-		        //printf("%d\n",val);
-		        opcode |= (operand1.val<<18);
-	        }else 
-	        {
-	        	type = (opcode>>8)&7;
-	        	if(type == 6) //swt
-	        	{
-	        		operand1.val = val&0x1;
-		        	opcode |= (operand1.val<<8);
-	        	}else //jump/call
-	        	{
-                    //printf("%d\n",val);
-                    if(val == 0)
-                    {
-                        operand1.val = 0;
-                    }else
-                    {
-                        val = (val-4-1)>>3;
-                        val++;
-                        operand1.val = val&0x3FFF;
-                    }
-
-                    //printf("%d\n",val);
-                    
-                    //printf("%d\n",operand1.val);
-		        	opcode |= (operand1.val<<18);
-	        	}
-	        }
-        }
+        operand2.val = val&0x3FFFF;
+        opcode |= (operand2.val<<8);
     } 
-/*
-    //REG,REG,IMM
-    if(operand1.type == OP_REG && operand2.type == OP_REG && operand3.type == OP_IMM)
+
+    if(operand2.type == OP_RRG)
+    {
+        opcode |= (operand2.reg<<20);
+        opcode |= (operand2.reg2<<14);
+    }
+
+    if(operand2.type == OP_IMR)
+    {
+        opcode |= (operand2.reg<<20);
+
+        eval_expr(operand2.value,&val,sec,pc);
+        opcode |= ( (val & 0x3FF)<<10);
+    }
+
+    if(operand2.type == OP_IMF)
+    {
+        unsigned int tmp,sign,exp,mant,texp;
+
+        tmp = operand2.val;
+
+        sign = (tmp>>16)&0x8000; //sign
+        texp = (tmp>>23)&0x00FF; //exp
+        mant = (tmp>>13)&0x03FF; //mantisse
+        
+        exp = (texp&0x0F)<<10;
+
+        if(texp&0x80)
+            exp |= 0x4000;
+
+        val = sign+mant+exp;
+
+        opcode |= ( (val & 0xFFFF)<<10);
+    }
+
+    if( (operand2.type >= OP_RLR) && (operand2.type <= OP_RIR ) )
+    {
+        opcode |= (operand2.type&0x3)<<20;
+    }
+
+
+    //------------- OPERAND 3 -------------
+    if( (operand3.type == OP_REG) || (operand3.type == OP_VRG) )
+    {
+        opcode |= (operand3.reg<<14);
+    }
+
+    if(operand3.type == OP_IMM)
     {
         eval_expr(operand3.value,&val,sec,pc);
-
-        type = (opcode>>4)&0x01;
-
-        operand3.val = val&0xFFFF;
-        opcode |= (operand1.val<<26) + (operand2.val<<5) + (k1ext&3);
+        operand3.val = val&0x3FF;
+        opcode |= (operand3.val<<10);
     }
-*/
 
-//printf("%d\n",k1ext&3);
+    if(operand3.type == OP_IMS)
+    {
+        eval_expr(operand3.value,&val,sec,pc);
+        operand3.val = val&0x1FF;
+        opcode |= (operand3.val<<11);
+    }
 
-
-
-
-
-    //printf("%s\n",outbin(opcode));
+    //-------------
+    //printf("%x\n",opcode);
     //printbin(opcode);
-    
 
     val = opcode;
     db->size = 4;
     
-
 	d = db->data = mymalloc(db->size);
 	*d++ = (val)&0xFF;
 	*d++ = (val>>8)&0xFF;
 	*d++ = (val>>16)&0xFF;
     *d++ = (val>>24)&0xFF;
-
 
     return db;
 }
@@ -718,16 +595,16 @@ dblock *eval_data(operand *op,taddr bitsize,section *sec,taddr pc)
 
     eval_expr(operand1.value,&val,sec,pc);
 
-    db->size = 4;
+    db->size = bitsize>>3;
     d = db->data = mymalloc(db->size);
-
     
-
-    *d++ = (val)&0xFF;
-	*d++ = (val>>8)&0xFF;
-	*d++ = (val>>16)&0xFF;
-	*d++ = (val>>24)&0xFF;
-    
+    int shift = 8,i;
+    for(i = 0;i < db->size;i++)
+    {
+       *d++ = (val)&0xFF;
+        val = val>>shift;
+        shift+= 8;
+    }
 
     return db;
 }
@@ -738,8 +615,7 @@ dblock *eval_data(operand *op,taddr bitsize,section *sec,taddr pc)
    to the data created by eval_instruction. */
 taddr instruction_size(instruction *p,section *sec,taddr pc)
 {
-    //printf("ok\n",len);
-    return 1;
+    return 4;
 }
 
 operand *new_operand()

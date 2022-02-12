@@ -1,53 +1,80 @@
-while(1)
-{
-     command_line_send();
 
-     //mon jeu collision et j'y passe
-
-     
-     
-
-     vsync();
-
-
-
-}
-0xCCDD DDDA AAAA AAAA
+0xCDDD DDDD AAAA AAAA
 C = CMD
 D = Depend
 A = ADR or ID
 
-0 = buffer_select
-1 = VDATA in for vertex shader
-2 = PDATA in for pixel shader
-3 = model data (vertex,normal,index,tc,id,,other)
-4 = texture
-5 draw
+0 = Fbuffer_select
+1 = Zbuffer_select
+2 = execute
+3 = end
+4 = wait
+5 = flush cache buffer or texture
+6 = PPU info
 
-select_buffer_A
-VDATA1
-vertex_shader1
-pixel_shader1
-Model_A
-texture1
-texture2
-texturenormal_map
-draw
+0xCSSS Xaaa AAAA AAAA (Load_DATA)
+7  = CLUT <- X(RAM/1T-SRAM/SPM2)
+XL = SRC
+XH = NCLUT
 
-DATA2
-Model_B
-draw
 
-DATA3
-vertex_shader1
-pixel_shader1
-Model_A
-texture1
-texture2
-texturenormal_map
-draw
+0xCSSS aaaa AAAA AAAA (Load_DATA /Store_DATA)
+
+8 = RAM -> L2_SPM
+9 = RAM <- L2_SPM
+
+10 = RAM -> 1T-SRAM
+11 = RAM <- 1T-SRAM
+
+12 = RAM -> L1_SPM-I
+13 = RAM <- L1_SPM-I
+
+14 = L2_SPM -> L1_SPM-I
+15 = L2_SPM <- L1_SPM-I
+-------------example-----------------------
+
+CMD 0: select_Fbuffer
+CMD 1: select_Zbuffer
+CMD 6: size buffer
+CMD 8: Load_DATA vertexshader 0
+CMD 8: Load_DATA pixelshader 0
+CMD 14: Load_DATA shader 0
+CMD 2: execute //clear F/Z Buffer
+
+CMD 8: Load_DATA vertexshader 1
+CMD 8: Load_DATA pixelshader 1
+CMD 8: Load_DATA gen 1 (texture select /matrix/other)
+CMD 8: Load_DATA Model 1
+CMD 10: Load_DATA texture 1
+CMD 14: Load_DATA shader 1
+CMD 2: execute (draw model 1)
+
+CMD 8: Load_DATA gen 2
+CMD 8: Load_DATA Model 2
+CMD 2: execute //(draw model 2)
+
+CMD 8: Load_DATA pixelshader 2
+CMD 8: Load_DATA gen(texture select /matrix/other)
+CMD 8: Load_DATA Model 3
+CMD 14: Load_DATA shader 2
+CMD 2: execute //(draw model 3)
+
+CMD 10: Load_DATA texture 2
+CMD 2: execute //(draw model 3)
 
 etc etc
 
+//end
+CMD 5: flush cache buffer
+CMD 11: Store_DATA buffer
+CMD 3: end
 
 
+Info PPU :
+-Alpha blending
+-pixel format
+-size buffer
+-Z-buffer (info + Depth Method)
+-AntiAliasing E/D
+
+CLUT 4ko

@@ -491,12 +491,9 @@ static void handle_global(char *s)
 
 static void handle_data(char *s,int size)
 {
-
   /* size is negative for floating point data! */
   for (;;) {
-
     char *opstart = s;
-    char *s2 = s;
     operand *op;
     dblock *db = NULL;
 
@@ -506,24 +503,19 @@ static void handle_data(char *s,int size)
         s = opstart;
       }
     }
-
-    
-    if (!db){
-      
+    if (!db) {
       op = new_operand();
       s = skip_operand(s);
-      if (parse_operand(opstart,s-opstart,op,(8))) {
+      if (parse_operand(opstart,s-opstart,op,DATA_OPERAND(size))) {
         atom *a;
 
-        a = new_datadef_atom(1,op);
-        //if (!align_data)
-        a->align = 1;
+        a = new_datadef_atom(abs(size),op);
+        if (!align_data)
+          a->align = 1;
         add_atom(0,a);
       }
       else
-      {
         syntax_error(8);  /* invalid data operand */
-      }
     }
 
     s = skip(s);
