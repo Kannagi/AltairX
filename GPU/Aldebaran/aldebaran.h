@@ -12,7 +12,7 @@ extern "C"
 #define ALDEBARANAPI_PTR ALDEBARANAPI_CALL
 #elif defined(__ANDROID__) && defined(__ARM_ARCH) && __ARM_ARCH < 7
 #error "Aldebaran isn't supported for the 'armeabi' NDK ABI"
-#elif defined(__ANDROID__) && defined(__ARM_ARCH) && __ARM_ARCH >= 7 &&       \
+#elif defined(__ANDROID__) && defined(__ARM_ARCH) && __ARM_ARCH >= 7 && \
     defined(__ARM_32BIT_STATE)
 #define ALDEBARANAPI_ATTR __attribute__((pcs("aapcs-vfp")))
 #define ALDEBARANAPI_CALL
@@ -100,128 +100,178 @@ extern "C"
 
 	enum Exe
 	{
-		AK1_EXE_ALU,
-		AK1_EXE_LSU,
-		AK1_EXE_BRU,
-		AK1_EXE_CMP,
-		AK1_EXE_VFPU,
-		AK1_EXE_DMA,
-		AK1_EXE_OTHER,
-		AK1_EXE_NOP,
+		AK1_EXE_ALU_B     = 0b0000,
+		AK1_EXE_ALU_A     = 0b0001,
+		AK1_EXE_LSU_SPM   = 0b0010,
+		AK1_EXE_LSU_CACHE = 0b0011,
+		AK1_EXE_CMP       = 0b0100,
+		AK1_EXE_BRU       = 0b0101,
+		AK1_EXE_VBRU      = 0b0110,
+		AK1_EXE_VFPU_A    = 0b0101,
+		AK1_EXE_VFPU_B    = 0b0110,
+		AK1_EXE_EFU       = 0b1001,
+		AK1_EXE_DMA       = 0b0111,
 	};
 
-	// ALU
-	enum OpcodeALU
+	enum OpcodeALU_A
 	{
-		AK1_OPCODE_ADD,
-		AK1_OPCODE_SUB,
-		AK1_OPCODE_XOR,
-		AK1_OPCODE_OR,
-		AK1_OPCODE_AND,
-		AK1_OPCODE_LSL,
-		AK1_OPCODE_ASR,
-		AK1_OPCODE_LSR,
-
-		AK1_OPCODE_MOVE = 0x10,
-		AK1_OPCODE_MOVESP,
+		AK1_OPCODE_ADD  = 0b0000,
+		AK1_OPCODE_SUB  = 0b0001,
+		AK1_OPCODE_XOR  = 0b0010,
+		AK1_OPCODE_OR   = 0b0011,
+		AK1_OPCODE_AND  = 0b0100,
+		AK1_OPCODE_LSL  = 0b0101,
+		AK1_OPCODE_ASR  = 0b0110,
+		AK1_OPCODE_LSR  = 0b0111,
+		AK1_OPCODE_ADDI = 0b1000,
+		AK1_OPCODE_SUBI = 0b1001,
+		AK1_OPCODE_XORI = 0b1010,
+		AK1_OPCODE_ORI  = 0b1011,
+		AK1_OPCODE_ANDI = 0b1100,
+		AK1_OPCODE_LSLI = 0b1101,
+		AK1_OPCODE_ASRI = 0b1110,
+		AK1_OPCODE_LSRI = 0b1111,
 	};
 
-	// CMP
+	enum OpcodeALU_B
+	{
+		AK1_OPCODE_NOP    = 0b0000,
+		AK1_OPCODE_SEXT   = 0b0001,
+		AK1_OPCODE_BOOL   = 0b0010,
+		AK1_OPCODE_SMOVE  = 0b0011,
+		AK1_OPCODE_MOVEI  = 0b0100,
+		AK1_OPCODE_MOVEIU = 0b0101,
+	};
+
+	enum OpcodeLSU_SPM
+	{
+		AK1_OPCODE_LOAD    = 0b0000,
+		AK1_OPCODE_LOADI   = 0b0001,
+		AK1_OPCODE_LOADL   = 0b0010,
+		AK1_OPCODE_LOADL2  = 0b0011,
+		AK1_OPCODE_STORE   = 0b0100,
+		AK1_OPCODE_STOREI  = 0b0101,
+		AK1_OPCODE_STOREL  = 0b0110,
+		AK1_OPCODE_STOREL2 = 0b0111,
+	};
+
+	enum OpcodeLSU_Cache
+	{
+		AK1_OPCODE_LOAD   = 0b0000,
+		AK1_OPCODE_LOADI  = 0b0001,
+		AK1_OPCODE_LOADL  = 0b0010,
+		AK1_OPCODE_LOADL2 = 0b0011,
+	};
+
 	enum OpcodeCMP
 	{
-		AK1_OPCODE_CMP,
-		AK1_OPCODE_FCMP = 0x04,
+		AK1_OPCODE_CMP   = 0b0000,
+		AK1_OPCODE_CMPFR = 0b0001,
+		AK1_OPCODE_CMPI  = 0b0010,
+		AK1_OPCODE_CMPIU = 0b0011,
+		AK1_OPCODE_ENDP  = 0b0100,
+		AK1_OPCODE_RET   = 0b0101,
+		AK1_OPCODE_ENDB  = 0b0110,
 	};
 
-	// LSU
-	enum OpcodeLSU
+	enum OpcodeVCMP
 	{
-		AK1_OPCODE_LDM,
-		AK1_OPCODE_STM,
-		AK1_OPCODE_LDC,
-
-		AK1_OPCODE_PREFETCH,
-		AK1_OPCODE_FLUSH,
+		AK1_OPCODE_BCMPZ    = 0b0000,
+		AK1_OPCODE_BCMP     = 0b0001,
+		AK1_OPCODE_BCMPZI   = 0b0010,
+		AK1_OPCODE_BCMPI    = 0b0011,
+		AK1_OPCODE_BFCMPE   = 0b0100,
+		AK1_OPCODE_BFCMPNE  = 0b0101,
+		AK1_OPCODE_BFCMPEI  = 0b0110,
+		AK1_OPCODE_BFCMPNEI = 0b0111,
+		AK1_OPCODE_FCMP     = 0b1000,
+		AK1_OPCODE_FCMPI    = 0b1001,
 	};
 
-	// BRU
 	enum OpcodeBRU
 	{
-		AK1_OPCODE_BNE,
-		AK1_OPCODE_BEQ,
-		AK1_OPCODE_BL,
-		AK1_OPCODE_BLE,
-		AK1_OPCODE_BG,
-		AK1_OPCODE_BGE,
-		AK1_OPCODE_BLS,
-		AK1_OPCODE_BLES,
-		AK1_OPCODE_BGS,
-		AK1_OPCODE_BGES,
-		AK1_OPCODE_BRA,
-		AK1_OPCODE_JMP,
-		AK1_OPCODE_JMPBR,
-		AK1_OPCODE_CALL,
-		AK1_OPCODE_CALLBR,
-
-		AK1_OPCODE_RET = 0x10,
+		AK1_OPCODE_BNE    = 0b0000,
+		AK1_OPCODE_BEQ    = 0b0001,
+		AK1_OPCODE_BL     = 0b0010,
+		AK1_OPCODE_BLE    = 0b0011,
+		AK1_OPCODE_BG     = 0b0100,
+		AK1_OPCODE_BGE    = 0b0101,
+		AK1_OPCODE_BLS    = 0b0110,
+		AK1_OPCODE_BLES   = 0b0111,
+		AK1_OPCODE_BGS    = 0b1000,
+		AK1_OPCODE_BGES   = 0b1001,
+		AK1_OPCODE_BRA    = 0b1010,
+		AK1_OPCODE_JMP    = 0b1011,
+		AK1_OPCODE_JMPBR  = 0b1100,
+		AK1_OPCODE_CALL   = 0b1101,
+		AK1_OPCODE_CALLBR = 0b1110,
+		AK1_OPCODE_LOOP   = 0b1111,
 	};
 
-	// DMA
+	enum OpcodeVFPU_A
+	{
+		AK1_OPCODE_FADD      = 0b0000,
+		AK1_OPCODE_FSUB      = 0b0001,
+		AK1_OPCODE_FMUL      = 0b0010,
+		AK1_OPCODE_FMADD     = 0b0011,
+		AK1_OPCODE_VFADD     = 0b0100,
+		AK1_OPCODE_VFSUB     = 0b0101,
+		AK1_OPCODE_VFMUL     = 0b0110,
+		AK1_OPCODE_VFMADD    = 0b0111,
+		AK1_OPCODE_VFADDS    = 0b1000,
+		AK1_OPCODE_VFSUBS    = 0b1001,
+		AK1_OPCODE_VFMULS    = 0b1010,
+		AK1_OPCODE_VFMADDS   = 0b1011,
+		AK1_OPCODE_FMULSUB   = 0b1100,
+		AK1_OPCODE_VFMULSUB  = 0b1101,
+		AK1_OPCODE_VFMULSUBS = 0b1110,
+		AK1_OPCODE_SHUFFLE   = 0b1111,
+	};
+
+	enum OpcodeVFPU_B
+	{
+		AK1_OPCODE_FMOVE   = 0b0000,
+		AK1_OPCODE_VMOVE   = 0b0001,
+		AK1_OPCODE_FMOVEI  = 0b0010,
+		AK1_OPCODE_VFMOVEI = 0b0011,
+		AK1_OPCODE_FNEG    = 0b0100,
+		AK1_OPCODE_FABS    = 0b0101,
+		AK1_OPCODE_VFNEG   = 0b0110,
+		AK1_OPCODE_VFABS   = 0b0111,
+		AK1_OPCODE_VFTOH   = 0b1000,
+		AK1_OPCODE_VHTOF   = 0b1001,
+		AK1_OPCODE_VFTOI   = 0b1010,
+		AK1_OPCODE_VITOF   = 0b1011,
+		AK1_OPCODE_VFTOD   = 0b1100,
+		AK1_OPCODE_VDTOF   = 0b1101,
+		AK1_OPCODE_VFMIN   = 0b1110,
+		AK1_OPCODE_VFMAX   = 0b1111,
+	};
+
+	enum OpcodeEFU
+	{
+		AK1_OPCODE_FDIV   = 0b0000,
+		AK1_OPCODE_FSQRT  = 0b0001,
+		AK1_OPCODE_FATAN  = 0b0100,
+		AK1_OPCODE_FATAN2 = 0b0101,
+		AK1_OPCODE_FEXP   = 0b0110,
+		AK1_OPCODE_FSUM   = 0b1000,
+		AK1_OPCODE_FIPR   = 0b1001,
+		AK1_OPCODE_FSIN   = 0b1010,
+	};
+
 	enum OpcodeDMA
 	{
-		AK1_OPCODE_LDDMA,
-		AK1_OPCODE_STDMA,
-		AK1_OPCODE_LDDMACL,
-		AK1_OPCODE_STDMACL,
-		AK1_OPCODE_DMAI,
-		AK1_OPCODE_WAIT = 7,
+		AK1_OPCODE_LDDMA  = 0b0000,
+		AK1_OPCODE_STDMA  = 0b0001,
+		AK1_OPCODE_DMAI   = 0b0100,
+		AK1_OPCODE_LDDMAI = 0b1000,
+		AK1_OPCODE_STDMAI = 0b1001,
+		AK1_OPCODE_DMAII  = 0b1100,
+		AK1_OPCODE_WAIT   = 0b1111,
 	};
 
-	// VFPU
-	enum OpcodeVFPU
-	{
-		AK1_OPCODE_FADD,
-		AK1_OPCODE_FSUB,
-		AK1_OPCODE_FMUL,
-		AK1_OPCODE_FMADD,
-
-		AK1_OPCODE_VFADD,
-		AK1_OPCODE_VFSUB,
-		AK1_OPCODE_VFMUL,
-		AK1_OPCODE_VFMADD,
-
-		AK1_OPCODE_VFADDS,
-		AK1_OPCODE_VFSUBS,
-		AK1_OPCODE_VFMULS,
-		AK1_OPCODE_VFMADDS,
-
-		AK1_OPCODE_FMSUB,
-		AK1_OPCODE_VFMSUB,
-		AK1_OPCODE_VFMSUBS,
-
-		AK1_OPCODE_FMOVE = 0x00,
-		AK1_OPCODE_VFMOVE,
-
-		AK1_OPCODE_FNEG = 0x04,
-		AK1_OPCODE_FABS,
-		AK1_OPCODE_VFNEG,
-		AK1_OPCODE_VFABS,
-
-		AK1_OPCODE_VFTOH = 0x08,
-		AK1_OPCODE_VHTOF,
-		AK1_OPCODE_VFTOI,
-		AK1_OPCODE_VITOF,
-		AK1_OPCODE_VFTOD,
-		AK1_OPCODE_VDTOF,
-
-	};
-
-	// OTHER
-	enum OpcodeOther
-	{
-		AK1_OPCODE_INT,
-		AK1_OPCODE_ENDP,
-	};
+#define AK1_OPCODE_UNKNOWN -1
 
 	enum Reg
 	{
@@ -229,7 +279,6 @@ extern "C"
 		AK1_REG_P,
 		AK1_REG_Q,
 	};
-#define AK1_OPCODE_UNKNOWN -1
 
 	struct ArVirtualMachine_T;
 	typedef ArVirtualMachine_T* ArVirtualMachine;
@@ -243,15 +292,23 @@ extern "C"
 	struct PixelProcessUnit_t;
 	typedef PixelProcessUnit_t* PixelProcessUnit;
 
-	int ALDEBARANAPI_CALL Aldebaran_VM_Init(int sizeRAM, int sizeSPM2,
-	                                        int sizeTSRAM, GPU* gpu);
-	int ALDEBARANAPI_CALL Aldebaran_VM_CMDList(GPU gpu, uint64_t* cmd);
-	int ALDEBARANAPI_CALL Aldebaran_SPIRV(uint32_t* spirvCode,
-	                                      uint64_t spirvSize,
-	                                      uint8_t** aldebaranCode,
-	                                      uint64_t* aldebaranSize);
-	int ALDEBARANAPI_CALL Aldebaran_SPIRV_Free(uint8_t* aldebaranCode);
-	int ALDEBARANAPI_CALL Aldebaran_VM_End(GPU gpu);
+	int32_t ALDEBARANAPI_CALL Aldebaran_VM_Init(uint64_t sizeRAM,
+	                                            uint64_t sizeSPM2,
+	                                            uint64_t sizeTexureRAM,
+	                                            uint64_t sizeBufferRAM,
+	                                            GPU* gpu);
+
+	int32_t ALDEBARANAPI_CALL Aldebaran_VM_CMDList(GPU gpu,
+	                                               const uint64_t* cmds);
+
+	int32_t ALDEBARANAPI_CALL Aldebaran_SPIRV(uint32_t* spirvCode,
+	                                          uint64_t spirvSize,
+	                                          uint8_t** aldebaranCode,
+	                                          uint64_t* aldebaranSize);
+
+	void ALDEBARANAPI_CALL Aldebaran_SPIRV_Free(uint8_t* aldebaranCode);
+
+	void ALDEBARANAPI_CALL Aldebaran_VM_End(GPU gpu);
 
 #ifdef __cplusplus
 }

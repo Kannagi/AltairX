@@ -10,7 +10,7 @@ class buffer_t
 public:
 	buffer_t() = default;
 	buffer_t(const buffer_t&) = delete;
-	buffer_t(buffer_t&& b) noexcept : m_ptr(u.m_ptr), m_end(u.m_end)
+	buffer_t(buffer_t&& b) noexcept : m_ptr(b.m_ptr), m_end(b.m_end)
 	{
 		u.m_ptr = nullptr;
 		u.m_end = nullptr;
@@ -28,22 +28,29 @@ public:
 	}
 
 	buffer_t& operator=(const buffer_t&) = delete;
-	buffer_t& operator=(buffer_t&&) noexcept
+	buffer_t& operator=(buffer_t&& b) noexcept
 	{
-		m_ptr = u.m_ptr;
-		m_end = u.m_end;
+		m_ptr = b.m_ptr;
+		m_end = b.m_end;
 
-		u.m_ptr = nullptr;
-		u.m_end = nullptr;
+		b.m_ptr = nullptr;
+		b.m_end = nullptr;
 
 		return *this;
 	}
 
-	uint64_t size() noexcept { return m_end - m_ptr; }
+	uint64_t size() const noexcept { return m_end - m_ptr; }
 	T* data() noexcept { return m_ptr; }
+	const T* data() const noexcept { return m_ptr; }
 
 	T* begin() noexcept { return m_ptr; }
 	T* end() noexcept { return m_end; }
+
+	const T* begin() const noexcept { return m_ptr; }
+	const T* end() const noexcept { return m_end; }
+
+	const T* cbegin() const noexcept { return m_ptr; }
+	const T* cend() const noexcept { return m_end; }
 
 	template <typename IntegerT>
 	T& operator[](IntegerT i)

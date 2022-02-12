@@ -5,7 +5,7 @@
 #include <cstring>
 #include <cu.hpp>
 
-static uint64_t extendSign(uint32_t value, uint32_t bits)
+uint64_t extendSign(uint32_t value, uint32_t bits)
 {
 	if (value > (1u << (bits - 1)))
 	{
@@ -17,12 +17,12 @@ static uint64_t extendSign(uint32_t value, uint32_t bits)
 	}
 }
 
-static uint32_t readbits(uint32_t buffer, uint32_t index, uint32_t size)
+uint32_t readbits(uint32_t buffer, uint32_t index, uint32_t size)
 {
 	return (buffer >> index) & ((1u << size) - 1);
 }
 
-static float convertImmFloat(uint32_t imm)
+float convertImmFloat(uint32_t imm)
 {
 	uint32_t xval;
 	uint32_t exp = (imm & 0x3C00) >> 3;
@@ -52,8 +52,7 @@ static float convertImmFloat(uint32_t imm)
 
 //-----------------------
 
-static int decodeBRU(ComputeUnit cu, ArExecute_T* output, uint32_t unit,
-                     uint32_t imm)
+int decodeBRU(ComputeUnit cu, ArExecute_T* output, uint32_t unit, uint32_t imm)
 {
 	output->unit1 = AK1_EXE_BRU;
 	cu->delayop = output->unit2 = unit;
@@ -64,8 +63,7 @@ static int decodeBRU(ComputeUnit cu, ArExecute_T* output, uint32_t unit,
 	return 0;
 }
 
-static int decodeCMP(ComputeUnit cu, ArExecute_T* output, uint32_t unit,
-                     uint64_t imm)
+int decodeCMP(ComputeUnit cu, ArExecute_T* output, uint32_t unit, uint64_t imm)
 {
 	if (unit == 0)  // CMP
 	{
@@ -96,8 +94,8 @@ static int decodeCMP(ComputeUnit cu, ArExecute_T* output, uint32_t unit,
 	return 0;
 }
 
-static int decodeALU(ComputeUnit cu, ArExecute_T* output, uint32_t unit1,
-                     uint32_t unit2, uint64_t imm)
+int decodeALU(ComputeUnit cu, ArExecute_T* output, uint32_t unit1,
+              uint32_t unit2, uint64_t imm)
 {
 	output->unit1 = AK1_EXE_ALU;
 
@@ -134,8 +132,8 @@ static int decodeALU(ComputeUnit cu, ArExecute_T* output, uint32_t unit1,
 	return 0;
 }
 
-static int decodeLSU(ComputeUnit cu, ArExecute_T* output, uint32_t unit1,
-                     uint32_t unit2, uint64_t imm)
+int decodeLSU(ComputeUnit cu, ArExecute_T* output, uint32_t unit1,
+              uint32_t unit2, uint64_t imm)
 {
 	output->unit1 = AK1_EXE_LSU;
 	if (unit1 == 0)  // LS
@@ -183,8 +181,8 @@ static int decodeLSU(ComputeUnit cu, ArExecute_T* output, uint32_t unit1,
 	return 0;
 }
 
-static int decodeDMA(ComputeUnit cu, ArExecute_T* output, uint32_t unit2,
-                     uint64_t imm)
+int decodeDMA(ComputeUnit cu, ArExecute_T* output, uint32_t unit2,
+              uint64_t imm)
 {
 	output->unit1 = AK1_EXE_DMA;
 	output->unit2 = unit2 & 0x7;
@@ -198,8 +196,8 @@ static int decodeDMA(ComputeUnit cu, ArExecute_T* output, uint32_t unit2,
 	return 0;
 }
 
-static int decodeVFPU(ComputeUnit cu, ArExecute_T* output, uint32_t unit1,
-                      uint32_t unit2, uint64_t imm)
+int decodeVFPU(ComputeUnit cu, ArExecute_T* output, uint32_t unit1,
+               uint32_t unit2, uint64_t imm)
 {
 	output->unit1 = AK1_EXE_VFPU;
 	output->unit2 = unit2 + (unit1 << 4);
@@ -224,7 +222,7 @@ static int decodeVFPU(ComputeUnit cu, ArExecute_T* output, uint32_t unit1,
 	return 0;
 }
 
-static int decode(ComputeUnit cu, uint32_t id)
+int decode(ComputeUnit cu, uint32_t id)
 {
 	const uint32_t opcode = cu->opcodes[id];
 	const uint32_t compute_unit = readbits(opcode, 0, 2);

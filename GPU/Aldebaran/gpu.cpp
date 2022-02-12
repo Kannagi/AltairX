@@ -1,18 +1,21 @@
 #include <cstring>
 #include <gpu.hpp>
 
-void GPU_t::processCommandList(uint64_t* cmd)
+void GPU_t::processCommandList(const GpuInstruction* cmds)
 {
-	for (uint64_t* it = cmd; command(*it) != Aldebaran_Command_end; ++it)
+	for (const GpuInstruction* cmdIt = cmds;
+	     cmdIt->command() != Aldebaran_Command_end; ++cmdIt)
 	{
-		switch (command(*it))
+		const GpuInstruction& cmd = *cmdIt;
+
+		switch (cmd.command())
 		{
 		case Aldebaran_Command_Fbuffer_select:
 		{
-			uint32_t d = depend(*it);
-			uint32_t a = address(*it);
+			uint32_t d = cmd.depend();
+			uint32_t a = cmd.address();
 
-			if (depend == 0)
+			if (d == 0)
 				framebuffer = TSRAM.data() + a * 64;
 			else
 				framebuffer = RAM.data() + a * 64;
@@ -21,10 +24,10 @@ void GPU_t::processCommandList(uint64_t* cmd)
 		}
 		case Aldebaran_Command_Zbuffer_select:
 		{
-			uint32_t d = depend(*it);
-			uint32_t a = address(*it);
+			uint32_t d = cmd.depend();
+			uint32_t a = cmd.address();
 
-			if (depend == 0)
+			if (d == 0)
 				zbuffer = TSRAM.data() + a * 64;
 			else
 				zbuffer = RAM.data() + a * 64;
@@ -33,7 +36,7 @@ void GPU_t::processCommandList(uint64_t* cmd)
 		}
 		case Aldebaran_Command_execute:
 		{
-			uint64_t a = address(*it);
+			uint32_t a = cmd.address();
 			pc = SPMI.data() + (a * 8);
 
 			execute();
@@ -42,13 +45,13 @@ void GPU_t::processCommandList(uint64_t* cmd)
 		}
 		case Aldebaran_Command_PPU:
 		{
-			flags = depend(*it);
+			flags = cmd.depend();
 			break;
 		}
 		case Aldebaran_Command_CLUT:
 		{
-			uint32_t d = depend(*it);
-			uint64_t a = address(*it);
+			uint32_t d = cmd.depend();
+			uint64_t a = cmd.address();
 
 			uint32_t src = d & 0b00000000'00000000'00000000'01111111;
 			uint64_t count = d & 0b11111111'11111111'11111111'10000000;
@@ -72,7 +75,7 @@ void GPU_t::processCommandList(uint64_t* cmd)
 		case Aldebaran_Command_Src:
 		{
 			copySrc =
-			    (*it) &
+			    cmd.data &
 			    0b00001111'11111111'11111111'11111111'11111111'11111111'11111111'11111111;
 
 			break;
@@ -80,14 +83,14 @@ void GPU_t::processCommandList(uint64_t* cmd)
 		case Aldebaran_Command_Dst:
 		{
 			copyDst =
-			    (*it) &
+			    cmd.data &
 			    0b00001111'11111111'11111111'11111111'11111111'11111111'11111111'11111111;
 
 			break;
 		}
 		case Aldebaran_Command_Send:
 		{
-			uint32_t d = depend(*it);
+			uint32_t d = cmd.depend();
 			Aldebaran_Send_Mode mode =
 			    Aldebaran_Send_Mode(d & 0b00000000'00000000'00000000'00001111);
 			uint64_t size = d & 0b11111111'11111111'11111111'11110000;

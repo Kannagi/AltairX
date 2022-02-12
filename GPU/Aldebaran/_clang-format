@@ -1,47 +1,73 @@
 Language: Cpp
+
+# BasedOnStyle: Chromium
+#
+# AccessModifierOffset: -4
+# AlignEscapedNewlines: Right
+# AllowAllArgumentsOnNextLine: false
+# AllowAllConstructorInitializersOnNextLine: false
+# AllowShortBlocksOnASingleLine: Empty
+# AllowShortCaseLabelsOnASingleLine: true
+# AllowShortFunctionsOnASingleLine: true
+# AllowShortIfStatementsOnASingleLine: Never
+# AllowShortLambdasOnASingleLine: All
+# AlwaysBreakTemplateDeclarations: Yes
+# BinPackArguments: true
+# BinPackParameters: true
+# BreakBeforeBraces: Allman
+# ColumnLimit: 79
+# Cpp11BracedListStyle: false
+# IndentCaseLabels: false
+# IndentExternBlock: NoIndent
+# IndentPPDirectives: None
+# IndentWidth: 4
+# IndentWrappedFunctionNames: false
+# NamespaceIndentation: None
+# PointerAlignment: Left
+# SortUsingDeclarations: true
+# SpaceBeforeCtorInitializerColon: true
+# SpaceBeforeInheritanceColon: true
+# SpaceBeforeRangeBasedForLoopColon: true
+# SpaceBeforeSquareBrackets: false
+# SpaceInEmptyBlock: false
+# SpacesInAngles: false
+# TabWidth: 4
+# UseTab: ForIndentation
+#
+# BraceWrapping:
+#   AfterClass: false
+#   AfterControlStatement: false
+#   AfterEnum: false
+#   AfterFunction: false
+#   AfterNamespace: false
+#   AfterObjCDeclaration: false
+#   AfterStruct: false
+#   AfterUnion: false
+#   AfterExternBlock: false
+#   AfterEnum: false
+#   AfterEnum: false
+
 BasedOnStyle: Chromium
 
-AccessModifierOffset: -4
-AlignEscapedNewlines: Right
-AllowAllArgumentsOnNextLine: false
-AllowAllConstructorInitializersOnNextLine: false
-AllowShortBlocksOnASingleLine: Empty
-AllowShortCaseLabelsOnASingleLine: true
-AllowShortFunctionsOnASingleLine: true
-AllowShortIfStatementsOnASingleLine: Never
-AllowShortLambdasOnASingleLine: All
-AlwaysBreakTemplateDeclarations: Yes
-BinPackArguments: true
-BinPackParameters: true
+AccessModifierOffset : -4
+AlignConsecutiveAssignments: true
+AllowShortIfStatementsOnASingleLine: false
 BreakBeforeBraces: Allman
 ColumnLimit: 79
-Cpp11BracedListStyle: false
 IndentCaseLabels: false
-IndentExternBlock: NoIndent
-IndentPPDirectives: None
 IndentWidth: 4
-IndentWrappedFunctionNames: false
-NamespaceIndentation: None
-PointerAlignment: Left
-SortUsingDeclarations: true
-SpaceBeforeCtorInitializerColon: true
-SpaceBeforeInheritanceColon: true
-SpaceBeforeRangeBasedForLoopColon: true
-SpaceBeforeSquareBrackets: false
-SpaceInEmptyBlock: false
-SpacesInAngles: false
-TabWidth: 4
+TabWidth : 4
 UseTab: ForIndentation
 
-BraceWrapping:
-  AfterClass: false
-  AfterControlStatement: false
-  AfterEnum: false
-  AfterFunction: false
-  AfterNamespace: false
-  AfterObjCDeclaration: false
-  AfterStruct: false
-  AfterUnion: false
-  AfterExternBlock: false
-  AfterEnum: false
-  AfterEnum: false
+# BraceWrapping:
+#   AfterClass: false
+#   AfterControlStatement: false
+#   AfterEnum : false
+#   AfterFunction  : false
+#   AfterNamespace  : false
+#   AfterObjCDeclaration  : false
+#   AfterStruct  : false
+#   AfterUnion  : false
+#   AfterExternBlock  : false
+#   AfterEnum : false
+#   AfterEnum : false

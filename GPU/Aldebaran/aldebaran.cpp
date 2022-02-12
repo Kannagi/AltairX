@@ -1,36 +1,38 @@
 #include <aldebaran.h>
 #include <gpu.hpp>
 
-int ALDEBARANAPI_CALL Aldebaran_VM_Init(int sizeRAM, int sizeSPM2,
-                                        int sizeTSRAM, GPU* gpu)
+int32_t ALDEBARANAPI_CALL Aldebaran_VM_Init(uint64_t sizeRAM,
+                                            uint64_t sizeSPM2,
+                                            uint64_t sizeTexureRAM,
+                                            uint64_t sizeBufferRAM,
+                                            GPU* gpu)
 {
-	*gpu = new GPU_t(sizeRAM, sizeSPM2, sizeTSRAM);
-	return 0;
+	*gpu = new GPU_t{sizeRAM, sizeSPM2, sizeTexureRAM, sizeBufferRAM};
+	return AR_SUCCESS;
 }
 
-int ALDEBARANAPI_CALL Aldebaran_VM_CMDList(GPU gpu, uint64_t* cmd)
+int32_t ALDEBARANAPI_CALL Aldebaran_VM_CMDList(GPU gpu, const uint64_t* cmds)
 {
-	gpu->processCommandList(cmd);
-	return 0;
+	gpu->processCommandList(reinterpret_cast<const GpuInstruction*>(cmds));
+	return AR_SUCCESS;
 }
 
-int ALDEBARANAPI_CALL Aldebaran_SPIRV(uint32_t* spirvCode, uint64_t spirvSize,
-                                      uint8_t** aldebaranCode,
-                                      uint64_t* aldebaranSize)
+int32_t ALDEBARANAPI_CALL Aldebaran_SPIRV(uint32_t* spirvCode,
+                                          uint64_t spirvSize,
+                                          uint8_t** aldebaranCode,
+                                          uint64_t* aldebaranSize)
 {
 	/// TODO
 	*aldebaranCode = nullptr;
-	return 0;
+	return AR_SUCCESS;
 }
 
-int ALDEBARANAPI_CALL Aldebaran_SPIRV_Free(uint8_t* aldebaranCode)
+void ALDEBARANAPI_CALL Aldebaran_SPIRV_Free(uint8_t* aldebaranCode)
 {
 	delete aldebaranCode;
-	return 0;
 }
 
-int ALDEBARANAPI_CALL Aldebaran_VM_End(GPU gpu)
+void ALDEBARANAPI_CALL Aldebaran_VM_End(GPU gpu)
 {
 	delete gpu;
-	return 0;
 }
