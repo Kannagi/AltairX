@@ -12,8 +12,8 @@ So Aldebaran G1 is a VLIW in order processor.
 1 MiB L2 Buffer cache (Set-associative 4 ways).  
 
 The calculation unit can only execute 2 instructions / cycle.  
-- 16 VFPU (Vector Float Point Unit), 32 FDIV (Float Division), 32 EFU (Elementary Function Unit).  
-- 16 ALU (32 bits , no division), 32 LSU.
+- 16 VFPU (Vector Float Point Unit), 16 FDIV (Float Division), 16 EFU (Elementary Function Unit).
+- 16 ALU (32 bits , no division), 16 LSU.
 
 The EFU will have all the necessary instructions to speed up calculations and 3D rendering.  
 (sin, cos, arctan, dot, rasterization, Min / Max, Clip, Culling , Sorting etc etc).  
