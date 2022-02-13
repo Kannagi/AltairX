@@ -12,8 +12,8 @@ public:
 	buffer_t(const buffer_t&) = delete;
 	buffer_t(buffer_t&& b) noexcept : m_ptr(b.m_ptr), m_end(b.m_end)
 	{
-		u.m_ptr = nullptr;
-		u.m_end = nullptr;
+		b.m_ptr = nullptr;
+		b.m_end = nullptr;
 	}
 	buffer_t(uint64_t count) : m_ptr(new T[count]), m_end(m_ptr + count)
 	{

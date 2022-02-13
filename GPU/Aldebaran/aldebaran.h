@@ -55,6 +55,7 @@ extern "C"
 #define AR_PROCESSOR_VREG_COUNT 64
 #define AR_SUCCESS 1
 #define AR_ERROR_ILLEGAL_INSTRUCTION -1
+#define AR_ERROR_OUT_OF_BOUNDS -2
 #define AR_END_OF_CODE 2
 
 #define N_SHADER 16
@@ -157,10 +158,10 @@ extern "C"
 
 	enum OpcodeLSU_Cache
 	{
-		AK1_OPCODE_LOAD   = 0b0000,
-		AK1_OPCODE_LOADI  = 0b0001,
-		AK1_OPCODE_LOADL  = 0b0010,
-		AK1_OPCODE_LOADL2 = 0b0011,
+		AK1_OPCODE_CACHE_LOAD   = 0b0000,
+		AK1_OPCODE_CACHE_LOADI  = 0b0001,
+		AK1_OPCODE_CACHE_LOADL  = 0b0010,
+		AK1_OPCODE_CACHE_LOADL2 = 0b0011,
 	};
 
 	enum OpcodeCMP
@@ -292,11 +293,11 @@ extern "C"
 	struct PixelProcessUnit_t;
 	typedef PixelProcessUnit_t* PixelProcessUnit;
 
-	int32_t ALDEBARANAPI_CALL Aldebaran_VM_Init(uint64_t sizeRAM,
-	                                            uint64_t sizeSPM2,
-	                                            uint64_t sizeTexureRAM,
-	                                            uint64_t sizeBufferRAM,
-	                                            GPU* gpu);
+	int32_t ALDEBARANAPI_CALL Aldebaran_VM_Init(GPU* gpu);
+	int32_t ALDEBARANAPI_CALL Aldebaran_VM_WriteToRAM(GPU gpu,
+	                                                  size_t RAMOffset,
+	                                                  const uint8_t* data,
+	                                                  size_t size);
 
 	int32_t ALDEBARANAPI_CALL Aldebaran_VM_CMDList(GPU gpu,
 	                                               const uint64_t* cmds);

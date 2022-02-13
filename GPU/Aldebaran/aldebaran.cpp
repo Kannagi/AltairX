@@ -1,13 +1,22 @@
 #include <aldebaran.h>
+#include <cstring>
 #include <gpu.hpp>
 
-int32_t ALDEBARANAPI_CALL Aldebaran_VM_Init(uint64_t sizeRAM,
-                                            uint64_t sizeSPM2,
-                                            uint64_t sizeTexureRAM,
-                                            uint64_t sizeBufferRAM,
-                                            GPU* gpu)
+int32_t ALDEBARANAPI_CALL Aldebaran_VM_Init(GPU* gpu)
 {
-	*gpu = new GPU_t{sizeRAM, sizeSPM2, sizeTexureRAM, sizeBufferRAM};
+	*gpu = new GPU_t;
+	return AR_SUCCESS;
+}
+
+int32_t ALDEBARANAPI_CALL Aldebaran_VM_WriteToRAM(GPU gpu,
+                                                  size_t RAMOffset,
+                                                  const uint8_t* data,
+                                                  size_t size)
+{
+	if (gpu->RAM.cbegin() + RAMOffset >= gpu->RAM.cend())
+		return AR_ERROR_OUT_OF_BOUNDS;
+
+	std::memcpy(gpu->RAM.data() + RAMOffset, data, size);
 	return AR_SUCCESS;
 }
 

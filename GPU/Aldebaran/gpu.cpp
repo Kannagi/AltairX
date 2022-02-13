@@ -1,4 +1,5 @@
 #include <cstring>
+#include <iostream>
 #include <gpu.hpp>
 
 void GPU_t::processCommandList(const GpuInstruction* cmds)
@@ -13,7 +14,7 @@ void GPU_t::processCommandList(const GpuInstruction* cmds)
 		case Aldebaran_Command_Fbuffer_select:
 		{
 			uint32_t d = cmd.depend();
-			uint32_t a = cmd.address();
+			uint64_t a = cmd.address();
 
 			if (d == 0)
 				framebuffer = TSRAM.data() + a * 64;
@@ -25,7 +26,7 @@ void GPU_t::processCommandList(const GpuInstruction* cmds)
 		case Aldebaran_Command_Zbuffer_select:
 		{
 			uint32_t d = cmd.depend();
-			uint32_t a = cmd.address();
+			uint64_t a = cmd.address();
 
 			if (d == 0)
 				zbuffer = TSRAM.data() + a * 64;
@@ -36,7 +37,7 @@ void GPU_t::processCommandList(const GpuInstruction* cmds)
 		}
 		case Aldebaran_Command_execute:
 		{
-			uint32_t a = cmd.address();
+			uint64_t a = cmd.address();
 			pc = SPMI.data() + (a * 8);
 
 			execute();
@@ -55,7 +56,7 @@ void GPU_t::processCommandList(const GpuInstruction* cmds)
 
 			uint32_t src = d & 0b00000000'00000000'00000000'01111111;
 			uint64_t count = d & 0b11111111'11111111'11111111'10000000;
-			count >= 7;
+			count >>= 7;
 
 			if (src == 0)  // TSRAM
 			{
@@ -74,27 +75,24 @@ void GPU_t::processCommandList(const GpuInstruction* cmds)
 		}
 		case Aldebaran_Command_Src:
 		{
-			copySrc =
-			    cmd.data &
-			    0b00001111'11111111'11111111'11111111'11111111'11111111'11111111'11111111;
+			copySrc = cmd.address();
 
 			break;
 		}
 		case Aldebaran_Command_Dst:
 		{
-			copyDst =
-			    cmd.data &
-			    0b00001111'11111111'11111111'11111111'11111111'11111111'11111111'11111111;
+			copyDst = cmd.address();
 
 			break;
 		}
 		case Aldebaran_Command_Send:
 		{
-			uint32_t d = cmd.depend();
-			Aldebaran_Send_Mode mode =
-			    Aldebaran_Send_Mode(d & 0b00000000'00000000'00000000'00001111);
-			uint64_t size = d & 0b11111111'11111111'11111111'11110000;
-			size >= 4;
+			uint64_t d = cmd.data;
+			// clang-format off
+			Aldebaran_Send_Mode mode = Aldebaran_Send_Mode(
+				            (d & 0b00000000'00000000'00000000'00000000'11110000'00000000'00000000'00000000) >> 28u);
+			uint64_t size = (d & 0b00000000'00000000'00000000'00000000'00001111'11111111'11111111'11110000) >> 4u;
+			// clang-format on
 			size *= 64;
 
 			switch (mode)
@@ -153,4 +151,15 @@ void GPU_t::processCommandList(const GpuInstruction* cmds)
 	}
 }
 
-void GPU_t::execute() {}
+void GPU_t::execute()
+{
+	//units[0].instruction = 0;
+	//units[1].instruction = 0;
+	//units[2].instruction = 0;
+	//units[3].instruction = 0;
+	uint32_t res0 = units[0].execute();
+	std::cout << "res0: " << res0 << "\n";
+	//uint32_t res1 = units[1].execute();
+	//uint32_t res2 = units[2].execute();
+	//uint32_t res3 = units[3].execute();
+}

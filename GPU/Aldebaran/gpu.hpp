@@ -7,19 +7,46 @@
 
 static_assert(sizeof(uint8_t*) == 8);
 
+struct GpuInstruction
+{
+	uint64_t data;
+
+	Aldebaran_Command command() const
+	{
+		return Aldebaran_Command(data & 0b1111);
+	}
+
+	uint32_t depend() const
+	{
+		uint64_t d =
+			data &
+			0b00000000'00000000'00000000'00000000'11111111'11111111'11111111'11110000;
+		d >= 32u;
+		return uint32_t(d);
+	}
+
+	uint32_t address() const
+	{
+		uint64_t a =
+			data &
+			0b11111111'11111111'11111111'11111111'00000000'00000000'00000000'00000000;
+		return uint32_t(a);
+	}
+
+	void setCommand(Aldebaran_Command cmd)
+	{
+		data = uint64_t(cmd);
+	}
+};
+
 struct GPU_t
 {
-	buffer_t<uint8_t> RAM;
-
-	// L2
-	buffer_t<uint8_t> TRAM;  // 1'048'576 bytes expected (1 MiB)
-	buffer_t<uint8_t> SPM2;  // 2'097'152 bytes expected (2 MiB)
-	buffer_t<uint8_t> BRAM;  // 1'048'576 bytes expected (1 MiB)
-
-	// L1
-	buffer_t<uint8_t> SPMD{131'072};  // 128 Kio;
-	buffer_t<uint8_t> SPMI{131'072};  // 128 Kio;
-	buffer_t<uint8_t> DATA{32'768};   // 32 Kio;
+	buffer_t<uint8_t> RAM{134'217'728};   // 128 MiB
+	buffer_t<uint8_t> TSRAM{33'554'432};  // 32 MiB
+	buffer_t<uint8_t> SPM2{1'048'576};    // 1 MiB
+	buffer_t<uint8_t> SPMD{131'072};      // 128 Kio;
+	buffer_t<uint8_t> SPMI{131'072};      // 128 Kio;
+	buffer_t<uint8_t> CLUT{8'192};        // 8 Kio;
 
 	uint8_t* framebuffer = nullptr;
 	uint8_t* zbuffer     = nullptr;
@@ -37,14 +64,6 @@ struct GPU_t
 	    {*this},
 	    {*this},
 	};
-
-	GPU_t(uint64_t sRAM,
-	      uint64_t sSPM2,
-	      uint64_t sTextureRAM,
-	      uint64_t sBufferRAM)
-	    : RAM{sRAM}, TRAM{sTextureRAM}, SPM2{sSPM2}, BRAM{sBufferRAM}
-	{
-	}
 
 	void processCommandList(const GpuInstruction* cmds);
 
