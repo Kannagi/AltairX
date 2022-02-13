@@ -36,6 +36,8 @@ For the textures, here is what will have to manage:
 ## Pipeline GPU
 <img src="AldebaranG1_diagram.png?raw=true" alt="Pipeline">
 
+<img src="PipelineGD.png?raw=true" alt="Pipeline">
+
 ## Pipeline Compute Unit
 <img src="Pipeline_Graphics_Diagram.png?raw=true" alt="Compute Unit">
 
