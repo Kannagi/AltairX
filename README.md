@@ -3,47 +3,44 @@ New computer and new CPU PoC
 
 The main processor of the AltairX K1 is a VLIW In Order CPU.  
 It has 3 internal memory:  
-64 KiB L1 data Scratchpad memory.  
-128 KiB L1 instruction Scratchpad memory.  
-32 KiB L1 data Cache 4-way.  
 
-1 MiB L2 cache (Set-associative 4/8 ways).  
+64 KiB L1 instruction Cache 4-way.  
+32 KiB L1 data Cache RW 4-way.  
+32 KiB L1 data Cache R 4-way.  
+32 KiB L1 data Scratchpad memory.
+
 1 MiB L2 Scratchpad memory.  
 
 The processor has no branch prediction, it will be based on the delay slot (1 cycle for Fetch) and 1 decode cycle + Jump (Delay)
 
 The number of instructions is done via a "Pairing" bit, when it is equal to 1, there is another instruction to be executed in parallel, 0 indicates the end of the bundle.  
 
-<img src="Altair_instruction.png?raw=true" alt="arch">   
+<img src="graph/Altair_instruction.png?raw=true" alt="arch">   
 
 The goal of this processor is to reach the minimum of latency, and to solve the problem of latency of the RAM.  
 For this, the compiler will have to do two things:  
 - resolve pipeline conflicts  
-- preload the data in advance with a DMA
-
-This is a technique used on consoles like the Playstation 2 and 3, we have to make a double buffer, and therefore execute and read our data in buffer 1, while we preload our data in buffer 2.  
-Then we execute the buffer 2 and we preload the buffer 1 and so on.  
-
-<img src="Single-and-Double-Buffering.png?raw=true" alt="arch">  
+- prefetch instruction and data
+- use SPM 
 
 To resolve pipeline conflicts, it has an accumulator internal to the ALU and to the VFPU which is register 61.  
 To avoid multiple writes to registers due to unsynchronized pipeline, there are two special registers P and Q (Product and Quotient) which are registers 62 and 63, to handle mul / div / sqrt etc etc.  
 There is also a specific register for loops (register 60).  
 
-The processor has 60 general registers of 64 bits, and 61 registers of 128 bits for the FPU.  
+The processor has 64 general registers of 64 bits, and 64 registers of 128 bits for the FPU.  
 The processor only has SIMD instructions for the FPU.  
 
 
-It has 170 instructions distributed like this:  
+It has 160 instructions distributed like this:  
 ALU : 42  
-LSU : 36  
+LSU : 32  
 CMP : 8  
-Other : 1  
+Other : 2  
 BRU : 20  
 VFPU : 32  
 EFU : 9  
 FPU-D : 8  
-DMA : 14  
+DMA : 5  
 
 For floating point numbers in AltairX , it will not be 100% compatible with the standard with IEEE 754  
 -Non-normalized numbers are not handled (they are equal to zero).  
@@ -53,7 +50,7 @@ For floating point numbers in AltairX , it will not be 100% compatible with the 
 -Exceptions are not handled   
 
 For the calculation unit it has:  
-2ALU+4LSU 1VFPU/FDIV 1DIV/MUL BRU/CMP  
+2ALU+2LSU 1VFPU 1EFU 1FPU-D 1DIV/MUL BRU/CMP  
 
 The advantage of this processor is that it has a simple design, and requires little transistor for "high performance" and therefore consume / cost less than CISC/RISC Out Of Order processors.
 
@@ -62,10 +59,9 @@ The advantage of this processor is that it has a simple design, and requires lit
 - Terminate virtual machine (cycle emulation and device management) 
 
 ## Target configuration
-Main core : AltairX K1 2.5 GHz  
-Sub  core : AltairX K1 2.5 GHz , 6 cores   
-LPDDR4 3200 MHz , 8GB in a unified memory  
-GPU Aldebaran G1 1 GHz , 4 CU , 512 GFlops  
+8 cores : AltairX K1 2.5 GHz  
+DD3 1600 MHz , 8GB in a unified memory  
+GPU Aldebaran G1 1 GHz , 2 CU , 256 GFlops  
 
 ## Link
 AltairX K1 ISA : https://docs.google.com/spreadsheets/d/1AmdMslRcXIX9pKGBSRJJcx2IvRyzBLjA61SzxmlEYf8/edit?usp=sharing   
@@ -83,32 +79,10 @@ Aldebaran G1 ISA : https://docs.google.com/spreadsheets/d/1LiSZbdd6wCpa-sZZ9uLg5
 GPU todo list : https://docs.google.com/spreadsheets/d/1eRX1vLHEJdrAsx2u1OiycSSz82G3cboVMcu8gBYkgGA/edit?usp=sharing  
 
 ## AltairX Pipeline  
-<img src="Pipeline.png?raw=true" alt="Pipeline">
-
-# AltairX K1  
+<img src="graph/Pipeline.png?raw=true" alt="Pipeline">
 
 ## Pipeline
-<img src="AltairK1_diagram.png?raw=true" alt="Pipeline">
+<img src="graph/Pipeline_AX.png?raw=true" alt="Pipeline">
 
-## Architecture intern 
-<img src="Altair_arch_Intern.png?raw=true" alt="arch">
-
-## Architecture Bus 
-<img src="diagram_busK1.png?raw=true" alt="arch">
-
-## APU Die (420 MT) 20-30 mm² , 28 nm FD-SOI
-<img src="APU2_Diagram.png?raw=true" alt="APU">
-
-# AltairX E0  
-
-## Pipeline
-<img src="AltairE0_diagram.png?raw=true" alt="Pipeline">
-
-## Architecture intern 
-<img src="Altair_arch_Intern2.png?raw=true" alt="arch">
-
-## Architecture Bus 
-<img src="Altair_Bus2.png?raw=true" alt="arch">
-
-## APU Die (300 MT) 20 mm² , 28 nm FD-SOI
-<img src="APU_AX-E0.png?raw=true" alt="APU">
+## APU Die (420 MT) 30 mm² , 28 nm FD-SOI
+<img src="graph/APU2_Diagram.png?raw=true" alt="APU">
