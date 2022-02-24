@@ -84,6 +84,7 @@ static double convertImmDouble(uint32_t imm)
 
 static int decode(Core *core,uint32_t id)
 {
+	uint32_t tmp;
     const uint32_t opcode = core->opcodes[id];
 
     const uint32_t compute_unit = readbits(opcode, 1, 3);
@@ -126,24 +127,49 @@ static int decode(Core *core,uint32_t id)
 			{
 				output->unit1 = AX_EXE_ALU;
 
-				if(unit == 6) //SMOVE
+				if(unit == 3) //SMOVE
+				{
 					core->operations[id].opB = ( (imm>>2)&0xFFFF );
-				else if(unit == 7) //MOVEI
-					core->operations[id].opB = extendSign( imm&0x3FFFF,17 );
-				else if(unit == 8) //SLTS
+				}
+				else if(unit == 6) //SLTS
 				{
 					core->operations[id].opC = extendSign( (imm>>2)&0x3FF,9);
 					output->unit2 = AX_OPCODE_SLTS;
 				}
-				else if(unit == 9) //SLTU
+				else if(unit ==7) //SLTU
 				{
 					core->operations[id].opC = ( (imm>>2)&0x3FF );
 					output->unit2 = AX_OPCODE_SLTU;
 				}
-				else if(unit == 11) //MOVEIU
+				else if(unit == 8) //MOVEI
+				{
+					core->operations[id].opB = extendSign( imm&0x3FFFF,17 );
+					output->unit2 = AX_OPCODE_MOVE;
+				}
+				else if(unit == 9) //MOVEIU
 				{
 					core->operations[id].opB = imm&0x3FFFF;
 					output->unit2 = AX_OPCODE_MOVE;
+				}
+				else if(unit > 9)
+				{
+					if(id == 0) //MUL/DIV/REM
+					{
+						output->unit2 = unit;
+						if(opcode&0x400)
+						{
+							if(unit == 0)
+								core->operations[id].opC = extendSign( (imm>>3)&0x1FF,8);
+							else
+								core->operations[id].opC = ( (imm>>3)&0x1FF );
+						}
+
+					}
+					else
+					{
+
+					}
+
 				}
 			}
 
@@ -153,176 +179,165 @@ static int decode(Core *core,uint32_t id)
 		//ALU-B
 		case 1:
 			output->unit1 = AX_EXE_ALU;
-			output->unit2 = unit&0x0F;
+			output->unit2 = unit&0x07;
 
-			if(opcode&0x400)
+			if(unit&0x08)
 			{
-				if(unit == 1)
-					core->operations[id].opC = extendSign( (imm>>3)&0x1FF,8);
-				else if(unit == 2)
-					core->operations[id].opC = extendSign( (imm>>3)&0x1FF,8);
-				else if(unit == 3)
-					core->operations[id].opC = extendSign( (imm>>3)&0x1FF,8);
-				else if(unit == 8)
-					core->operations[id].opC = extendSign( (imm>>3)&0x1FF,8);
+				if(unit == 2) //XOR
+					core->operations[id].opC = extendSign( (imm>>2)&0x3FF,9);
 				else
-					core->operations[id].opC = ( (imm>>3)&0x1FF );
+					core->operations[id].opC = ( (imm>>2)&0x3FF );
 			}
 
 		break;
 
-		//LSU-SPM
+		//LSU-A
 		case 2:
-			output->unit1 = AX_EXE_LSUM;
+			output->unit1 = AX_EXE_LSU;
 			output->unit2 = unit&0x03;
 
-			if(unit&0x8)
-			{
-				core->operations[id].opC = ( (imm>>2)&0xFFFF );
+			core->operations[id].opC = ( (imm>>2)&0xFFFF );
 
-				if(unit&0x4)
-					core->operations[id].opB = core->ireg[1];
-				else
-					core->operations[id].opB = core->ireg[0];
-			}
-			else if(unit&0x4)
-				core->operations[id].opC = extendSign( (imm>>2)&0x3FF,9);
+			tmp = unit>>2;
+			core->operations[id].opB = core->ireg[tmp];
 		break;
 
-		//LSU-Cache
+		//LSU-B/DMA
 		case 3:
-			output->unit1 = AX_EXE_LSUM;
+			output->unit1 = AX_EXE_LSU;
 			output->unit2 = unit&0x03;
 
+			tmp = unit>>2;
 
-			if(unit&0x8)
+			if(tmp == 0)
 			{
-				core->operations[id].opC = ( (imm>>2)&0xFFFF );
-
-				if(unit&0x4)
-					core->operations[id].opB = core->ireg[3];
-				else
-					core->operations[id].opB = core->ireg[2];
+				//----
 			}
-			else if(unit&0x4)
-				core->operations[id].opC = extendSign( (imm>>2)&0x3FF,9);
-
-
-			if( (id == 1) && ( (unit&0xC) == 0x0C) )
+			else if(tmp == 1)
 			{
-				core->operations[id].opC = core->ireg[regC];
-				core->operations[id].opC = core->ireg[regC];
-				if(unit == 0xC)
+				core->operations[id].opC = extendSign( (imm>>2)&0x3FF,9);
+			}
+			else
+			{
+				if(id == 0) //DMA
 				{
-					output->unit2 = AX_OPCODE_PREFETCH;
-					core->operations[id].opB = ( (imm>>2)&0xFFFF);
+					output->unit1 = AX_EXE_DMA;
+					output->unit2 = unit&1;
+
+					if(unit&0x2)
+					{
+						output->opC = ( (imm>>2)&0xFFFF );
+					}
 				}
-				else if(unit == 0xD)
+				else //PREFETCH
 				{
-					output->unit2 = AX_OPCODE_FLUSH;
-					core->operations[id].opB = ( (imm>>2)&0xFFFF);
+					if(unit == 0xC)
+					{
+						output->unit2 = AX_OPCODE_PREFETCH;
+						core->operations[id].opB = ( (imm>>2)&0xFFFF);
+					}
+					else if(unit == 0xD)
+					{
+						output->unit2 = AX_OPCODE_FLUSH;
+						core->operations[id].opB = ( (imm>>2)&0xFFFF);
+					}
+					else if(unit == 0xE)
+					{
+						output->unit2 = AX_OPCODE_PREFETCH;
+					}
+					else if(unit == 0xF)
+					{
+						output->unit2 = AX_OPCODE_FLUSH;
+					}
 				}
-				else if(unit == 0xE)
-				{
-					output->unit2 = AX_OPCODE_PREFETCH;
-				}
-				else if(unit == 0xF)
-				{
-					output->unit2 = AX_OPCODE_FLUSH;
-				}
+
 			}
 
 
 		break;
 
-		//CMP/OTHER - DMA
+		//CMP/OTHER
 		case 4:
-			if(id == 0)
+
+			if(unit&0x8)
 			{
-				if(unit&0x8)
+
+				if(unit == 8)
 				{
-
-					if(unit == 8)
-					{
-						output->unit1 = AX_EXE_OTHER;
-						output->unit2 = AX_OPCODE_ENDP;
-					}
-					else if(unit == 9)
-					{
-						output->unit1 = AX_EXE_OTHER;
-						output->unit2 = AX_OPCODE_SYSCALL;
-					}
-					else if(unit == 10)
-					{
-
-						output->unit1 = AX_EXE_OTHER;
-						output->unit2 = AX_OPCODE_INT;
-					}
-					else if(unit == 12)
-					{
-
-						output->unit1 = AX_EXE_BRU;
-						core->delayop = output->unit2 = AX_OPCODE_RET;
-						core->delay = 0;
-					}else if(unit == 13)
-					{
-						output->unit1 = AX_EXE_BRU;
-						core->delayop = output->unit2 = AX_OPCODE_RETI;
-						core->delay = 0;
-					}
-					else
-					{
-						return 1;
-					}
+					output->unit1 = AX_EXE_OTHER;
+					output->unit2 = AX_OPCODE_ENDP;
+				}
+				else if(unit == 9)
+				{
+					output->unit1 = AX_EXE_OTHER;
+					output->unit2 = AX_OPCODE_EXE;
+				}
+				else if(unit == 10)
+				{
+					output->unit1 = AX_EXE_DMA;
+					output->unit2 = AX_OPCODE_WAIT;
+				}
+				else if(unit == 12)
+				{
+					output->unit1 = AX_EXE_BRU;
+					core->delayop = output->unit2 = AX_OPCODE_RET;
+					core->delay = 0;
+				}
+				else if(unit == 13)
+				{
+					output->unit1 = AX_EXE_BRU;
+					core->delayop = output->unit2 = AX_OPCODE_RETI;
+					core->delay = 0;
+				}
+				else if(unit == 14)
+				{
+					output->unit1 = AX_EXE_BRU;
+					core->delayop = output->unit2 = AX_OPCODE_SYSCALL;
+					core->delay = 0;
+				}
+				else if(unit == 15)
+				{
+					output->unit1 = AX_EXE_BRU;
+					core->delayop = output->unit2 = AX_OPCODE_INT;
+					core->delay = 0;
 				}
 				else
 				{
-					output->unit1 = AX_EXE_CMP;
-					output->unit2 = unit;
-
-					if(unit == 2)
-					{
-						output->opB = extendSign( (imm>>2)&0xFFFF,15);
-						output->unit2 = AX_OPCODE_CMP;
-					}
-					else if(unit == 3)
-					{
-						output->opB = ( (imm>>2)&0xFFFF );
-						output->unit2 = AX_OPCODE_CMP;
-					}
-					else if(unit == 6)
-					{
-						output->id = (output->size+1)&0x3;
-						output->fopB[output->id] = convertImmFloat(imm>>2);
-						output->unit2 = AX_OPCODE_FCMP;
-					}
-					else if(unit == 7)
-					{
-						output->dopB = convertImmDouble(imm>>2);
-						output->unit2 = AX_OPCODE_DCMP;
-					}
-					else
-					{
-
-					}
+					return 1;
 				}
 			}
-			else if(id == 1)
+			else
 			{
-				output->unit1 = AX_EXE_DMA;
-				output->unit2 = unit&7;
+				output->unit1 = AX_EXE_CMP;
+				output->unit2 = unit;
 
-				if(unit&0x8)
+				if(unit == 2)
 				{
-					if(unit == 10)
-						output->opC = ( (imm>>2)&0xFFFF );
-					else if(unit == 11)
-						output->opC = ( (imm>>2)&0xFFFF );
-					else
-						output->opC = ( (imm>>2)&0x3FF );
+					output->opB = extendSign(imm&0x3FFFF,17);
+					output->unit2 = AX_OPCODE_CMP;
 				}
+				else if(unit == 3)
+				{
+					output->opB = (imm&0x3FFFF);
+					output->unit2 = AX_OPCODE_CMP;
+				}
+				else if(unit == 6)
+				{
+					output->id = (output->size+1)&0x3;
+					output->fopB[output->id] = convertImmFloat(imm>>2);
+					output->unit2 = AX_OPCODE_FCMP;
+				}
+				else if(unit == 7)
+				{
+					output->dopB = convertImmDouble(imm>>2);
+					output->unit2 = AX_OPCODE_DCMP;
+				}
+				else
+				{
 
+				}
 			}
+
 
 		break;
 
@@ -332,8 +347,16 @@ static int decode(Core *core,uint32_t id)
 			output->unit1 = AX_EXE_BRU;
 			core->delayop = output->unit2 = unit;
 			core->delay = 0;
+			tmp = readbits(opcode, 8, 24);
 
-			core->imm =  ( (imm>>2)&0xFFFF );
+			if((unit&0xC) == 0xC)
+			{
+				core->imm = tmp;
+			}
+			else
+			{
+				core->imm = extendSign( (tmp>>2),21);
+			}
 
 		break;
 
@@ -421,52 +444,35 @@ static int decode(Core *core,uint32_t id)
 
 int AX_decode(Core *core)
 {
-    //Fetch
-    memcpy(core->opcodes, core->isram + (core->pc * 4), 4 * sizeof(uint32_t));
+	int error = 0;
 
+    //Fetch
+    int n = core->pc;
+    core->opcodes[0] = core->wram[n+0];
+    core->opcodes[1] = core->wram[n+1];
+
+
+    //printf("%x %d\n",core->opcodes[0],core->pc);
 
     //printf("pc : %d\n",core->pc);
 
-    int error = 0;
-    int pairing,i;
-    pairing  = (core->opcodes[0]&1);
-    pairing += (core->opcodes[1]&1)<<1;
-    pairing += (core->opcodes[2]&1)<<2;
-    pairing += (core->opcodes[3]&1)<<3;
-
+	int pairing  = (core->opcodes[0]&1);
 
     //issue
-    if( (pairing&1) == 0b0 )
+    if(pairing == 0)
     {
-        core->swt = 1;
+        core->swt = 0;
         core->pc += 1;
-    }
-    else if( (pairing&3) == 0b01 )
+        error += decode(core,0);
+    }else
     {
-        core->swt = 2;
+		core->swt = 1;
         core->pc += 2;
-    }
-    else if( (pairing&7) == 0b011 )
-    {
-        core->swt = 3;
-        core->pc += 3;
-    }
-    else if( (pairing&0xF) == 0b0111 )
-    {
-        core->swt = 4;
-        core->pc += 4;
-    }
-    else
-    {
-        return -1;
+        error += decode(core,0);
+        error += decode(core,1);
     }
 
-	//core->instruction += core->swt;
-
-	for(i = 0;i < core->swt;i++)
-    	error += decode(core,i);
-
-
+    core->instruction += core->swt+1;
 
 
     return -error;

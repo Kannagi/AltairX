@@ -57,7 +57,7 @@ static float HalftoFloat(uint32_t half)
 
 //--------------------------------------------------------
 
-static void executeDelayedInstruction(Core *core, uint16_t imm)
+static void executeDelayedInstruction(Core *core, uint32_t imm)
 {
     switch(core->delayop)
     {
@@ -65,7 +65,7 @@ static void executeDelayedInstruction(Core *core, uint16_t imm)
             return;
 
         case AX_OPCODE_BNE: // !=
-            if(!(core->flags & Z_MASK))
+            if((core->flags & Z_MASK))
             {
                 core->pc += imm;
             }
@@ -73,7 +73,7 @@ static void executeDelayedInstruction(Core *core, uint16_t imm)
             break;
 
         case AX_OPCODE_BEQ: // ==
-            if((core->flags & Z_MASK))
+            if(!(core->flags & Z_MASK))
             {
                 core->pc += imm;
             }
@@ -159,9 +159,9 @@ static void executeDelayedInstruction(Core *core, uint16_t imm)
 
 		case AX_OPCODE_LOOP:
 
-            if(core->ireg[59] != 0)
+            if(core->ireg[60] != 0)
 			{
-				core->ireg[59]--;
+				core->ireg[60]--;
 				core->pc += imm;
 			}
             break;
@@ -172,6 +172,18 @@ static void executeDelayedInstruction(Core *core, uint16_t imm)
 
 		case AX_OPCODE_RETI:
             core->pc = core->ir;
+            break;
+
+		case AX_OPCODE_INT:
+			core->syscall = 2;
+			core->ir = core->pc;
+			core->pc = 2;
+            break;
+
+		case AX_OPCODE_SYSCALL:
+			core->syscall = 1;
+			core->ir = core->pc;
+			core->pc = 0;
             break;
     }
 
@@ -187,47 +199,53 @@ static void executeLS(Core *core,void *reg,uint64_t offset,uint32_t size,uint32_
     uint64_t max = 0;
 
 
-    if(offset&EMEMORY_MAP_WRAM_BEGIN)
+    if(offset&MEMORY_MAP_WRAM_BEGIN)
     {
         address = core->mmap.wram;
         max = core->mmap.nwram-1; //Max 2 Gio
     }
-    else if(offset&EMEMORY_MAP_VRAM_BEGIN)
+    else if(offset&MEMORY_MAP_VRAM_BEGIN)
     {
 		address = core->mmap.vram;
 		max = (core->mmap.nvram-1); //Max 1 Gio
 	}
-	else if(offset&EMEMORY_MAP_SRAM_BEGIN)
+	else if(offset&MEMORY_MAP_SRAM_BEGIN)
 	{
 		address = core->mmap.spmram;
 		max = (core->mmap.nspmram-1); //Max 512 Mio
 	}
-	else if(offset&EMEMORY_MAP_SPM3_BEGIN)
-	{
-		address = core->mmap.spm3;
-		max = (core->mmap.nspm3-1); //Max 256 Mio
-	}
-	else if(offset&EMEMORY_MAP_IO_BEGIN)
-	{
-		address = core->mmap.io;
-		max = 0xFFFFF; //Max 1 Mio (mirror 128 Mio)
-	}
-	else if(offset&EMEMORY_MAP_SPM2_BEGIN)
+	else if(offset&MEMORY_MAP_SPM2_BEGIN)
 	{
 		address = core->mmap.spm2;
 		max = (core->mmap.nspm2-1); //Max 64 Mio
 	}
-	else if(offset&EMEMORY_MAP_SPMT_BEGIN)
-	{
-		address = core->mmap.spmt;
-		max = (core->mmap.nspmt-1); //Max 32 Mio
-	}
 	else
 	{
-		address = core->mmap.rom;
-		max = (core->mmap.nrom-1); //Max 32 Mio
+		uint64_t tmp = (offset>>25)&3;
+		if(tmp == 0) // SPM L1
+		{
+			address = core->spm;
+			max = 0x7FFF; //Max 32 Kio
+		}else
+		if(tmp == 1) // ROM
+		{
+			address = core->mmap.rom;
+			max = (core->mmap.nrom-1); //Max 32 Mio
+		}else
+		if(tmp == 2) // I/O
+		{
+			address = core->mmap.io;
+			max = 0xFFFFF; //Max 1 Mio (max 32 Mio)
+		}else
+		if(tmp == 3) // SPM Thread
+		{
+			address = core->mmap.spmt;
+			max = (core->mmap.nspmt-1); //Max 32 Mio
+		}
+
 	}
 
+	offset &= max;
     if( (offset+size) > max)
     {
         exit(-1);
@@ -235,11 +253,11 @@ static void executeLS(Core *core,void *reg,uint64_t offset,uint32_t size,uint32_
 
     if(store)
     {
-        memcpy(reg, address+offset, size);
+		memcpy(address+offset, reg, size);
     }
     else
     {
-        memcpy(address+offset, reg, size);
+        memcpy(reg, address+offset, size);
     }
 }
 
@@ -374,7 +392,7 @@ static int executeInstruction(Core *core, uint32_t index)
             break;
 
             case AX_OPCODE_SLTS:
-            	printf("%ld %ld\n",opB,opC);
+            	//printf("%ld %ld\n",opB,opC);
                 ireg[opA] = ( (int64_t)opB < (int64_t)opC);
             break;
 
@@ -383,7 +401,7 @@ static int executeInstruction(Core *core, uint32_t index)
             break;
 
             case AX_OPCODE_SMOVE:
-                ireg[opA] = opB<<(size*16);
+                ireg[opA] |= opB<<(size*16);
                 size = 3;
             break;
 
@@ -429,7 +447,7 @@ static int executeInstruction(Core *core, uint32_t index)
         }
         ireg[opA] &= sizemask[size];
     }
-    else if(unit1 == AX_EXE_LSUM)
+    else if(unit1 == AX_EXE_LSU)
     {
         uint64_t offset =  opB + opC;
         switch(unit2)
@@ -437,40 +455,27 @@ static int executeInstruction(Core *core, uint32_t index)
             default:
                 return AX_ERROR_ILLEGAL_INSTRUCTION;
 
-            case AX_OPCODE_LDM:
-                memcpy(&ireg[opA], core->dsram + (offset&0x1FFFF), 1u << size);
+            case AX_OPCODE_LD:
+                executeLS(core,&ireg[opA],offset,1u << size,0);
+
             break;
 
-            case AX_OPCODE_STM:
-                memcpy(core->dsram + (offset&0x1FFFF), &ireg[opA], 1u << size);
+            case AX_OPCODE_ST:
+                executeLS(core,&ireg[opA],offset,1u << size,1);
             break;
 
-            case AX_OPCODE_LDC:
-                executeLS(core,&ireg[opA*4],offset,1u << size,0);
-            break;
-
-            case AX_OPCODE_STC:
-                executeLS(core,&ireg[opA*4],offset,1u << size,1);
-            break;
-
-            case AX_OPCODE_LDMV:
-                memcpy(&freg[opA*4], core->dsram + (offset&0x1FFFF), (1+size) << 4u);
-            break;
-
-            case AX_OPCODE_STMV:
-                memcpy(core->dsram + (offset&0x1FFFF), &freg[opA*4], (1+size) << 4u);
-            break;
-
-            case AX_OPCODE_LDCV:
+            case AX_OPCODE_LDV:
                 executeLS(core,&freg[opA*4],offset, (1+size) << 4u,0);
             break;
 
-            case AX_OPCODE_STCV:
+            case AX_OPCODE_STV:
                 executeLS(core,&freg[opA*4],offset, (1+size) << 4u,1);
             break;
 
             case AX_OPCODE_FLUSH:
             case AX_OPCODE_PREFETCH:
+            case AX_OPCODE_IFLUSH:
+            case AX_OPCODE_IPREFETCH:
 
             break;
 
@@ -501,7 +506,7 @@ static int executeInstruction(Core *core, uint32_t index)
 
             case AX_OPCODE_CMP:
 
-                opA = opA & sizemask[size];
+                opA = ireg[opA] & sizemask[size];
                 opB = opB & sizemask[size];
 
                 core->flags &= ZSUClearMask;
@@ -541,7 +546,7 @@ static int executeInstruction(Core *core, uint32_t index)
     }
     else if(unit1 == AX_EXE_DMA)
     {
-        void *addressA = core->dsram + ireg[opA];
+        void *addressA = core->spm + ireg[opA];
 
         switch(unit2)
         {
@@ -549,30 +554,12 @@ static int executeInstruction(Core *core, uint32_t index)
                 return AX_ERROR_ILLEGAL_INSTRUCTION;
 
             case AX_OPCODE_LDDMA:
-                executeLS(core,addressA,opB,opC*64,1);
+                executeLS(core,addressA,opB,opC*64,0);
             break;
 
 
             case AX_OPCODE_STDMA:
-                executeLS(core,addressA,opB,opC*64,0);
-            break;
-
-            case AX_OPCODE_LDDMACL:
-                //for(int i = 0;i < opB;i++)
-                {
-                    //core->dsram[ireg[opA]+i]
-                    //executeLS(Core,addressA,opB,opC*64,0);
-                }
-            break;
-
-            case AX_OPCODE_STDMACL:
-
-			break;
-
-            case AX_OPCODE_DMAI:
-                addressA = core->isram + ireg[opA];
-                executeLS(core,addressA,opB,opC*64,0);
-
+                executeLS(core,addressA,opB,opC*64,1);
             break;
 
             case AX_OPCODE_WAIT:
@@ -587,14 +574,6 @@ static int executeInstruction(Core *core, uint32_t index)
         {
             default:
                 return AX_ERROR_ILLEGAL_INSTRUCTION;
-
-            case AX_OPCODE_INT:
-            	core->syscall = 2;
-            break;
-
-			case AX_OPCODE_SYSCALL:
-				core->syscall = 1;
-            break;
 
             case AX_OPCODE_ENDP:
 
@@ -857,6 +836,21 @@ int AX_execute(Core *core)
         executeDelayedInstruction(core, core->imm);
     }
 
+	int result = executeInstruction(core, 0);
+	if(result != 0)
+	{
+		return result;
+	}
+
+	if(core->swt == 0)
+		return 0;
+
+	result = executeInstruction(core, 1);
+	if(result != 0)
+	{
+		return result;
+	}
+/*
     for(uint32_t i = 0; i < core->swt; ++i)
     {
         int result = executeInstruction(core, i);
@@ -865,7 +859,7 @@ int AX_execute(Core *core)
             return result;
         }
     }
-
+*/
 
 
     return 0;

@@ -7,21 +7,20 @@
 #include "src/vm.h"
 
 
+
 int main(int argc, char** argv)
 {
 	int i,arg = 0;
 
     char address[500];
-
     address[0] = 0;
-
 
     Processor processor;
 
     AX_init_proc(&processor);
 
-	// 16 MiB WRAM , 1 MiB VRAM , 1 MiB SPMRAM , 1 MiB SPML3 , 8 KiB SPMT , 512 kiB SPM2
-	AX_init_mem(&processor,16,1,1,1,8,512);
+	// 16 MiB WRAM , 1 MiB VRAM , 1 MiB SPMRAM , 8 KiB SPMT , 512 kiB SPM2
+	AX_init_mem(&processor,16,1,1,8,512);
 
     for(i = 1; i < argc;i++)
     {
@@ -34,7 +33,6 @@ int main(int argc, char** argv)
         	if(strcmp(argv[i],"-spmram") == 0) arg = 4;
         	if(strcmp(argv[i],"-spmt")   == 0) arg = 5;
         	if(strcmp(argv[i],"-spm2")   == 0) arg = 6;
-        	if(strcmp(argv[i],"-spm3")   == 0) arg = 7;
         }else
         {
         	if(arg == 0)
@@ -68,9 +66,6 @@ int main(int argc, char** argv)
 						processor.mmap.nspm2 = atoi(argv[i]);
 					break;
 
-					case 7:
-						processor.mmap.nspm3 = atoi(argv[i]);
-					break;
 				}
 				arg = 0;
 			}
@@ -82,7 +77,7 @@ int main(int argc, char** argv)
     {
         printf("Enter a program\n");
         printf("option numbre core  : -ncore \n");
-        printf("option size memory : -wram -vram -spmram -spmt -spm2 -spm3\n");
+        printf("option size memory : -wram -vram -spmram -spmt -spm2\n");
         printf("option mode  : -mode\n");
         printf("mode 0 console,syscall emulate ,1 core only\n");
         printf("mode 1 same mode 0 and debug\n");
@@ -101,7 +96,7 @@ int main(int argc, char** argv)
 	AX_load_prog("prog.bin",&processor.mmap);
 
 	AX_add_core(&processor);
-	AX_boot_rom(processor.core[0],processor.mmap.rom,0x20000);
+	AX_boot_rom(processor.core[0],processor.mmap.rom,processor.mmap.nrom);
 
 	int error = AX_exe_core(processor.core[0]);
 

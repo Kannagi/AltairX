@@ -6,16 +6,7 @@
 #include <stdint.h>
 #include "vm.h"
 
-void AX_syscall(Core *core)
-{
-	if(core->syscall != 1)
-		return;
 
-	core->ir = core->pc;
-	core->pc = 0;
-
-	core->syscall = 0;
-}
 
 
 int AX_syscall_emul(Core *core)
@@ -31,7 +22,10 @@ int AX_syscall_emul(Core *core)
 	uint64_t reg2 = core->ireg[6];
 	uint64_t reg3 = core->ireg[7];
 
-	printf("syscall : %.2lx %.2lx\n",core->ireg[4],reg1);
+	char *adr;
+	char *adr2;
+
+	//printf("syscall : %.2lx %.2lx\n",core->ireg[4],reg1);
 	//printf("syscall : %f\n",core->vreg[3*4]);
 
 	if(regA == 0x00) //Kernel 1
@@ -44,7 +38,8 @@ int AX_syscall_emul(Core *core)
 			break;
 
 			case 1:
-				puts((char *)&core->dsram[reg1]);
+			    adr = AX_Memory_Map(core,reg1,1000);
+				printf(adr);
 			break;
 
 			case 2:
@@ -72,7 +67,9 @@ int AX_syscall_emul(Core *core)
 			break;
 
 			case 8: //FOPEN
-				file = fopen((  const char *__restrict)&core->mmap.wram[reg2],(const char *__restrict)&core->mmap.wram[reg2]);
+				adr  = AX_Memory_Map(core,reg2,1000);
+				adr2 = AX_Memory_Map(core,reg3,1000);
+				file = fopen(adr,adr2);
 				core->ireg[4] = (uint64_t)file;
 			break;
 
@@ -100,7 +97,7 @@ int AX_syscall_emul(Core *core)
 				core->ireg[4] = getchar();
 			break;
 
-			case 0xF: //IF
+			case 0xF: //GIF
 
 			break;
 		}

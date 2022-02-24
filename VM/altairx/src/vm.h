@@ -1,27 +1,16 @@
 
+#define MEMORY_MAP_SPM1_BEGIN   (0x00000000)
+#define MEMORY_MAP_ROM_BEGIN    (0x02000000)
+#define MEMORY_MAP_IO_BEGIN     (0x04000000)
+#define MEMORY_MAP_SPMT_BEGIN   (0x06000000)
 
-#define MEMORY_MAP_ROM_BEGIN    (0x000000000)
-#define MEMORY_MAP_SPMT_BEGIN   (0x040000000)
-#define MEMORY_MAP_SPM2_BEGIN   (0x080000000)
-#define MEMORY_MAP_IO_BEGIN     (0x0C0000000)
 
-#define EMEMORY_MAP_SPM3_BEGIN   (0x100000000)
-
-#define MEMORY_MAP_SRAM_BEGIN   (0x200000000)
-#define MEMORY_MAP_VRAM_BEGIN   (0x400000000)
-#define MEMORY_MAP_WRAM_BEGIN   (0x800000000)
+#define MEMORY_MAP_SPM2_BEGIN   (0x08000000)
 
 //32 BITS
-#define EMEMORY_MAP_ROM_BEGIN    (0x00000000)
-#define EMEMORY_MAP_SPMT_BEGIN   (0x02000000)
-#define EMEMORY_MAP_SPM2_BEGIN   (0x04000000)
-#define EMEMORY_MAP_IO_BEGIN     (0x08000000)
-
-#define EMEMORY_MAP_RML3_BEGIN   (0x10000000)
-
-#define EMEMORY_MAP_SRAM_BEGIN   (0x20000000)
-#define EMEMORY_MAP_VRAM_BEGIN   (0x40000000)
-#define EMEMORY_MAP_WRAM_BEGIN   (0x80000000)
+#define MEMORY_MAP_SRAM_BEGIN   (0x20000000)
+#define MEMORY_MAP_VRAM_BEGIN   (0x40000000)
+#define MEMORY_MAP_WRAM_BEGIN   (0x80000000)
 
 //IO
 #define IO_CCIF (0x000000)
@@ -45,9 +34,12 @@
 #define AX_core_MAX_OPERATIONS 4
 #define AX_core_IREG_COUNT 64
 #define AX_core_VREG_COUNT 64
-#define AX_core_DSRAM_SIZE 0x10000 //(64 KiB)
-#define AX_core_ISRAM_SIZE 0x20000 //(128 KiB)
-#define AR_core_CACHE_SIZE (0x8000/(64/4))  //(32 KiB , 4-way)
+#define AX_core_SPM_SIZE 0x8000 //(32 KiB)
+
+
+#define AR_core_ICACHE_SIZE (0x10000/1024) //(64 KiB , 4-way)
+#define AR_core_DCACHE_SIZE (0x8000/128)  //(32 KiB , 4-way)
+
 
 typedef struct
 {
@@ -65,8 +57,6 @@ typedef struct MMAP
     uint8_t *spm2;
     uint8_t *io;
 
-    uint8_t *spm3;
-
     uint8_t *spmram;
     uint8_t *vram;
     uint8_t *wram;
@@ -75,8 +65,6 @@ typedef struct MMAP
 	uint32_t nrom;
 	uint32_t nspmt;
 	uint32_t nspm2;
-
-	uint32_t nspm3;
 
 	uint32_t nspmram;
 	uint32_t nvram;
@@ -91,16 +79,20 @@ typedef struct core
 	MMAP mmap;
 	Execute operations[AX_core_MAX_OPERATIONS];
 
+	uint32_t *wram;
+
     uint64_t instruction;
     uint64_t cycle;
 
     uint32_t opcodes[AX_core_MAX_OPERATIONS];
 
-    uint16_t delay,delayop,imm,swt,syscall;
-    uint16_t pc; //program-counter
-    uint16_t br; //buffer-register
-    uint16_t lr; //link-register
-    uint16_t ir; //interrupt-register
+    uint32_t pc; //program-counter
+    uint32_t br; //buffer-register
+    uint32_t lr; //link-register
+    uint32_t ir; //interrupt-register
+
+    uint32_t imm;
+
 
     /// \brief CPU Flags register
     ///
@@ -109,10 +101,12 @@ typedef struct core
     /// Bit 2: S flag, 1 if lesser, 0 if greater (signed comparison)
     /// Bit 3: U flag, 1 if lesser, 0 if greater (unsigned comparison)
     uint16_t flags;
+    uint8_t delay,delayop,swt,syscall;
 
-    uint8_t dsram [AX_core_DSRAM_SIZE];
-    uint8_t isram [AX_core_ISRAM_SIZE];
-    uint8_t cache [AR_core_CACHE_SIZE];
+    uint8_t spm[AX_core_SPM_SIZE];
+    uint32_t icache[AR_core_ICACHE_SIZE];
+    uint32_t dcacher[AR_core_DCACHE_SIZE];
+    uint32_t dcacherw[AR_core_DCACHE_SIZE];
 
     uint64_t ireg[AX_core_IREG_COUNT];
     union
@@ -139,8 +133,7 @@ typedef struct Processor
 
 enum {
     AX_EXE_ALU = 0,
-    AX_EXE_LSUM,
-    AX_EXE_LSUC,
+    AX_EXE_LSU,
     AX_EXE_BRU,
     AX_EXE_CMP,
     AX_EXE_VFPU,
@@ -162,7 +155,7 @@ enum {
     AX_OPCODE_ASR,
     AX_OPCODE_LSR,
 
-    AX_OPCODE_MULS,
+    AX_OPCODE_MULS = 10,
     AX_OPCODE_MULU,
     AX_OPCODE_DIVS,
     AX_OPCODE_DIVU,
@@ -197,18 +190,16 @@ enum {
 
 //LSU
 enum {
-    AX_OPCODE_LDM,
-    AX_OPCODE_STM,
-    AX_OPCODE_LDC,
-    AX_OPCODE_STC,
+    AX_OPCODE_LD,
+    AX_OPCODE_ST,
+    AX_OPCODE_LDV,
+    AX_OPCODE_STV,
 
-    AX_OPCODE_LDMV,
-    AX_OPCODE_STMV,
-    AX_OPCODE_LDCV,
-    AX_OPCODE_STCV,
-
+    AX_OPCODE_IPREFETCH,
+    AX_OPCODE_IFLUSH,
     AX_OPCODE_PREFETCH,
     AX_OPCODE_FLUSH,
+
 };
 
 //BRU
@@ -224,14 +215,18 @@ enum {
     AX_OPCODE_BGS,
     AX_OPCODE_BGES,
     AX_OPCODE_BRA,
+    AX_OPCODE_LOOP,
+
     AX_OPCODE_JMP,
     AX_OPCODE_JMPBR,
     AX_OPCODE_CALL,
     AX_OPCODE_CALLBR,
-	AX_OPCODE_LOOP,
+
 
     AX_OPCODE_RET = 0x10,
     AX_OPCODE_RETI,
+    AX_OPCODE_SYSCALL,
+    AX_OPCODE_INT,
 
 };
 
@@ -239,12 +234,7 @@ enum {
 enum {
     AX_OPCODE_LDDMA,
     AX_OPCODE_STDMA,
-    AX_OPCODE_LDDMACL,
-    AX_OPCODE_STDMACL,
-    AX_OPCODE_DMAID,
-    AX_OPCODE_DMADI,
-    AX_OPCODE_DMAI,
-    AX_OPCODE_WAIT = 7,
+    AX_OPCODE_WAIT,
 };
 
 //VFPU
@@ -299,8 +289,7 @@ enum {
 //OTHER
 enum {
 	AX_OPCODE_ENDP,
-    AX_OPCODE_SYSCALL,
-    AX_OPCODE_INT,
+	AX_OPCODE_EXE,
 };
 
 
@@ -332,5 +321,6 @@ int AX_add_core(Processor *processor);
 
 int AX_init_proc(Processor *processor);
 int AX_init_proc_mem(Processor *processor);
-void AX_init_mem(Processor *processor,int nwram,int nvram,int nsram,int nspm3,int nspmt,int nspm2);
+void AX_init_mem(Processor *processor,int nwram,int nvram,int nsram,int nspmt,int nspm2);
 int AX_load_prog(char *name,MMAP *mmap);
+void *AX_Memory_Map(Core *core,uint64_t offset,uint32_t size);

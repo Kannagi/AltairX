@@ -17,67 +17,58 @@
 ;0x05
 ;GUI
 
-	
+
 	include "macro.asm"
-	include "vector.asm"
- 
-	movei r60,1
-
-
+	org $0
+	
+	
+	move IR,r0
+	move r0,IR
+	
+	nop.p
 	fmovei v0,1.5
-
 
 	fmovei v1,1.0
 
+	move FR,r5
 
+	nop
 	addi r63,r63,5
-
-
 
 	fadd.p v0,v0,v1
 	nop
+	
 	
 	syscall 0x00
 	nop
 	
 lab2:
-	smove.w r5,$8000
-	smove.b r5,$0400
-
-
-
-	movei r8,1
-
-
-	ldi r6,0[r5]
-	movei r7,'0'
-
-	;addi r6,r6,1
-	add r6,r7,r8
-	sti r6,0[r5]
+	movei r0,$00
+	movei r1,$400
 	
-	movei r4,$01
-
+	movei r8,$00
+	lddmai r0,r1,1
+	
+	ldml r1,$0	
 	syscall 0x00
-	nop
+	
 	
 	call lfunc
 	nop
 	
 	
-	movei r10,$1	
-	cmpi r10,0
+	movei r0,$00	
+	cmpi r0,0
 	beq test
 	nop
-	movei r4,$00
+	
 	syscall 0x00
-	nop
+	
 	
 test:
 	
 	endp
 	nop
-
 	
 lfunc:
 	nop
@@ -89,4 +80,5 @@ lfunc:
 	org $400
 	dc.b "Hello World",$A,0
 	
+	org $480
 	

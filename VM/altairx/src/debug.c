@@ -24,145 +24,137 @@ static void debug_inst(Core *core, uint32_t index)
         switch(unit2)
         {
             case AX_OPCODE_ADD:
-            	printf("ADD R%ld,R%d,R%d\n",opA,regB,regC);
+            	printf("ADD R%ld,R%d,R%d",opA,regB,regC);
             break;
 
             case AX_OPCODE_SUB:
-                printf("SUB R%ld,R%d,R%d\n",opA,regB,regC);
+                printf("SUB R%ld,R%d,R%d",opA,regB,regC);
             break;
 
             case AX_OPCODE_XOR:
-                printf("XOR R%ld,R%d,R%d\n",opA,regB,regC);
+                printf("XOR R%ld,R%d,R%d",opA,regB,regC);
             break;
 
             case AX_OPCODE_OR:
-                printf("OR R%ld,R%d,R%d\n",opA,regB,regC);
+                printf("OR R%ld,R%d,R%d",opA,regB,regC);
             break;
 
             case AX_OPCODE_AND:
-                printf("AND R%ld,R%d,R%d\n",opA,regB,regC);
+                printf("AND R%ld,R%d,R%d",opA,regB,regC);
             break;
 
             case AX_OPCODE_LSL:
-                printf("LSL R%ld,R%d,R%d\n",opA,regB,regC);
+                printf("LSL R%ld,R%d,R%d",opA,regB,regC);
             break;
 
             case AX_OPCODE_LSR:
-                printf("LSR R%ld,R%d,R%d\n",opA,regB,regC);
+                printf("LSR R%ld,R%d,R%d",opA,regB,regC);
             break;
 
             case AX_OPCODE_ASR:
-                printf("ASR R%ld,R%d,R%d\n",opA,regB,regC);
+                printf("ASR R%ld,R%d,R%d",opA,regB,regC);
             break;
 
             case AX_OPCODE_MULS:
-                printf("MULS P,R%d,R%d\n",regB,regC);
+                printf("MULS P,R%d,R%d",regB,regC);
             break;
 
             case AX_OPCODE_MULU:
-                printf("MULU P,R%d,R%d\n",regB,regC);
+                printf("MULU P,R%d,R%d",regB,regC);
             break;
 
             case AX_OPCODE_DIVS:
-                printf("DIVS Q,R%d,R%d\n",regB,regC);
+                printf("DIVS Q,R%d,R%d",regB,regC);
             break;
 
             case AX_OPCODE_DIVU:
-                printf("DIVS U,R%d,R%d\n",regB,regC);
+                printf("DIVS U,R%d,R%d",regB,regC);
             break;
 
             case AX_OPCODE_REMS:
-                printf("REMS Q,R%d,R%d\n",regB,regC);
+                printf("REMS Q,R%d,R%d",regB,regC);
             break;
 
             case AX_OPCODE_REMU:
-                printf("REMU Q,R%d,R%d\n",regB,regC);
+                printf("REMU Q,R%d,R%d",regB,regC);
             break;
 
 
             case AX_OPCODE_BOOL:
-            	printf("BOOL R%ld,R%d\n",opA,regB);
+            	printf("BOOL R%ld,R%d",opA,regB);
             break;
 
             case AX_OPCODE_SEXT:
-            	printf("SEXT.%d R%ld,R%d\n",size,opA,regB);
+            	printf("SEXT.%d R%ld,R%d",size,opA,regB);
             break;
 
             case AX_OPCODE_SLTS:
-            	printf("SLTS %d %d\n",regB,regC);
+            	printf("SLTS %d %d",regB,regC);
             break;
 
             case AX_OPCODE_SLTU:
-                printf("SLTU %d %d\n",regB,regC);
+                printf("SLTU %d %d",regB,regC);
             break;
 
             case AX_OPCODE_SMOVE:
-                printf("SMOVE.%d R%ld,R%d\n",size,opA,regB);
+                printf("SMOVE.%d R%ld,R%d",size,opA,regB);
             break;
 
             case AX_OPCODE_MOVE:
-                printf("MOVE R%ld,R%d\n",opA,regB);
+                printf("MOVE R%ld,R%d",opA,regB);
             break;
 
             case AX_OPCODE_MOVEINS:
-                printf("MOVEINS R%ld\n",opA);
+                printf("MOVEINS R%ld",opA);
             break;
 
             case AX_OPCODE_MOVECYCLE:
-                printf("MOVECYCLE R%ld\n",opA);
+                printf("MOVECYCLE R%ld",opA);
             break;
 
             case AX_OPCODE_MOVERI1:
-                printf("MOVE R%ld,RI%d\n",opA,regB);
+                printf("MOVE R%ld,RI%d",opA,regB);
             break;
 
             case AX_OPCODE_MOVERI2:
-                printf("MOVE RI%d,R%ld\n",regB,opA);
+                printf("MOVE RI%d,R%ld",regB,opA);
             break;
         }
     }
-    else if(unit1 == AX_EXE_LSUM)
+    else if(unit1 == AX_EXE_LSU)
     {
         switch(unit2)
         {
-            case AX_OPCODE_LDM:
-            	printf("LDM R%ld,R%d[R%d]\n",opA,regC,regB);
+            case AX_OPCODE_LD:
+            	printf("LD R%ld,R%d[R%d]",opA,regC,regB);
             break;
 
-            case AX_OPCODE_STM:
-                printf("STM R%ld,R%d[R%d]\n",opA,regC,regB);
+            case AX_OPCODE_ST:
+                printf("ST R%ld,R%d[R%d]",opA,regC,regB);
             break;
 
-            case AX_OPCODE_LDC:
-                printf("LDC R%ld,R%d[R%d]\n",opA,regC,regB);
+            case AX_OPCODE_LDV:
+            	printf("LDV V%ld,R%d[R%d]",opA,regC,regB);
             break;
 
-            case AX_OPCODE_STC:
-                printf("STC R%ld,R%d[R%d]\n",opA,regC,regB);
-            break;
-
-            case AX_OPCODE_LDMV:
-            	printf("LDMV V%ld,R%d[R%d]\n",opA,regC,regB);
-            break;
-
-            case AX_OPCODE_STMV:
-                printf("STMV V%ld,R%d[R%d]\n",opA,regC,regB);
-            break;
-
-            case AX_OPCODE_LDCV:
-                printf("LDCV V%ld,R%d[R%d]\n",opA,regC,regB);
-            break;
-
-            case AX_OPCODE_STCV:
-                printf("STCV V%ld,R%d[R%d]\n",opA,regC,regB);
+            case AX_OPCODE_STV:
+                printf("STV V%ld,R%d[R%d]",opA,regC,regB);
             break;
 
             case AX_OPCODE_FLUSH:
-            	printf("FLUSH R%d[R%ld]\n",regB,opA);
+            	printf("FLUSH R%d[R%ld]",regB,opA);
 			break;
 
             case AX_OPCODE_PREFETCH:
-				printf("PREFETCH R%d[R%ld]\n",regB,opA);
+				printf("PREFETCH R%d[R%ld]",regB,opA);
+            break;
+
+            case AX_OPCODE_IFLUSH:
+            	printf("IFLUSH R%d[R%ld]",regB,opA);
+			break;
+
+            case AX_OPCODE_IPREFETCH:
+				printf("IPREFETCH R%d[R%ld]",regB,opA);
             break;
 
         }
@@ -172,19 +164,19 @@ static void debug_inst(Core *core, uint32_t index)
         switch(unit2)
         {
             case AX_OPCODE_CMPFR:
-				printf("CMPRFR FR,R%ld\n",opA);
+				printf("CMPRFR FR,R%ld",opA);
             break;
 
             case AX_OPCODE_CMP:
-				printf("CMP R%ld,R%d\n",opA,regB);
+				printf("CMP R%ld,R%d",opA,regB);
             break;
 
             case AX_OPCODE_FCMP:
-				printf("CMPF V%ld,V%d\n",opA,regB);
+				printf("CMPF V%ld,V%d",opA,regB);
             break;
 
             case AX_OPCODE_DCMP:
-				printf("CMPD V%ld,V%d\n",opA,regB);
+				printf("CMPD V%ld,V%d",opA,regB);
             break;
 
 
@@ -196,71 +188,79 @@ static void debug_inst(Core *core, uint32_t index)
 		switch(unit2)
 		{
 			case AX_OPCODE_BNE: // !=
-				printf("BNE %d\n",imm);
+				printf("BNE %d",imm);
 			break;
 
 			case AX_OPCODE_BEQ: // ==
-				printf("BEQ %d\n",imm);
+				printf("BEQ %d",imm);
 			break;
 
 			case AX_OPCODE_BLE: // <=
-				printf("BLE %d\n",imm);
+				printf("BLE %d",imm);
 			break;
 
 			case AX_OPCODE_BG: // >
-				printf("BG %d\n",imm);
+				printf("BG %d",imm);
 			break;
 
 			case AX_OPCODE_BGE: // >=
-				printf("BGE %d\n",imm);
+				printf("BGE %d",imm);
 			break;
 
 			case AX_OPCODE_BLS: // <
-				printf("BLS %d\n",imm);
+				printf("BLS %d",imm);
 			break;
 
 			case AX_OPCODE_BLES: // <=
-				printf("BLES %d\n",imm);
+				printf("BLES %d",imm);
 			break;
 
 			case AX_OPCODE_BGS: // >
-				printf("BGS %d\n",imm);
+				printf("BGS %d",imm);
 			break;
 
 			case AX_OPCODE_BGES: // >=
-				printf("BGES %d\n",imm);
+				printf("BGES %d",imm);
 			break;
 
 			case AX_OPCODE_BRA:
-				printf("BRA: %d\n",imm);
+				printf("BRA: %d",imm);
 			break;
 
 			case AX_OPCODE_JMP:
-				printf("JMP: %d\n",imm);
+				printf("JMP: %d",imm);
 			break;
 
 			case AX_OPCODE_CALL:
-				printf("CALL: %d\n",imm);
+				printf("CALL: %d",imm);
 			break;
 
 			case AX_OPCODE_JMPBR:
-				printf("JMPBR: %d+%d\n",imm,core->br);
+				printf("JMPBR: %d+%d",imm,core->br);
 			break;
 
 			case AX_OPCODE_CALLBR:
-				printf("CALLBR: %d+%d\n",imm,core->br);
+				printf("CALLBR: %d+%d",imm,core->br);
 			break;
 
 			case AX_OPCODE_LOOP:
-				printf("LOOP: %d\n",imm);
+				printf("LOOP: %d",imm);
 			break;
 
+			case AX_OPCODE_INT:
+            	printf("INT");
+            break;
+
+			case AX_OPCODE_SYSCALL:
+				printf("SYSCALL");
+            break;
+
 			case AX_OPCODE_RET:
-				puts("RET");
+				printf("RET");
 			break;
 
 			case AX_OPCODE_RETI:
-				puts("RETI");
+				printf("RETI");
 			break;
 		}
 
@@ -270,28 +270,12 @@ static void debug_inst(Core *core, uint32_t index)
         switch(unit2)
         {
             case AX_OPCODE_LDDMA:
-				printf("LDDMA R%ld,R%d,R%d\n",opA,regB,regC);
+				printf("LDDMA R%ld,R%d,R%d",opA,regB,regC);
             break;
 
 
             case AX_OPCODE_STDMA:
-                printf("STDMA R%ld,R%d,R%d\n",opA,regB,regC);
-            break;
-
-            case AX_OPCODE_LDDMACL:
-                //for(int i = 0;i < opB;i++)
-                {
-                    //core->dsram[ireg[opA]+i]
-                    //executeLS(Core,addressA,opB,opC*64,0);
-                }
-            break;
-
-            case AX_OPCODE_STDMACL:
-
-			break;
-
-            case AX_OPCODE_DMAI:
-
+                printf("STDMA R%ld,R%d,R%d",opA,regB,regC);
             break;
 
             case AX_OPCODE_WAIT:
@@ -304,14 +288,6 @@ static void debug_inst(Core *core, uint32_t index)
     {
         switch(unit2)
         {
-            case AX_OPCODE_INT:
-            	puts("INT");
-            break;
-
-			case AX_OPCODE_SYSCALL:
-				puts("SYSCALL");
-            break;
-
             case AX_OPCODE_ENDP:
 				puts("ENDP");
             break;
@@ -329,74 +305,74 @@ static void debug_inst(Core *core, uint32_t index)
             switch(unit2)
             {
                 case AX_OPCODE_FADD:
-                	printf("FADD V%ld,V%d,V%d\n",opA,regB,regC);
+                	printf("FADD V%ld,V%d,V%d",opA,regB,regC);
                 break;
 
                 case AX_OPCODE_FSUB:
-                    printf("FSUB V%ld,V%d,V%d\n",opA,regB,regC);
+                    printf("FSUB V%ld,V%d,V%d",opA,regB,regC);
                 break;
 
                 case AX_OPCODE_FMUL:
-                    printf("FMUL V%ld,V%d,V%d\n",opA,regB,regC);
+                    printf("FMUL V%ld,V%d,V%d",opA,regB,regC);
                 break;
 
                 case AX_OPCODE_FMADD:
-                    printf("FMADD V%ld,V%d,V%d\n",opA,regB,regC);
+                    printf("FMADD V%ld,V%d,V%d",opA,regB,regC);
                 break;
 
                 case AX_OPCODE_FMSUB:
-                    printf("FMSUB V%ld,V%d,V%d\n",opA,regB,regC);
+                    printf("FMSUB V%ld,V%d,V%d",opA,regB,regC);
                 break;
 
                 //------------
 
                 case AX_OPCODE_VFADD:
-					printf("VFADD V%ld,V%d,V%d\n",opA,regB,regC);
+					printf("VFADD V%ld,V%d,V%d",opA,regB,regC);
                 break;
 
                 case AX_OPCODE_VFSUB:
-                    printf("VFSUB V%ld,V%d,V%d\n",opA,regB,regC);
+                    printf("VFSUB V%ld,V%d,V%d",opA,regB,regC);
                 break;
 
                 case AX_OPCODE_VFMUL:
-                    printf("VFMUL V%ld,V%d,V%d\n",opA,regB,regC);
+                    printf("VFMUL V%ld,V%d,V%d",opA,regB,regC);
                 break;
 
                 case AX_OPCODE_VFMADD:
-                    printf("VFMADD V%ld,V%d,V%d\n",opA,regB,regC);
+                    printf("VFMADD V%ld,V%d,V%d",opA,regB,regC);
                 break;
 
                 case AX_OPCODE_VFMSUB:
-                	printf("VFMSUB V%ld,V%d,V%d\n",opA,regB,regC);
+                	printf("VFMSUB V%ld,V%d,V%d",opA,regB,regC);
                 break;
 
                 //------------
 
                 case AX_OPCODE_VFADDS:
-                	printf("VFADDS V%ld,V%d,V%d\n",opA,regB,regC);
+                	printf("VFADDS V%ld,V%d,V%d",opA,regB,regC);
                 break;
 
                 case AX_OPCODE_VFSUBS:
-                	printf("VFSUBS V%ld,V%d,V%d\n",opA,regB,regC);
+                	printf("VFSUBS V%ld,V%d,V%d",opA,regB,regC);
                 break;
 
                 case AX_OPCODE_VFMULS:
-                	printf("VFMULS V%ld,V%d,V%d\n",opA,regB,regC);
+                	printf("VFMULS V%ld,V%d,V%d",opA,regB,regC);
                 break;
 
                 case AX_OPCODE_VFMADDS:
-                	printf("VFMADDS V%ld,V%d,V%d\n",opA,regB,regC);
+                	printf("VFMADDS V%ld,V%d,V%d",opA,regB,regC);
                 break;
 
                 case AX_OPCODE_VFMSUBS:
-                	printf("VFMSUBS V%ld,V%d,V%d\n",opA,regB,regC);
+                	printf("VFMSUBS V%ld,V%d,V%d",opA,regB,regC);
                 break;
 
                 //------------
 
 
                 case AX_OPCODE_VFSHUFFLE:
-                	printf("VFSHUFFLE V%ld,V%d,V%d\n",opA,regB,regC);
+                	printf("VFSHUFFLE V%ld,V%d,V%d",opA,regB,regC);
                 break;
 
 
@@ -409,90 +385,90 @@ static void debug_inst(Core *core, uint32_t index)
             switch(unit2)
             {
                 case AX_OPCODE_FMOVE:
-                    printf("FMOVE V%ld,V%d\n",opA,regB);
+                    printf("FMOVE V%ld,V%d",opA,regB);
                 break;
 
                 case AX_OPCODE_VFMOVE:
-                    printf("VFMOVE V%ld,V%d\n",opA,regB);
+                    printf("VFMOVE V%ld,V%d",opA,regB);
                 break;
 
                 case AX_OPCODE_FNEG:
-                	printf("FNEG V%ld,V%d\n",opA,regB);
+                	printf("FNEG V%ld,V%d",opA,regB);
                 break;
 
                 case AX_OPCODE_FABS:
-                    printf("FABS V%ld,V%d\n",opA,regB);
+                    printf("FABS V%ld,V%d",opA,regB);
                 break;
 
                 case AX_OPCODE_VFNEG:
-                	printf("VFNEG V%ld,V%d\n",opA,regB);
+                	printf("VFNEG V%ld,V%d",opA,regB);
                 break;
 
                 case AX_OPCODE_VFABS:
-                	printf("VFABS V%ld,V%d\n",opA,regB);
+                	printf("VFABS V%ld,V%d",opA,regB);
                 break;
 
                 case AX_OPCODE_VFTOI:
-                	printf("VFTOI V%ld,V%d\n",opA,regB);
+                	printf("VFTOI V%ld,V%d",opA,regB);
                 break;
 
                 case AX_OPCODE_VITOF:
-                	printf("VITOF V%ld,V%d\n",opA,regB);
+                	printf("VITOF V%ld,V%d",opA,regB);
                 break;
 
                 case AX_OPCODE_VFTOD:
-                	printf("VFTOD V%ld,V%d\n",opA,regB);
+                	printf("VFTOD V%ld,V%d",opA,regB);
                 break;
 
                 case AX_OPCODE_VDTOF:
-                	printf("VDTOF V%ld,V%d\n",opA,regB);
+                	printf("VDTOF V%ld,V%d",opA,regB);
                 break;
 
                 case AX_OPCODE_VFTOH:
-                	printf("VFTOH V%ld,V%d\n",opA,regB);
+                	printf("VFTOH V%ld,V%d",opA,regB);
                 break;
 
                 case AX_OPCODE_VHTOF:
-                	printf("VHTOF V%ld,V%d\n",opA,regB);
+                	printf("VHTOF V%ld,V%d",opA,regB);
                 break;
             }
 
         }
         else if(unit3 == 2) //EFU
-        {
-
+        {/*
+			case AX_OPCODE_DDIV:
+				printf("DDIV Q,V%d,V%d",regB,regC);
+			break;*/
         }
         else //DOUBLE
         {
             switch(unit2)
             {
                 case AX_OPCODE_DMOVE:
-                    printf("DMOVE V%ld,V%d\n",opA,regB);
+                    printf("DMOVE V%ld,V%d",opA,regB);
                 break;
 
                 case AX_OPCODE_DADD:
-                    printf("DADD V%ld,V%d,V%d\n",opA,regB,regC);
+                    printf("DADD V%ld,V%d,V%d",opA,regB,regC);
                 break;
 
                 case AX_OPCODE_DSUB:
-                    printf("DSUB V%ld,V%d,V%d\n",opA,regB,regC);
+                    printf("DSUB V%ld,V%d,V%d",opA,regB,regC);
                 break;
 
                 case AX_OPCODE_DMUL:
-                    printf("DMUL V%ld,V%d,V%d\n",opA,regB,regC);
+                    printf("DMUL V%ld,V%d,V%d",opA,regB,regC);
                 break;
 
                 case AX_OPCODE_DNEG:
-                    printf("DNEG V%ld,V%d\n",opA,regB);
+                    printf("DNEG V%ld,V%d",opA,regB);
                 break;
 
                 case AX_OPCODE_DABS:
-                    printf("DABS V%ld,V%d\n",opA,regB);
+                    printf("DABS V%ld,V%d",opA,regB);
                 break;
 
-                case AX_OPCODE_DDIV:
-                    printf("DDIV Q,V%d,V%d\n",regB,regC);
-                break;
+
             }
 
         }
@@ -500,17 +476,21 @@ static void debug_inst(Core *core, uint32_t index)
     }
     else if(unit1 == AX_EXE_NOP)
     {
-    	puts("NOP");
+    	printf("NOP");
     }
 
 }
 
 void AX_debug(Core *core)
 {
-	printf("PC %d : ",core->pc);
-    for(uint32_t i = 0; i < core->swt; ++i)
-    {
-        debug_inst(core, i);
-    }
+	printf("PC %d: ",core->pc-1-core->swt);
 
+	debug_inst(core, 0);
+
+	printf("    ");
+
+	if(core->swt == 1)
+		debug_inst(core, 1);
+
+	printf("\n");
 }

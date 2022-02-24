@@ -14,7 +14,7 @@
 				<Option compiler="gcc" />
 				<Option parameters=" prog.bin" />
 				<Compiler>
-					<Add option="-O2" />
+					<Add option="-Os" />
 				</Compiler>
 				<Linker>
 					<Add option="-s" />
@@ -55,6 +55,9 @@
 			<Add option="-s" />
 		</Compiler>
 		<Unit filename="main.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/cycle.c">
 			<Option compilerVar="CC" />
 		</Unit>
 		<Unit filename="src/debug.c">

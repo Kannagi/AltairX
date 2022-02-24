@@ -447,24 +447,25 @@ dblock *eval_instruction(instruction *p,section *sec,taddr pc)
         eval_expr(operand1.value,&val,sec,pc);
         val = (val-pc-4-1)>>2;
 
-        operand1.val = val&0xFFFF;
+        operand1.val = val&0x3FFFFF;
 
         opcode |= (operand1.val<<10);
     }
 
-    if(operand1.type == OP_IMM)
-    {
+    if(operand1.type == OP_ILB)
+    { 
         eval_expr(operand1.value,&val,sec,pc);
+
         if(val == 0)
         {
             operand1.val = 0;
         }else
         {
             val = (val+4-1)>>2;
-            operand1.val = val&0xFFFF;
+            operand1.val = val&0xFFFFFF;
         }
 
-        opcode |= (operand1.val<<10);
+        opcode |= (operand1.val<<8);
     }
 
     if(operand1.type == OP_IMR)
@@ -482,7 +483,7 @@ dblock *eval_instruction(instruction *p,section *sec,taddr pc)
     }
 
 
-    if( (operand1.type >= OP_RLR) && (operand1.type <= OP_RIR ) && (operand2.type == OP_REG) )
+    if( (operand1.type >= OP_RLR) && (operand1.type <= OP_RIR ) )
     {
         opcode |= (operand1.type&0x3)<<26;
     }
@@ -564,12 +565,12 @@ dblock *eval_instruction(instruction *p,section *sec,taddr pc)
     {
         eval_expr(operand3.value,&val,sec,pc);
         operand3.val = val&0x1FF;
-        opcode |= (operand3.val<<11);
+        opcode |= (operand3.val<<11); 
     }
 
     //-------------
     //printf("%x\n",opcode);
-    //printbin(opcode);
+   // printbin(opcode);
 
     val = opcode;
     db->size = 4;

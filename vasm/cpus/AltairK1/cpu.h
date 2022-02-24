@@ -56,15 +56,16 @@ typedef struct {
 
 #define OP_RFF             0x0A
 
-#define OP_IMM             0x10
+#define OP_IMM             0x10 //10 bits/16 bits
 #define OP_IMS             0x11 //9 bits
-#define OP_IMB             0x12 //16 bits branch
-#define OP_IML             0x13 //18 bits
-#define OP_IMF             0x14 //Float/half
+#define OP_IMB             0x12 //22 bits
+#define OP_ILB             0x13 //24 bits
+#define OP_IML             0x14 //18 bits
+#define OP_IMF             0x15 //Float/half
 
 
-#define OP_IMR             0x15
-#define OP_RRG             0x16
+#define OP_IMR             0x18
+#define OP_RRG             0x19
 
 
 #define OP_DATA            0x3e

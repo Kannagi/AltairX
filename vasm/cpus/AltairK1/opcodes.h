@@ -1,73 +1,50 @@
+  //LSU-A Unit 2 (010)
+  "ldl",     {OP_REG,OP_IMM,      },  {K1,(0b00000100)},
+  "stl",     {OP_REG,OP_IMM,      },  {K1,(0b00010100)},
+  "ldvl",    {OP_VRG,OP_IMM,      },  {K1,(0b00100100)},
+  "stvl",    {OP_VRG,OP_IMM,      },  {K1,(0b00110100)},
 
-  //DMA Unit 4 (100)
-  "lddma",    {OP_REG,OP_REG,OP_REG},  {K1,(0b00001000)},
-  "stdma",    {OP_REG,OP_REG,OP_REG},  {K1,(0b00011000)},
-  "lddmacl",  {OP_REG,OP_REG,      },  {K1,(0b00101000)},
-  "stdmacl",  {OP_REG,OP_REG,      },  {K1,(0b00111000)},
+  "ldl2",    {OP_REG,OP_IMM,      },  {K1,(0b01000100)},
+  "stl2",    {OP_REG,OP_IMM,      },  {K1,(0b01010100)},
+  "ldvl2",   {OP_VRG,OP_IMM,      },  {K1,(0b01100100)},
+  "stvl2",   {OP_VRG,OP_IMM,      },  {K1,(0b01110100)},
 
-  "dmaidi",   {OP_REG,OP_REG,OP_REG},  {K1,(0b01001000)},
-  "dmadii",   {OP_REG,OP_REG,OP_REG},  {K1,(0b01011000)},
-  "dmai",     {OP_REG,OP_REG,OP_REG},  {K1,(0b01101000)},
-  //"wait",     {                    },  {K1,(0b01111000)},
+  "ldl3",    {OP_REG,OP_IMM,      },  {K1,(0b10000100)},
+  "stl3",    {OP_REG,OP_IMM,      },  {K1,(0b10010100)},
+  "ldvl3",   {OP_VRG,OP_IMM,      },  {K1,(0b10100100)},
+  "stvl3",   {OP_VRG,OP_IMM,      },  {K1,(0b10110100)},
 
-  "lddmai",   {OP_REG,OP_REG,OP_IMM},  {K1,(0b10001000)},
-  "stdmai",   {OP_REG,OP_REG,OP_IMM},  {K1,(0b10011000)},
-  "lddmacli", {OP_REG,OP_IMM,      },  {K1,(0b10101000)},
-  "stdmacli", {OP_REG,OP_IMM,      },  {K1,(0b10111000)},
+  "ldl4",    {OP_REG,OP_IMM,      },  {K1,(0b11000100)},
+  "stl4",    {OP_REG,OP_IMM,      },  {K1,(0b11010100)},
+  "ldvl4",   {OP_VRG,OP_IMM,      },  {K1,(0b11100100)},
+  "stvl4",   {OP_VRG,OP_IMM,      },  {K1,(0b11110100)},
 
-  "dmaidi",   {OP_REG,OP_REG,OP_REG},  {K1,(0b11001000)},
-  "dmadii",   {OP_REG,OP_REG,OP_REG},  {K1,(0b11011000)},
-  "dmai",     {OP_REG,OP_REG,OP_REG},  {K1,(0b11101000)},
+  //LSU-B Unit 3 (011)
+  "ld",      {OP_REG,OP_RRG,      },  {K1,(0b00000110)},
+  "st",      {OP_REG,OP_RRG,      },  {K1,(0b00010110)},
+  "ldv",     {OP_VRG,OP_RRG,      },  {K1,(0b00100110)},
+  "stv",     {OP_VRG,OP_RRG,      },  {K1,(0b00110110)},
 
-  "wait",     {                    },  {K1,(0b11111000)},
+  "ldi",     {OP_REG,OP_IMR,      },  {K1,(0b01000110)},
+  "sti",     {OP_REG,OP_IMR,      },  {K1,(0b01010110)},
+  "ldvi",    {OP_VRG,OP_IMR,      },  {K1,(0b01100110)},
+  "stvi",    {OP_VRG,OP_IMR,      },  {K1,(0b01110110)},
 
-  //LSU SPM Unit 2 (010)
-  "ldm",      {OP_REG,OP_RRG,      },  {K1,(0b00000100)},
-  "stm",      {OP_REG,OP_RRG,      },  {K1,(0b00010100)},
-  "ldmv",     {OP_VRG,OP_RRG,      },  {K1,(0b00100100)},
-  "stmv",     {OP_VRG,OP_RRG,      },  {K1,(0b00110100)},
-
-  "ldmi",     {OP_REG,OP_IMR,      },  {K1,(0b01000100)},
-  "stmi",     {OP_REG,OP_IMR,      },  {K1,(0b01010100)},
-  "ldmvi",    {OP_VRG,OP_IMR,      },  {K1,(0b01100100)},
-  "stmvi",    {OP_VRG,OP_IMR,      },  {K1,(0b01110100)},
-
-  "ldml",     {OP_REG,OP_IMM,      },  {K1,(0b10000100)},
-  "stml",     {OP_REG,OP_IMM,      },  {K1,(0b10010100)},
-  "ldmvl",    {OP_VRG,OP_IMM,      },  {K1,(0b10100100)},
-  "stmvl",    {OP_VRG,OP_IMM,      },  {K1,(0b10110100)},
-
-  "ldml2",    {OP_REG,OP_IMM,      },  {K1,(0b11000100)},
-  "stml2",    {OP_REG,OP_IMM,      },  {K1,(0b11010100)},
-  "ldmvl2",   {OP_VRG,OP_IMM,      },  {K1,(0b11100100)},
-  "stmvl2",   {OP_VRG,OP_IMM,      },  {K1,(0b11110100)},
-
-  //LSU Cache Unit 3 (011)
-  "ldc",      {OP_REG,OP_RRG,      },  {K1,(0b00000110)},
-  "stc",      {OP_REG,OP_RRG,      },  {K1,(0b00010110)},
-  "ldcv",     {OP_VRG,OP_RRG,      },  {K1,(0b00100110)},
-  "stcv",     {OP_VRG,OP_RRG,      },  {K1,(0b00110110)},
-
-  "ldci",     {OP_REG,OP_IMR,      },  {K1,(0b01000110)},
-  "stci",     {OP_REG,OP_IMR,      },  {K1,(0b01010110)},
-  "ldcvi",    {OP_VRG,OP_IMR,      },  {K1,(0b01100110)},
-  "stcvi",    {OP_VRG,OP_IMR,      },  {K1,(0b01110110)},
-
-  "ldcl",     {OP_REG,OP_IMM,      },  {K1,(0b10000110)},
-  "stcl",     {OP_REG,OP_IMM,      },  {K1,(0b10010110)},
-  "ldcvl",    {OP_VRG,OP_IMM,      },  {K1,(0b10100110)},
-  "stcvl",    {OP_VRG,OP_IMM,      },  {K1,(0b10110110)},
-
-  "ldcl2",    {OP_REG,OP_IMM,      },  {K1,(0b11000110)},
-  "stcl2",    {OP_REG,OP_IMM,      },  {K1,(0b11010110)},
-  "ldcvl2",   {OP_VRG,OP_IMM,      },  {K1,(0b11100110)},
-  "stcvl2",   {OP_VRG,OP_IMM,      },  {K1,(0b11110110)},
-
+  "iprefetch",{OP_IMR,             },  {K1,(0b10000110)},
+  "iflush",   {OP_IMR,             },  {K1,(0b10010110)},
+  "iprefetch",{OP_RRG,             },  {K1,(0b10100110)},
+  "iflush",   {OP_RRG,             },  {K1,(0b10110110)},
 
   "prefetch", {OP_IMR,             },  {K1,(0b11000110)},
   "flush",    {OP_IMR,             },  {K1,(0b11010110)},
   "prefetch", {OP_RRG,             },  {K1,(0b11100110)},
   "flush",    {OP_RRG,             },  {K1,(0b11110110)},
+
+  //---------
+  "lddma",    {OP_REG,OP_REG,OP_REG},  {K1,(0b10000110)},
+  "stdma",    {OP_REG,OP_REG,OP_REG},  {K1,(0b10010110)},
+  "lddmai",   {OP_REG,OP_REG,OP_IMM},  {K1,(0b10100110)},
+  "stdmai",   {OP_REG,OP_REG,OP_IMM},  {K1,(0b10110110)},
 
   //ALU-A Unit 0 (000)
   "nop",      {                    },  {K1,(0b00000000)},
@@ -77,14 +54,28 @@
 
   "slts",     {OP_REG,OP_REG,OP_REG},  {K1,(0b01000000)},
   "sltu",     {OP_REG,OP_REG,OP_REG},  {K1,(0b01010000)},
-  //"___",    {OP_REG,OP_IMM,      },  {K1,(0b01100000)},
-  "movei",    {OP_REG,OP_IML,      },  {K1,(0b01110000)},
+  "sltsi",    {OP_REG,OP_REG,OP_IMM},  {K1,(0b01100000)},
+  "sltui",    {OP_REG,OP_REG,OP_IMM},  {K1,(0b01110000)},
 
-  "sltsi",    {OP_REG,OP_REG,OP_IMM},  {K1,(0b10000000)},
-  "sltui",    {OP_REG,OP_REG,OP_IMM},  {K1,(0b10010000)},
-  //"___",    {OP_REG,OP_IMM,      },  {K1,(0b10100000)},
-  "moveiu",   {OP_REG,OP_IML,      },  {K1,(0b10110000)},
+  "movei",    {OP_REG,OP_IML,      },  {K1,(0b10000000)},
+  "moveiu",   {OP_REG,OP_IML,      },  {K1,(0b10010000)},
 
+  //-----------
+  "muls",     {OP_RGP,OP_REG,OP_REG},  {K1,(0b10100000)},
+  "mulu",     {OP_RGP,OP_REG,OP_REG},  {K1,(0b10110000)},
+  "divs",     {OP_RGQ,OP_REG,OP_REG},  {K1,(0b11000000)},
+  "divu",     {OP_RGQ,OP_REG,OP_REG},  {K1,(0b11010000)},
+  "rems",     {OP_RGQ,OP_REG,OP_REG},  {K1,(0b11100000)},
+  "remu",     {OP_RGQ,OP_REG,OP_REG},  {K1,(0b11110000)},
+
+  "mulsi",    {OP_RGP,OP_REG,OP_IMS},  {K1,(0b10010100000)},
+  "mului",    {OP_RGP,OP_REG,OP_IMS},  {K1,(0b10010110000)},
+  "divsi",    {OP_RGQ,OP_REG,OP_IMS},  {K1,(0b10011000000)},
+  "divui",    {OP_RGQ,OP_REG,OP_IMS},  {K1,(0b10011010000)},
+  "remsi",    {OP_RGQ,OP_REG,OP_IMS},  {K1,(0b10011100000)},
+  "remui",    {OP_RGQ,OP_REG,OP_IMS},  {K1,(0b10011110000)},
+
+  //---------
   "moveins",  {OP_REG,             },  {K1,(0b11000000)},
   "movecyc",  {OP_REG,             },  {K1,(0b11010000)},
 
@@ -99,7 +90,7 @@
   "move",     {OP_RIR,OP_REG,      },  {K1,(0b11110000)},
 
   //ALU-B Unit 1 (001)
-  "move",     {OP_REG,OP_REG,      },  {K1,(0b10000110010)},
+  "move",     {OP_REG,OP_REG,      },  {K1,(0b10110010)}, //ori
 
   "add",      {OP_REG,OP_REG,OP_REG},  {K1,(0b00000010)},
   "sub",      {OP_REG,OP_REG,OP_REG},  {K1,(0b00010010)},
@@ -109,27 +100,15 @@
   "lsl",      {OP_REG,OP_REG,OP_REG},  {K1,(0b01010010)},
   "asr",      {OP_REG,OP_REG,OP_REG},  {K1,(0b01100010)},
   "lsr",      {OP_REG,OP_REG,OP_REG},  {K1,(0b01110010)},
-  "muls",     {OP_RGP,OP_REG,OP_REG},  {K1,(0b10000010)},
-  "mulu",     {OP_RGP,OP_REG,OP_REG},  {K1,(0b10010010)},
-  "divs",     {OP_RGQ,OP_REG,OP_REG},  {K1,(0b10100010)},
-  "divu",     {OP_RGQ,OP_REG,OP_REG},  {K1,(0b10110010)},
-  "rems",     {OP_RGQ,OP_REG,OP_REG},  {K1,(0b11000010)},
-  "remu",     {OP_RGQ,OP_REG,OP_REG},  {K1,(0b11010010)},
 
-  "addi",     {OP_REG,OP_REG,OP_IMS},  {K1,(0b10000000010)},
-  "subi",     {OP_REG,OP_REG,OP_IMS},  {K1,(0b10000010010)},
-  "xori",     {OP_REG,OP_REG,OP_IMS},  {K1,(0b10000100010)},
-  "ori",      {OP_REG,OP_REG,OP_IMS},  {K1,(0b10000110010)},
-  "andi",     {OP_REG,OP_REG,OP_IMS},  {K1,(0b10001000010)},
-  "lsli",     {OP_REG,OP_REG,OP_IMS},  {K1,(0b10001010010)},
-  "asri",     {OP_REG,OP_REG,OP_IMS},  {K1,(0b10001100010)},
-  "lsri",     {OP_REG,OP_REG,OP_IMS},  {K1,(0b10001110010)},
-  "mulsi",    {OP_RGP,OP_REG,OP_IMS},  {K1,(0b10010000010)},
-  "mului",    {OP_RGP,OP_REG,OP_IMS},  {K1,(0b10010010010)},
-  "divsi",    {OP_RGQ,OP_REG,OP_IMS},  {K1,(0b10010100010)},
-  "divui",    {OP_RGQ,OP_REG,OP_IMS},  {K1,(0b10010110010)},
-  "remsi",    {OP_RGQ,OP_REG,OP_IMS},  {K1,(0b10011000010)},
-  "remui",    {OP_RGQ,OP_REG,OP_IMS},  {K1,(0b10011010010)},
+  "addi",     {OP_REG,OP_REG,OP_IMM},  {K1,(0b10000010)},
+  "subi",     {OP_REG,OP_REG,OP_IMM},  {K1,(0b10010010)},
+  "xori",     {OP_REG,OP_REG,OP_IMM},  {K1,(0b10100010)},
+  "ori",      {OP_REG,OP_REG,OP_IMM},  {K1,(0b10110010)},
+  "andi",     {OP_REG,OP_REG,OP_IMM},  {K1,(0b11000010)},
+  "lsli",     {OP_REG,OP_REG,OP_IMM},  {K1,(0b11010010)},
+  "asri",     {OP_REG,OP_REG,OP_IMM},  {K1,(0b11100010)},
+  "lsri",     {OP_REG,OP_REG,OP_IMM},  {K1,(0b11110010)},
 
   //BRU Unit 5 (101)
   "bne",      {OP_IMB,             },  {K1,(0b00001010)},
@@ -148,14 +127,13 @@
   "bges",     {OP_IMB,             },  {K1,(0b10011010)},
 
   "bra",      {OP_IMB,             },  {K1,(0b10101010)},
+  "loop",     {OP_IMB,             },  {K1,(0b10111010)},
 
-  "jmp",      {OP_IMM,             },  {K1,(0b10111010)},
-  "jmpbr",    {OP_IMM,             },  {K1,(0b11001010)},
-  "call",     {OP_IMM,             },  {K1,(0b11011010)},
-  "callbr",   {OP_IMM,             },  {K1,(0b11101010)},
-  "loop",     {OP_IMB,             },  {K1,(0b11111010)},
-
-
+  "jmp",      {OP_ILB,             },  {K1,(0b11001010)},
+  "jmpbr",    {OP_ILB,             },  {K1,(0b11011010)},
+  "call",     {OP_ILB,             },  {K1,(0b11101010)},
+  "callbr",   {OP_ILB,             },  {K1,(0b11111010)},
+  
   //CMP Unit 4 (100)
   "cmp",      {OP_REG,OP_REG,      },  {K1,(0b00001000)},
   "cmp",      {OP_RFR,OP_IMM,      },  {K1,(0b00011000)},
@@ -168,14 +146,14 @@
   "dcmpi",    {OP_VRG,OP_IMF,      },  {K1,(0b01111000)},
 
   "endp",     {                    },  {K1,(0b10001000)},
-  "syscall",  {                    },  {K1,(0b10011000)},
-  "int",      {                    },  {K1,(0b10101000)},
-  //"__",     {OP_IMM,             },  {K1,(0b10111000)},
+  "wait",     {                    },  {K1,(0b10011000)},
+  "exe",      {OP_REG,             },  {K1,(0b10101000)},
+  //"___",      {OP_REG,             },  {K1,(0b10111000)},
 
   "ret",      {                    },  {K1,(0b11001000)},
   "reti",     {                    },  {K1,(0b11011000)},
-  //"___",    {                    },  {K1,(0b11101000)},
-  //"__",     {                    },  {K1,(0b11111000)},
+  "syscall",  {                    },  {K1,(0b11101000)},
+  "int",      {                    },  {K1,(0b11111000)},
 
   //VFPU-A Unit 6 (110)
   "fadd",     {OP_VRG,OP_VRG,OP_VRG},  {K1,(0b00001100)},
