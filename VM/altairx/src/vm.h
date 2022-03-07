@@ -2,11 +2,8 @@
 #define MEMORY_MAP_SPM1_BEGIN   (0x00000000)
 #define MEMORY_MAP_ROM_BEGIN    (0x02000000)
 #define MEMORY_MAP_IO_BEGIN     (0x04000000)
-#define MEMORY_MAP_SPMT_BEGIN   (0x06000000)
-
-
-#define MEMORY_MAP_SPM2_BEGIN   (0x08000000)
-
+#define MEMORY_MAP_SPMT_BEGIN   (0x08000000)
+#define MEMORY_MAP_SPM2_BEGIN   (0x10000000)
 //32 BITS
 #define MEMORY_MAP_SRAM_BEGIN   (0x20000000)
 #define MEMORY_MAP_VRAM_BEGIN   (0x40000000)
@@ -83,6 +80,7 @@ typedef struct core
 
     uint64_t instruction;
     uint64_t cycle;
+    uint64_t bandwidth;
 
     uint32_t opcodes[AX_core_MAX_OPERATIONS];
 
@@ -92,6 +90,12 @@ typedef struct core
     uint32_t ir; //interrupt-register
 
     uint32_t imm;
+
+    uint32_t icachemiss,dcachemiss;
+    uint32_t icachemiss_cycle,dcachemiss_cycle;
+
+
+
 
 
     /// \brief CPU Flags register
@@ -103,8 +107,12 @@ typedef struct core
     uint16_t flags;
     uint8_t delay,delayop,swt,syscall;
 
+	uint8_t busy_reg[AX_core_IREG_COUNT];
+	uint8_t busy_vreg[AX_core_VREG_COUNT];
+
     uint8_t spm[AX_core_SPM_SIZE];
     uint32_t icache[AR_core_ICACHE_SIZE];
+    uint32_t dcache[AR_core_DCACHE_SIZE*2];
     uint32_t dcacher[AR_core_DCACHE_SIZE];
     uint32_t dcacherw[AR_core_DCACHE_SIZE];
 
@@ -323,4 +331,4 @@ int AX_init_proc(Processor *processor);
 int AX_init_proc_mem(Processor *processor);
 void AX_init_mem(Processor *processor,int nwram,int nvram,int nsram,int nspmt,int nspm2);
 int AX_load_prog(char *name,MMAP *mmap);
-void *AX_Memory_Map(Core *core,uint64_t offset,uint32_t size);
+void *AX_Memory_Map(Core *core,uint64_t offset);

@@ -31,14 +31,14 @@ The processor has 64 general registers of 64 bits, and 64 registers of 128 bits 
 The processor only has SIMD instructions for the FPU.  
 
 
-It has 160 instructions distributed like this:  
-ALU : 42  
-LSU : 32  
+It has 151 instructions distributed like this:  
+ALU : 36  
+LSU : 28  
 CMP : 8  
 Other : 2  
 BRU : 20  
 VFPU : 32  
-EFU : 9  
+EFU : 12  
 FPU-D : 8  
 DMA : 5  
 
@@ -83,6 +83,9 @@ GPU todo list : https://docs.google.com/spreadsheets/d/1eRX1vLHEJdrAsx2u1OiycSSz
 
 ## Pipeline
 <img src="graph/Pipeline_AX.png?raw=true" alt="Pipeline">
+
+## Architecture
+<img src="graph/Architecture.png" alt="Architecture">
 
 ## APU Die (420 MT) 30 mm² , 28 nm FD-SOI
 <img src="graph/APU2_Diagram.png?raw=true" alt="APU">

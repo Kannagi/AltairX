@@ -6,7 +6,7 @@
 #include <stdint.h>
 #include "vm.h"
 
-void *AX_Memory_Map(Core *core,uint64_t offset,uint32_t size)
+void *AX_Memory_Map(Core *core,uint64_t offset)
 {
     void *address = NULL;
     uint64_t max = 0;
@@ -15,7 +15,7 @@ void *AX_Memory_Map(Core *core,uint64_t offset,uint32_t size)
     {
         address = core->mmap.wram;
         max = core->mmap.nwram-1; //Max 2 Gio
-	}
+    }
     else if(offset&MEMORY_MAP_VRAM_BEGIN)
     {
 		address = core->mmap.vram;
@@ -29,39 +29,30 @@ void *AX_Memory_Map(Core *core,uint64_t offset,uint32_t size)
 	else if(offset&MEMORY_MAP_SPM2_BEGIN)
 	{
 		address = core->mmap.spm2;
-		max = (core->mmap.nspm2-1); //Max 64 Mio
+		max = (core->mmap.nspm2-1); //Max 256 Mio
 	}
-	else
+	else if(offset&MEMORY_MAP_SPMT_BEGIN)
 	{
-		uint64_t tmp = (offset>>25)&3;
-		if(tmp == 0) // SPM L1
-		{
-			address = core->spm;
-			max = 0x7FFF; //Max 32 Kio
-		}else
-		if(tmp == 1) // ROM
-		{
-			address = core->mmap.rom;
-			max = (core->mmap.nrom-1); //Max 32 Mio
-		}else
-		if(tmp == 2) // I/O
-		{
-			address = core->mmap.io;
-			max = 0xFFFFF; //Max 1 Mio (max 32 Mio)
-		}else
-		if(tmp == 3) // SPM Thread
-		{
-			address = core->mmap.spmt;
-			max = (core->mmap.nspmt-1); //Max 32 Mio
-		}
-
+		address = core->mmap.spmt;
+		max = (core->mmap.nspmt-1); //Max 128 Mio
+	}
+	else if(offset&MEMORY_MAP_ROM_BEGIN)
+	{
+		address = core->mmap.rom;
+		max = (core->mmap.nrom-1); //Max 64 Mio
+	}
+	else if(offset&MEMORY_MAP_IO_BEGIN)
+	{
+		address = core->mmap.io;
+		max = 0x7FFFFF; //Max 8 Mio (miroir 32 Mio)
+	}
+	else //SPM
+	{
+		address = core->spm;
+		max = 0x7FFF; //Max 32 Kio
 	}
 
 	offset &= max;
-    if( (offset+size) > max)
-    {
-        //exit(-1);
-    }
 
     return address+offset;
 
@@ -130,7 +121,7 @@ int AX_init_proc_mem(Processor *processor)
 	processor->mmap.spmt = malloc(processor->mmap.nspmt);
 	processor->mmap.spm2 = malloc(processor->mmap.nspm2);
 
-	processor->mmap.io = malloc(0x10000); // 1 Mio
+	processor->mmap.io = malloc(0x80000); // 8 Mio
 	return 0;
 }
 
@@ -149,6 +140,26 @@ int AX_add_core(Processor *processor)
 	core->delay = 0;
 	core->pc = 0x100/4;
 	core->wram = (uint32_t*)processor->mmap.wram;
+
+
+	int i;
+	for(i = 0;i < AR_core_DCACHE_SIZE*2;i++)
+		core->dcache[i] = 0;
+
+	for(i = 0;i < AR_core_ICACHE_SIZE;i++)
+		core->icache[i] = 0;
+
+	for(i = 0;i < AX_core_IREG_COUNT;i++)
+		core->busy_reg[i] = 0;
+
+	for(i = 0;i < AX_core_VREG_COUNT;i++)
+		core->busy_vreg[i] = 0;
+
+	core->icachemiss = 0;
+	core->dcachemiss = 0;
+	core->icachemiss_cycle = 0;
+	core->dcachemiss_cycle = 0;
+	core->bandwidth = 0;
 
 	processor->core[processor->icore] = core;
 
@@ -194,6 +205,11 @@ int AX_exe_core(Core *core)
 
 		//printf("%d\n",core->pc);
 	}
+
+	printf("%ld instructions\n",core->instruction);
+	printf("%ld cycle\n",core->cycle);
+
+	printf("IPC : %f\n",(float)core->instruction/(float)core->cycle);
 
 	return error;
 }

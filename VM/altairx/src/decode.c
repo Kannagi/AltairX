@@ -84,6 +84,7 @@ static double convertImmDouble(uint32_t imm)
 
 static int decode(Core *core,uint32_t id)
 {
+
 	uint32_t tmp;
     const uint32_t opcode = core->opcodes[id];
 

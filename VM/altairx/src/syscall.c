@@ -38,7 +38,7 @@ int AX_syscall_emul(Core *core)
 			break;
 
 			case 1:
-			    adr = AX_Memory_Map(core,reg1,1000);
+			    adr = AX_Memory_Map(core,reg1);
 				printf(adr);
 			break;
 
@@ -67,8 +67,8 @@ int AX_syscall_emul(Core *core)
 			break;
 
 			case 8: //FOPEN
-				adr  = AX_Memory_Map(core,reg2,1000);
-				adr2 = AX_Memory_Map(core,reg3,1000);
+				adr  = AX_Memory_Map(core,reg2);
+				adr2 = AX_Memory_Map(core,reg3);
 				file = fopen(adr,adr2);
 				core->ireg[4] = (uint64_t)file;
 			break;

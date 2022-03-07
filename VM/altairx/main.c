@@ -6,8 +6,6 @@
 
 #include "src/vm.h"
 
-
-
 int main(int argc, char** argv)
 {
 	int i,arg = 0;

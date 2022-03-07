@@ -188,10 +188,7 @@ static void executeDelayedInstruction(Core *core, uint32_t imm)
     }
 
     core->delay = 0;
-
 }
-
-
 
 static void executeLS(Core *core,void *reg,uint64_t offset,uint32_t size,uint32_t store)
 {
@@ -217,39 +214,35 @@ static void executeLS(Core *core,void *reg,uint64_t offset,uint32_t size,uint32_
 	else if(offset&MEMORY_MAP_SPM2_BEGIN)
 	{
 		address = core->mmap.spm2;
-		max = (core->mmap.nspm2-1); //Max 64 Mio
+		max = (core->mmap.nspm2-1); //Max 256 Mio
 	}
-	else
+	else if(offset&MEMORY_MAP_SPMT_BEGIN)
 	{
-		uint64_t tmp = (offset>>25)&3;
-		if(tmp == 0) // SPM L1
-		{
-			address = core->spm;
-			max = 0x7FFF; //Max 32 Kio
-		}else
-		if(tmp == 1) // ROM
-		{
-			address = core->mmap.rom;
-			max = (core->mmap.nrom-1); //Max 32 Mio
-		}else
-		if(tmp == 2) // I/O
-		{
-			address = core->mmap.io;
-			max = 0xFFFFF; //Max 1 Mio (max 32 Mio)
-		}else
-		if(tmp == 3) // SPM Thread
-		{
-			address = core->mmap.spmt;
-			max = (core->mmap.nspmt-1); //Max 32 Mio
-		}
-
+		address = core->mmap.spmt;
+		max = (core->mmap.nspmt-1); //Max 128 Mio
+	}
+	else if(offset&MEMORY_MAP_ROM_BEGIN)
+	{
+		address = core->mmap.rom;
+		max = (core->mmap.nrom-1); //Max 64 Mio
+	}
+	else if(offset&MEMORY_MAP_IO_BEGIN)
+	{
+		address = core->mmap.io;
+		max = 0x7FFFFF; //Max 8 Mio (miroir 32 Mio)
+	}
+	else //SPM
+	{
+		address = core->spm;
+		max = 0x7FFF; //Max 32 Kio
 	}
 
 	offset &= max;
+	/*
     if( (offset+size) > max)
     {
         exit(-1);
-    }
+    }*/
 
     if(store)
     {

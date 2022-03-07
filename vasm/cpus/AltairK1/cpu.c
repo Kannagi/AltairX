@@ -232,18 +232,6 @@ int parse_operand(char *p,int len,operand *op,int requires)
         return 1;
     }
 
-    //Register BR
-    if(requires == OP_RBR )
-    {
-        if(len != 2) return 0;
-        if( !(p[0] == 'b' || p[0] == 'B') )
-            return 0;
-
-        if( !(p[1] == 'r' || p[1] == 'R') )
-            return 0;
-        
-        return 1;
-    }
 
     //Register FR
     if(requires == OP_RFR )
@@ -486,6 +474,16 @@ dblock *eval_instruction(instruction *p,section *sec,taddr pc)
     if( (operand1.type >= OP_RLR) && (operand1.type <= OP_RIR ) )
     {
         opcode |= (operand1.type&0x3)<<26;
+    }
+
+    if(operand1.type == OP_RGQ)
+    {
+        opcode |= (0x3F<<26);
+    }
+
+    if(operand1.type == OP_RGP)
+    {
+        opcode |= (0x3E<<26);
     }
 
     //------------- OPERAND 2 -------------
