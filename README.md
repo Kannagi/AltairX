@@ -87,5 +87,5 @@ GPU todo list : https://docs.google.com/spreadsheets/d/1eRX1vLHEJdrAsx2u1OiycSSz
 ## Architecture
 <img src="graph/Architecture.png" alt="Architecture">
 
-## APU Die (420 MT) 30 mm² , 28 nm FD-SOI
-<img src="graph/APU2_Diagram.png?raw=true" alt="APU">
+## APU Die (380 MT) 30 mm² , 28 nm FD-SOI
+<img src="graph/APU_Diagram.png?raw=true" alt="APU">
