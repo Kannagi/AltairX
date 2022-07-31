@@ -335,5 +335,5 @@ int main(int argc, char **argv)
     os << *module;
     os.flush();
 
-    std::ofstream{filename + ".comp"} << output;
+    std::ofstream{filename + ".comp.ll"} << output;
 }

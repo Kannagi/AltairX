@@ -26,12 +26,34 @@ std::string get_value_label(const llvm::Value& value)
 
 std::string type_name(const llvm::Type& type)
 {
-    std::string output{};
-    llvm::raw_string_ostream os{output};
-    type.print(os);
-    os.flush();
+    if(type.isArrayTy())
+    {
+        return "array_" + std::to_string(type.getArrayNumElements()) + "_" + type_name(*type.getArrayElementType());
+    }
+    else if(type.isVectorTy())
+    {
+        auto vector = llvm::dyn_cast<llvm::VectorType>(&type);
+        auto count = vector->getElementCount();
 
-    return output;
+        std::string output{"vector_"};
+        if(count.isScalable())
+        {
+            output += "scalable_";
+        }
+
+        output += std::to_string(count.getKnownMinValue()) + "_" + type_name(*vector->getElementType());
+
+        return output;
+    }
+    else
+    {
+        std::string output{};
+        llvm::raw_string_ostream os{output};
+        type.print(os);
+        os.flush();
+
+        return output;
+    }
 }
 
 bool is_external_call(const llvm::CallInst& call)
@@ -138,14 +160,14 @@ std::vector<llvm::BasicBlock*> loop_successors(const llvm::Loop& loop)
     return std::vector<llvm::BasicBlock*>{std::begin(output), std::end(output)};
 }
 
-bool is_complex_branch(llvm::Function::iterator current)
+bool is_complex_branch(llvm::Function::iterator current, llvm::Function::iterator end)
 {
     if(auto branch{llvm::dyn_cast<llvm::BranchInst>(current->getTerminator())}; branch)
     {
         auto next{current};
         ++next;
 
-        return branch->isConditional() && branch->getSuccessor(1) != &(*next);
+        return branch->isConditional() && next != end && branch->getSuccessor(1) != &(*next);
     }
 
     return false;

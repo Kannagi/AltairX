@@ -2,6 +2,11 @@
 #include <stdlib.h>
 #include <stdbool.h>
 
+uint64_t testmove(uint64_t i)
+{
+    return i + 18446744073709551478ull;
+}
+
 int32_t bar(int32_t a, int32_t b, int32_t c, int32_t d);
 int32_t bar(int32_t a, int32_t b, int32_t c, int32_t d)
 {
@@ -29,6 +34,26 @@ void foo(int* array, size_t count)
     {
         array[i] += 1;
     }
+}
+
+struct A {
+  int8_t a;
+  int32_t b[10][20];
+  int8_t c;
+};
+struct B {
+  int32_t x;
+  int64_t y;
+  struct A z[];
+};
+
+int* testptr(struct B* s, size_t index) {
+  return &s[0].z[index].b[5][13];
+}
+
+int negate(int i)
+{
+    return -i;
 }
 
 void bubble_sort(int* array, size_t count)

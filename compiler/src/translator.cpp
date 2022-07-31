@@ -5,6 +5,8 @@
 #include "utilities.hpp"
 #include "transform.hpp"
 
+#include <llvm/IR/Constants.h>
+
 /*
 // Terminator Instructions - These instructions are used to terminate a basic
 // block of the program.   Every basic block must end with one of these
@@ -106,7 +108,8 @@ std::string function_translator::translate()
     m_asm_code = std::ostringstream{};
     m_asm_code << m_function.getName().str() << ":" << std::endl;
 
-    for(auto it{m_function.begin()}; it != m_function.end(); ++it)
+    const auto end{m_function.end()};
+    for(auto it{m_function.begin()}; it != end; ++it)
     {
         const auto& block{m_allocator.info_of(&*it)};
 
@@ -145,7 +148,7 @@ std::string function_translator::translate()
 
             // Complex branch is a br with a false path that need a real jump instead of a fallthrough
             // translate_instruction() only covers the true (or unconditionnal) path, the false path is handled here
-            if(is_complex_branch(it))
+            if(is_complex_branch(it, end))
             {
                 branch_to(it->getTerminator()->getSuccessor(1));
                 delay_slot();
@@ -247,17 +250,6 @@ void function_translator::translate_instruction(const register_allocator::value_
     }
     else if(auto ptr{llvm::dyn_cast<llvm::GetElementPtrInst>(instruction.value)}; ptr)
     {
-        const llvm::DataLayout& data_layout{m_module.getDataLayout()}; //used for struct
-        const llvm::StructLayout* struct_layout{};
-
-        // assume that all getelementprt only has a single value
-
-        llvm::Type* type{ptr->getSourceElementType()};
-        auto* struct_type{llvm::dyn_cast<llvm::StructType>(type)};
-        if(struct_type)
-        {
-            struct_layout = data_layout.getStructLayout(struct_type);
-        }
 
     }
     else

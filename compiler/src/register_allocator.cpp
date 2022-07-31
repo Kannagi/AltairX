@@ -17,6 +17,8 @@ register_allocator::register_allocator(llvm::Module& module, llvm::Function& fun
 ,m_tree{m_function}
 ,m_loop_info{m_tree}
 {
+    ar::transforms::swap_add_sub(m_module, m_function);
+    ar::transforms::decompose_getelementptr(m_module, m_function);
     ar::transforms::insert_move_for_constant(m_module, m_function);
 
     extract_sccs();

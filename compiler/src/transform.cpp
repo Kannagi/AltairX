@@ -1,35 +1,205 @@
 #include "transform.hpp"
 
 #include "intrinsic.hpp"
+#include "utilities.hpp"
+
+#include <iostream>
+#include <llvm/IR/Constants.h>
 
 namespace ar::transforms
 {
+
+void swap_add_sub(llvm::Module& module [[maybe_unused]], llvm::Function& function)
+{
+    llvm::SmallVector<llvm::Instruction*> to_remove;
+
+    for(llvm::BasicBlock& block : function)
+    {
+        for(llvm::Instruction& instruction : block)
+        {
+            if(llvm::BinaryOperator* binary{llvm::dyn_cast<llvm::BinaryOperator>(&instruction)}; binary)
+            {
+                if(binary->getOpcode() == llvm::BinaryOperator::BinaryOps::Add || binary->getOpcode() == llvm::BinaryOperator::BinaryOps::Sub)
+                {
+                    if(llvm::ConstantInt* value{llvm::dyn_cast<llvm::ConstantInt>(binary->getOperand(1))}; value)
+                    {
+                        if(value->isNegative() && value->getSExtValue() > -512)
+                        {
+                            auto new_value{llvm::ConstantInt::get(binary->getType(), -value->getSExtValue())};
+
+                            llvm::BinaryOperator* new_op{};
+                            if(binary->getOpcode() == llvm::BinaryOperator::BinaryOps::Add)
+                            {
+                                new_op = llvm::BinaryOperator::CreateSub(binary->getOperand(0), new_value, "", binary);
+                            }
+                            else
+                            {
+                                new_op = llvm::BinaryOperator::CreateAdd(binary->getOperand(0), new_value, "", binary);
+                            }
+
+                            // copy users list since we modify it indirectly in the loop
+                            for(llvm::User* user : llvm::SmallVector<llvm::User*>{instruction.user_begin(), instruction.user_end()})
+                            {
+                                user->replaceUsesOfWith(&instruction, new_op);
+                            }
+
+                            to_remove.emplace_back(&instruction);
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    for(auto gep : to_remove)
+    {
+        gep->eraseFromParent();
+    }
+}
+
+/*
+size: imm
+moveu:
+    [0x00; 0x0003 FFFF]
+moven:
+    [0xFFFF FFFF FFFC 0000; 0xFFFF FFFF FFFF FFFF]
+smove: NOTE: IT DOES A BITWISE OR WITH THE BASE VALUE ALREADY IN REGISTER
+    [0x0000 0000 0000 0000; 0x0000 0000 0000 FFFF]
+    [0x0000 0000 0001 0000; 0x0000 0000 FFFF 0000]
+    [0x0000 0001 0000 0000; 0x0000 FFFF 0000 0000]
+    [0x0001 0000 0000 0000; 0xFFFF 0000 0000 0000]
+load ?
+ */
+
+
+// `is_signed` is for the `size` of the imm
+static llvm::Value* insert_constant_int(llvm::Module& module, llvm::ConstantInt* value, std::size_t size, bool is_signed, llvm::Instruction* position)
+{
+    const auto compose_int = [&](std::uint64_t val)
+    {
+        auto low_word{llvm::ConstantInt::get(llvm::Type::getInt64Ty(module.getContext()), val & 0xFFFFull)};
+
+        llvm::Instruction* last{insert_moveu_intrinsic(module, low_word, position)};
+
+        for(std::uint64_t i{1}; i < 4; ++i)
+        {
+            const std::uint64_t bit_shift{16 * i};
+
+            if(const std::uint64_t current{(val & (0xFFFFull << bit_shift)) >> bit_shift}; current != 0)
+            {
+                auto word {llvm::ConstantInt::get(llvm::Type::getInt64Ty(module.getContext()), current)};
+                auto shift{llvm::ConstantInt::get(llvm::Type::getInt64Ty(module.getContext()), i)};
+
+                last = insert_smove_intrinsic(module, last, word, shift, position);
+            }
+        }
+
+        return last;
+    };
+
+    constexpr std::uint64_t moveu_max{(1ull << 18) - 1};
+    constexpr std::int64_t  moven_min{-(1ll << 18)};
+    // op codes are 32-bit so it will always fit
+    const std::uint64_t inst_max{(1ull << (size - static_cast<std::int64_t>(is_signed))) - 1};
+    const std::int64_t  inst_min{is_signed ? -static_cast<std::int64_t>(inst_max) - 1 : 0ll};
+
+    if(value->isNegative())
+    {
+        const std::int64_t val{value->getSExtValue()};
+
+        if(val >= inst_min && size > 0) //fit in size: do nothing
+        {
+            return value;
+        }
+        else if(val >= moven_min) // fit in moves
+        {
+            return insert_moven_intrinsic(module, value, position);
+        }
+        else
+        {
+            return compose_int(static_cast<std::uint64_t>(val));
+        }
+    }
+    else
+    {
+        const std::uint64_t val{value->getZExtValue()};
+
+        if(val <= inst_max && size > 0) //fit in size: do nothing
+        {
+            return value;
+        }
+        else if(val <= moveu_max) // fit in moveu
+        {
+            return insert_moveu_intrinsic(module, value, position);
+        }
+        else
+        {
+            return compose_int(val);
+        }
+    }
+}
 
 void insert_move_for_constant(llvm::Module& module, llvm::Function& function)
 {
     for(llvm::BasicBlock& block : function)
     {
-        for(llvm::PHINode& phi : block.phis())
+        for(llvm::Instruction& instruction : block)
         {
-            for(llvm::BasicBlock* predecessor : phi.blocks())
-            {
-                if(llvm::ConstantInt* value{llvm::dyn_cast<llvm::ConstantInt>(phi.getIncomingValueForBlock(predecessor))}; value)
-                {
-                    phi.setIncomingValueForBlock(predecessor, ar::add_move_intrinsic(module, value, predecessor->getTerminator()));
-                }
-            }
-        }
+            //filter intrinsics to prevent altair.move(iX X) from generating infinite loops
 
-        if(llvm::ReturnInst* ret{llvm::dyn_cast<llvm::ReturnInst>(block.getTerminator())}; ret)
-        {
-            if(ret->getReturnValue())
+            if(auto phi{llvm::dyn_cast<llvm::PHINode>(&instruction)}; phi)
             {
-                if(llvm::ConstantInt* value{llvm::dyn_cast<llvm::ConstantInt>(ret->getReturnValue())}; value)
+                // Insert move in predecessor if the phi value when comming from this predecessor is a contant
+
+                for(llvm::BasicBlock* predecessor : phi->blocks())
                 {
-                    ret->setOperand(0, ar::add_move_intrinsic(module, value, block.getTerminator()));
+                    if(llvm::ConstantInt* value{llvm::dyn_cast<llvm::ConstantInt>(phi->getIncomingValueForBlock(predecessor))}; value)
+                    {
+                        phi->setIncomingValueForBlock(predecessor, insert_constant_int(module, value, 0, false, predecessor->getTerminator()));
+                    }
+
+                    //add float, bool and pointer support
                 }
             }
-        }
+            else if(llvm::CallInst* call{llvm::dyn_cast<llvm::CallInst>(&instruction)}; call)
+            {
+
+            }
+            else if(llvm::BinaryOperator* binary{llvm::dyn_cast<llvm::BinaryOperator>(&instruction)}; binary)
+            {
+                if(llvm::ConstantInt* value{llvm::dyn_cast<llvm::ConstantInt>(binary->getOperand(1))}; value)
+                {
+                    switch(binary->getOpcode())
+                    {
+                    case llvm::BinaryOperator::BinaryOps::SDiv: [[fallthrough]];
+                    case llvm::BinaryOperator::BinaryOps::SRem:
+                        binary->setOperand(1, insert_constant_int(module, value, 9, true, binary));
+                        break;
+                    default:
+                         binary->setOperand(1, insert_constant_int(module, value, 9, false, binary));
+                        break;
+                    }
+                }
+            }
+            else if(llvm::LoadInst* load{llvm::dyn_cast<llvm::LoadInst>(&instruction)}; load)
+            {
+
+            }
+            else if(llvm::StoreInst* binary{llvm::dyn_cast<llvm::StoreInst>(&instruction)}; binary)
+            {
+
+            }
+            else if(llvm::ReturnInst* ret{llvm::dyn_cast<llvm::ReturnInst>(&instruction)}; ret)
+            {
+                if(ret->getReturnValue())
+                {
+                    if(llvm::ConstantInt* value{llvm::dyn_cast<llvm::ConstantInt>(ret->getReturnValue())}; value)
+                    {
+                        ret->setOperand(0, insert_constant_int(module, value, 0, false, ret));
+                    }
+                }
+            }
+       }
     }
 }
 
@@ -54,7 +224,9 @@ void invert_branch_condition(llvm::Module& module [[maybe_unused]], llvm::Functi
         }
     };
 
-    for(auto it{function.begin()}; it != function.end(); ++it)
+    auto end{function.end()};
+    --end; // function can not be empty (they have at least 1 block)
+    for(auto it{function.begin()}; it != end; ++it)
     {
         auto branch{llvm::dyn_cast<llvm::BranchInst>(it->getTerminator())};
         if(branch && branch->isConditional())
@@ -79,6 +251,127 @@ void invert_branch_condition(llvm::Module& module [[maybe_unused]], llvm::Functi
                 }
             }
         }
+    }
+}
+
+static llvm::BinaryOperator* insert_const_mul(llvm::Module& module, llvm::Value* left, std::uint64_t right, llvm::Instruction* position)
+{
+    if(has_single_bit(right)) // if size is a pow of two then use a bit shift instead of a multiplication
+    {
+        auto size{llvm::ConstantInt::get(llvm::Type::getInt64Ty(module.getContext()), ilog2(right))};
+        return llvm::BinaryOperator::CreateShl(left, size, "", position);
+    }
+
+    auto size{llvm::ConstantInt::get(llvm::Type::getInt64Ty(module.getContext()), right)};
+    return llvm::BinaryOperator::CreateMul(left, size, "", position);
+};
+
+static void decompose_getelementptr_process(llvm::Module& module, llvm::GetElementPtrInst* gep)
+{
+    const llvm::DataLayout& data_layout{module.getDataLayout()}; //used for struct
+
+    bool first_index{true}; // first index is always an array like index
+    std::int64_t constant_offset{}; // accumulator of contant indices
+
+    llvm::Type* type{gep->getSourceElementType()}; // currently indexed type
+    llvm::Value* ptr{gep->getPointerOperand()}; // the ptr used for next ptradd
+
+    const auto flush_constant = [&]()
+    {
+        if(constant_offset != 0)
+        {
+            auto offset{llvm::ConstantInt::get(llvm::Type::getInt64Ty(module.getContext()), constant_offset, true)};
+
+            ptr = ar::insert_ptradd_intrinsic(module, ptr, offset, llvm::PointerType::getUnqual(module.getContext()), gep);
+            constant_offset = 0;
+        }
+    };
+
+    for(llvm::Use& index : gep->indices())
+    {
+        // Contant indices can be added together can just need to be split from dynamic indices
+        if(auto cint{llvm::dyn_cast<llvm::ConstantInt>(index.get())}; cint)
+        {
+            if(auto struct_type{llvm::dyn_cast<llvm::StructType>(type)}; struct_type)
+            {
+                const llvm::StructLayout* struct_layout{data_layout.getStructLayout(struct_type)};
+
+                if(first_index) // when indexing structs, the first index is an array-like index
+                {
+                    constant_offset += struct_layout->getSizeInBytes() * cint->getSExtValue();
+                }
+                else
+                {
+                    constant_offset += struct_layout->getElementOffset(static_cast<std::uint32_t>(cint->getZExtValue()));
+                    type = struct_type->getStructElementType(static_cast<std::uint32_t>(cint->getZExtValue()));
+                }
+            }
+            else // array like index
+            {
+                if(auto array_type{llvm::dyn_cast<llvm::ArrayType>(type)}; array_type)
+                {
+                    type = array_type->getElementType();
+                }
+                else if(auto vector_type{llvm::dyn_cast<llvm::VectorType>(type)}; vector_type)
+                {
+                    type = vector_type->getElementType();
+                }
+
+                constant_offset += data_layout.getTypeStoreSize(type) * cint->getSExtValue();
+            }
+        }
+        else
+        {
+            // Split from previous contants, if any
+            flush_constant();
+
+            if(auto array_type{llvm::dyn_cast<llvm::ArrayType>(type)}; array_type)
+            {
+                type = array_type->getElementType();
+            }
+            else if(auto vector_type{llvm::dyn_cast<llvm::VectorType>(type)}; vector_type)
+            {
+                type = vector_type->getElementType();
+            }
+
+            // dynamic indices are always array-like access, so we simply use type size (padding included for structs)
+            auto offset{insert_const_mul(module, index.get(), data_layout.getTypeStoreSize(type), gep)};
+            auto ptradd{ar::insert_ptradd_intrinsic(module, ptr, offset, llvm::PointerType::getUnqual(module.getContext()), gep)};
+
+            ptr = ptradd;
+        }
+
+        first_index = false;
+    }
+
+    flush_constant();
+
+    // copy users list since we modify it indirectly in the loop
+    for(llvm::User* user : llvm::SmallVector<llvm::User*>{gep->user_begin(), gep->user_end()})
+    {
+        user->replaceUsesOfWith(gep, ptr);
+    }
+}
+
+void decompose_getelementptr(llvm::Module& module, llvm::Function& function)
+{
+    llvm::SmallVector<llvm::Instruction*> to_remove;
+
+    for(llvm::BasicBlock& block : function)
+    {
+        for(llvm::Instruction& instruction : block)
+        {
+            if(auto gep{llvm::dyn_cast<llvm::GetElementPtrInst>(&instruction)}; gep)
+            {
+                decompose_getelementptr_process(module, gep);
+                to_remove.emplace_back(gep);
+            }
+        }
+    }
+
+    for(auto gep : to_remove)
+    {
+        gep->eraseFromParent();
     }
 }
 

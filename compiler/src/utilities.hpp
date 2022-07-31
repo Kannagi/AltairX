@@ -11,7 +11,48 @@
 namespace ar
 {
 
+template<typename T>
+constexpr bool has_single_bit(T x) noexcept
+{
+    return x != 0 && (x & (x - 1)) == 0;
+}
+
+template<typename T>
+constexpr T ilog2(T n) noexcept
+{
+    return (n > 1) ? 1 + log2(n >> 1) : 0;
+}
+
+constexpr std::size_t int_size(std::uint64_t value) noexcept
+{
+    if(value < (1ull << 8))
+    {
+        return 1;
+    }
+    else if(value < (1ull << 16))
+    {
+        return 2;
+    }
+    else if(value < (1ull << 32))
+    {
+        return 4;
+    }
+    else
+    {
+        return 8;
+    }
+}
+
 std::string get_value_label(const llvm::Value& value);
+
+/*
+* For vectors of X components: returns "vector_<scalable_>X_<type_name(innertype)>"
+* For arrays of X components: returns "array_X_<type_name(innertype)>"
+* For non opaque pointer: returns "ptr_<type_name(pointedtype)>"
+* For other: returns the llvm::Type::print text
+*
+* This function is useful to create intrinsics or output info in verbose mode
+*/
 std::string type_name(const llvm::Type& type);
 
 bool is_external_call(const llvm::CallInst& call);
@@ -22,7 +63,7 @@ std::size_t get_last_external_call(const llvm::BasicBlock& block);
 std::vector<llvm::BasicBlock*> loop_predecessors(const llvm::Loop& loop);
 std::vector<llvm::BasicBlock*> loop_successors(const llvm::Loop& loop);
 
-bool is_complex_branch(llvm::Function::iterator current);
+bool is_complex_branch(llvm::Function::iterator current, llvm::Function::iterator end);
 
 }
 
