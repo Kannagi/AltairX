@@ -2,6 +2,7 @@
 
 #include <sstream>
 
+#include "intrinsic.hpp"
 #include "utilities.hpp"
 #include "transform.hpp"
 
@@ -184,7 +185,7 @@ void function_translator::translate_instruction(const register_allocator::value_
         if(llvm::ConstantInt* contant{llvm::dyn_cast<llvm::ConstantInt>(binary->getOperand(1))}; contant)
         {
             m_asm_code << indent;
-            m_asm_code << get_opcode(binary) << "i ";
+            m_asm_code << get_opcode(binary) << "i." << get_int_size_name(binary) << " ";
             m_asm_code << get_register(binary) << ", ";
             m_asm_code << get_register(binary->getOperand(0)) << ", ";
             m_asm_code << std::to_string(contant->getSExtValue()) << std::endl;
@@ -192,12 +193,28 @@ void function_translator::translate_instruction(const register_allocator::value_
         else
         {
             m_asm_code << indent;
-            m_asm_code << get_opcode(binary) << " ";
+            m_asm_code << get_opcode(binary) << "." << get_int_size_name(binary) << " ";
             m_asm_code << get_register(binary) << ", ";
             m_asm_code << get_register(binary->getOperand(0)) << ", ";
             m_asm_code << get_register(binary->getOperand(1)) << std::endl;
         }
 
+    }
+    else if(auto load{llvm::dyn_cast<llvm::LoadInst>(instruction.value)}; load)
+    {
+        m_asm_code << indent;
+        m_asm_code << translate_instruction(load) << "." << get_int_size_name(load) << " ";
+        m_asm_code << get_register(load) << ", ";
+        m_asm_code << get_register(load->getPointerOperand()) << ", ";
+        m_asm_code << "0" << std::endl;
+    }
+    else if(auto store{llvm::dyn_cast<llvm::StoreInst>(instruction.value)}; store)
+    {
+        m_asm_code << indent;
+        m_asm_code << translate_instruction(store) << "." << get_int_size_name(store->getValueOperand()) << " ";
+        m_asm_code << get_register(store->getValueOperand()) << ", ";
+        m_asm_code << get_register(store->getPointerOperand()) << ", ";
+        m_asm_code << "0" << std::endl;
     }
     else if(auto compare{llvm::dyn_cast<llvm::ICmpInst>(instruction.value)}; compare)
     {
@@ -243,14 +260,66 @@ void function_translator::translate_instruction(const register_allocator::value_
             m_asm_code << get_block_label(m_allocator.info_of(branch->getSuccessor(0))) << std::endl;
         }
     }
+    else if(auto call{llvm::dyn_cast<llvm::CallInst>(instruction.value)}; call)
+    {
+        const auto intrinsic{get_intrinsic_id(*call)};
+
+        if(intrinsic == intrinsic_id::moven)
+        {
+            m_asm_code << indent;
+            m_asm_code << "moven " << get_register(call) << ", ";
+            m_asm_code << llvm::cast<llvm::ConstantInt>(call->getArgOperand(0))->getSExtValue() << std::endl;
+        }
+        else if(intrinsic == intrinsic_id::moveu)
+        {
+            m_asm_code << indent;
+            m_asm_code << "moveu " << get_register(call) << ", ";
+            m_asm_code << llvm::cast<llvm::ConstantInt>(call->getArgOperand(0))->getZExtValue() << std::endl;
+        }
+        else if(intrinsic == intrinsic_id::smove)
+        {
+            constexpr std::array shift_name{"b", "w", "l", "q"};
+
+            assert(m_allocator.info_of(call).register_index == m_allocator.info_of(call->getArgOperand(0)).register_index);
+
+            m_asm_code << indent;
+            m_asm_code << "smove." << shift_name[llvm::cast<llvm::ConstantInt>(call->getArgOperand(2))->getZExtValue()] << " ";
+            m_asm_code << get_register(call) << ", ";
+            m_asm_code << llvm::cast<llvm::ConstantInt>(call->getArgOperand(1))->getZExtValue() << std::endl;
+        }
+        else if(intrinsic == intrinsic_id::spill)
+        {
+
+        }
+        else if(intrinsic == intrinsic_id::fill)
+        {
+
+        }
+        else if(intrinsic == intrinsic_id::ptradd)
+        {
+            if(llvm::ConstantInt* contant{llvm::dyn_cast<llvm::ConstantInt>(call->getOperand(1))}; contant)
+            {
+                m_asm_code << indent;
+                m_asm_code << "addi.q ";
+                m_asm_code << get_register(call) << ", ";
+                m_asm_code << get_register(call->getArgOperand(0)) << ", ";
+                m_asm_code << std::to_string(contant->getSExtValue()) << std::endl;
+            }
+            else
+            {
+                m_asm_code << indent;
+                m_asm_code << "add.q ";
+                m_asm_code << get_register(call) << ", ";
+                m_asm_code << get_register(call->getArgOperand(0)) << ", ";
+                m_asm_code << get_register(call->getArgOperand(1)) << std::endl;
+            }
+
+        }
+    }
     else if(auto ret{llvm::dyn_cast<llvm::ReturnInst>(instruction.value)}; ret)
     {
         m_asm_code << indent;
         m_asm_code << "ret" << std::endl;
-    }
-    else if(auto ptr{llvm::dyn_cast<llvm::GetElementPtrInst>(instruction.value)}; ptr)
-    {
-
     }
     else
     {
@@ -283,6 +352,21 @@ std::string function_translator::get_opcode(const llvm::BinaryOperator* binary)
     default:
         throw std::runtime_error{"Bad or unsuported opcode for binary operation: " + std::to_string(binary->getOpcode())};
     }
+}
+
+std::string function_translator::translate_instruction(const llvm::LoadInst* load [[maybe_unused]])
+{
+    return "ldi";
+}
+
+std::string function_translator::translate_instruction(const llvm::StoreInst* store [[maybe_unused]])
+{
+    return "sti";
+}
+
+std::string function_translator::translate_instruction(const llvm::ICmpInst* compare [[maybe_unused]])
+{
+    return "cmp";
 }
 
 std::string function_translator::translate_instruction(const llvm::BranchInst* branch, const llvm::CmpInst* compare)
@@ -321,11 +405,6 @@ std::string function_translator::get_block_label(const register_allocator::block
 std::string function_translator::get_register(llvm::Value* value)
 {
     return "r" + std::to_string(m_allocator.info_of(value).register_index);
-}
-
-std::string function_translator::translate_instruction(const llvm::ICmpInst* compare [[maybe_unused]])
-{
-    return "cmp";
 }
 
 }

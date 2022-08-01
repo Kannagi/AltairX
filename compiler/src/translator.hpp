@@ -32,10 +32,13 @@ private:
 
     std::string get_opcode(const llvm::BinaryOperator* binary);
     std::string translate_instruction(const llvm::ICmpInst* compare);
+    std::string translate_instruction(const llvm::LoadInst* load);
+    std::string translate_instruction(const llvm::StoreInst* store);
     std::string translate_instruction(const llvm::BranchInst* branch, const llvm::CmpInst* compare);
 
     std::string get_block_label(const register_allocator::block_info& block);
     std::string get_register(llvm::Value* value);
+    std::string get_size_name(llvm::Value* value);
 
 private:
     llvm::Module& m_module;

@@ -181,13 +181,12 @@ void insert_move_for_constant(llvm::Module& module, llvm::Function& function)
                     }
                 }
             }
-            else if(llvm::LoadInst* load{llvm::dyn_cast<llvm::LoadInst>(&instruction)}; load)
+            else if(llvm::StoreInst* store{llvm::dyn_cast<llvm::StoreInst>(&instruction)}; store)
             {
-
-            }
-            else if(llvm::StoreInst* binary{llvm::dyn_cast<llvm::StoreInst>(&instruction)}; binary)
-            {
-
+                if(llvm::ConstantInt* value{llvm::dyn_cast<llvm::ConstantInt>(store->getOperand(0))}; value)
+                {
+                    store->setOperand(0, insert_constant_int(module, value, 0, false, store));
+                }
             }
             else if(llvm::ReturnInst* ret{llvm::dyn_cast<llvm::ReturnInst>(&instruction)}; ret)
             {

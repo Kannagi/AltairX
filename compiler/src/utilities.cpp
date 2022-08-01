@@ -24,6 +24,18 @@ std::string get_value_label(const llvm::Value& value)
     return output;
 }
 
+std::string get_int_size_name(llvm::Value* value)
+{
+    switch (value->getType()->getIntegerBitWidth())
+    {
+    case 8:  return "b";
+    case 16: return "w";
+    case 32: return "l";
+    case 64: return "q";
+    default: throw std::runtime_error{"wrong integer size"};
+    }
+}
+
 std::string type_name(const llvm::Type& type)
 {
     if(type.isArrayTy())

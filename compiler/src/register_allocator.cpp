@@ -493,7 +493,6 @@ void register_allocator::fill_register_info()
         m_registers[i].type = register_type::generic_volatile;
     }
 
-
     m_registers[60].type = register_type::special; //Loop
     m_registers[61].type = register_type::special; //Accumulator
     m_registers[62].type = register_type::special; //Product
