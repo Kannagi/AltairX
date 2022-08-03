@@ -10,9 +10,7 @@ target triple = "x86_64-pc-windows-msvc19.29.30136"
 ; Function Attrs: mustprogress nofree norecurse nosync nounwind readnone willreturn uwtable
 define dso_local i64 @testmove(i64 noundef %0) local_unnamed_addr #0 {
   %2 = add i64 %0, -138
-  %3 = add i64 %2, -6241989083535509713
-  %4 = add i64 %3, 6241989083535509713
-  ret i64 %4
+  ret i64 %2
 }
 
 ; Function Attrs: nofree norecurse nosync nounwind readnone uwtable

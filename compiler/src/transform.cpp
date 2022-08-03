@@ -1,13 +1,31 @@
 #include "transform.hpp"
 
+#include <iostream>
+
+#include <llvm/IR/Constants.h>
+#include <llvm/ADT/PostOrderIterator.h>
+
 #include "intrinsic.hpp"
 #include "utilities.hpp"
 
-#include <iostream>
-#include <llvm/IR/Constants.h>
-
 namespace ar::transforms
 {
+
+void reorder_blocks(llvm::Module& module [[maybe_unused]], llvm::Function& function)
+{
+    std::vector<llvm::BasicBlock*> po_blocks;
+
+    for(auto[it, end] = std::pair{llvm::po_begin(&function.getEntryBlock()), llvm::po_end(&function.getEntryBlock())}; it != end; ++it)
+    {
+        po_blocks.emplace_back(&(*(*it)));
+    }
+
+    std::reverse(std::begin(po_blocks), std::end(po_blocks));
+    for(auto it{std::begin(po_blocks) + 1}; it != std::end(po_blocks); ++it)
+    {
+        (*it)->moveAfter(&(*(*(it - 1))));
+    }
+}
 
 void swap_add_sub(llvm::Module& module [[maybe_unused]], llvm::Function& function)
 {
@@ -17,35 +35,31 @@ void swap_add_sub(llvm::Module& module [[maybe_unused]], llvm::Function& functio
     {
         for(llvm::Instruction& instruction : block)
         {
-            if(llvm::BinaryOperator* binary{llvm::dyn_cast<llvm::BinaryOperator>(&instruction)}; binary)
+            llvm::BinaryOperator* binary{llvm::dyn_cast<llvm::BinaryOperator>(&instruction)};
+            if(binary && (binary->getOpcode() == llvm::BinaryOperator::BinaryOps::Add || binary->getOpcode() == llvm::BinaryOperator::BinaryOps::Sub))
             {
-                if(binary->getOpcode() == llvm::BinaryOperator::BinaryOps::Add || binary->getOpcode() == llvm::BinaryOperator::BinaryOps::Sub)
+                llvm::ConstantInt* value{llvm::dyn_cast<llvm::ConstantInt>(binary->getOperand(1))};
+                if(value && value->isNegative() && value->getSExtValue() > -512)
                 {
-                    if(llvm::ConstantInt* value{llvm::dyn_cast<llvm::ConstantInt>(binary->getOperand(1))}; value)
+                    auto new_value{llvm::ConstantInt::get(binary->getType(), -value->getSExtValue())};
+
+                    llvm::BinaryOperator* new_op{};
+                    if(binary->getOpcode() == llvm::BinaryOperator::BinaryOps::Add)
                     {
-                        if(value->isNegative() && value->getSExtValue() > -512)
-                        {
-                            auto new_value{llvm::ConstantInt::get(binary->getType(), -value->getSExtValue())};
-
-                            llvm::BinaryOperator* new_op{};
-                            if(binary->getOpcode() == llvm::BinaryOperator::BinaryOps::Add)
-                            {
-                                new_op = llvm::BinaryOperator::CreateSub(binary->getOperand(0), new_value, "", binary);
-                            }
-                            else
-                            {
-                                new_op = llvm::BinaryOperator::CreateAdd(binary->getOperand(0), new_value, "", binary);
-                            }
-
-                            // copy users list since we modify it indirectly in the loop
-                            for(llvm::User* user : llvm::SmallVector<llvm::User*>{instruction.user_begin(), instruction.user_end()})
-                            {
-                                user->replaceUsesOfWith(&instruction, new_op);
-                            }
-
-                            to_remove.emplace_back(&instruction);
-                        }
+                        new_op = llvm::BinaryOperator::CreateSub(binary->getOperand(0), new_value, "", binary);
                     }
+                    else
+                    {
+                        new_op = llvm::BinaryOperator::CreateAdd(binary->getOperand(0), new_value, "", binary);
+                    }
+
+                    // copy users list since we modify it indirectly in the loop
+                    for(llvm::User* user : llvm::SmallVector<llvm::User*>{instruction.user_begin(), instruction.user_end()})
+                    {
+                        user->replaceUsesOfWith(&instruction, new_op);
+                    }
+
+                    to_remove.emplace_back(&instruction);
                 }
             }
         }
@@ -167,6 +181,11 @@ void insert_move_for_constant(llvm::Module& module, llvm::Function& function)
             }
             else if(llvm::BinaryOperator* binary{llvm::dyn_cast<llvm::BinaryOperator>(&instruction)}; binary)
             {
+                if(llvm::ConstantInt* value{llvm::dyn_cast<llvm::ConstantInt>(binary->getOperand(0))}; value)
+                {
+                    binary->setOperand(0, insert_constant_int(module, value, 0, false, binary));
+                }
+
                 if(llvm::ConstantInt* value{llvm::dyn_cast<llvm::ConstantInt>(binary->getOperand(1))}; value)
                 {
                     switch(binary->getOpcode())
@@ -176,7 +195,7 @@ void insert_move_for_constant(llvm::Module& module, llvm::Function& function)
                         binary->setOperand(1, insert_constant_int(module, value, 9, true, binary));
                         break;
                     default:
-                         binary->setOperand(1, insert_constant_int(module, value, 9, false, binary));
+                        binary->setOperand(1, insert_constant_int(module, value, 9, false, binary));
                         break;
                     }
                 }

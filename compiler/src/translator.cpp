@@ -101,6 +101,7 @@ function_translator::function_translator(llvm::Module& module, llvm::Function& f
 ,m_function{function}
 ,m_allocator{allocator}
 {
+    ar::transforms::reorder_blocks(m_module, m_function);
     ar::transforms::invert_branch_condition(m_module, m_function);
 }
 
@@ -112,7 +113,13 @@ std::string function_translator::translate()
     const auto end{m_function.end()};
     for(auto it{m_function.begin()}; it != end; ++it)
     {
-        const auto& block{m_allocator.info_of(&*it)};
+        const auto& block{m_allocator.info_of(&(*it))};
+
+        const llvm::BasicBlock* next_block{};
+        if(auto next{it}; ++next != end)
+        {
+            next_block = &(*next);
+        }
 
         m_asm_code << get_block_label(block) << ":" << std::endl;
 
@@ -121,8 +128,12 @@ std::string function_translator::translate()
 
         if(block_size == 1) // only a terminator
         {
-            translate_instruction(m_allocator.values()[block.begin_no_phi]);
-            delay_slot();
+            auto branch{llvm::dyn_cast<llvm::BranchInst>(m_allocator.values()[block.begin_no_phi].value)};
+            if(!branch || branch->isConditional() || branch->getSuccessor(0) != next_block)
+            {
+                translate_instruction(m_allocator.values()[block.begin_no_phi]);
+                delay_slot();
+            }
         }
         else
         {
@@ -137,7 +148,13 @@ std::string function_translator::translate()
             // Swap instruction to make the last instruction run during delay slot only if it is not a cmp
             if(!llvm::isa<llvm::CmpInst>(m_allocator.values()[block.end - 2].value))
             {
-                translate_instruction(m_allocator.values()[block.end - 1]);
+                // Only branch is necessary
+                auto branch{llvm::dyn_cast<llvm::BranchInst>(m_allocator.values()[block.end - 1].value)};
+                if(!branch || branch->isConditional() || branch->getSuccessor(0) != next_block)
+                {
+                    translate_instruction(m_allocator.values()[block.end - 1]);
+                }
+
                 translate_instruction(m_allocator.values()[block.end - 2]);
             }
             else

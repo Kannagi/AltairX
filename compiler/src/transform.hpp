@@ -9,6 +9,13 @@ namespace ar::transforms
 {
 
 /*
+Clang, and probably LLVM optimization passes tend to put block in a kinda random
+and suboptimal order leading to a lot of unneeded branches
+Current implementation simply reorder them in post order, which works well in most cases
+*/
+void reorder_blocks(llvm::Module& module, llvm::Function& function);
+
+/*
 Replace select with normal branching, example:
     a = cmp ...
     d = select a, b, c
@@ -108,7 +115,7 @@ Example:
 Will be transformed into:
 
 |  %5 = icmp sge i32 %0, %3 ; "<" inverse is ">="
-|  br i1 %5, label %12, label %6 ;false path can fallthrough (allocator handles this)
+|  br i1 %5, label %12, label %6 ;false path can fallthrough (translator handles this)
 |
 |6:                                                ; preds = %6, %4
 |  %7 = phi i32 [ %10, %6 ], [ %0, %4 ]
