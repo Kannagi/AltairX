@@ -178,7 +178,7 @@ public:
     std::size_t index_of(const llvm::Loop* loop) const noexcept
     {
         std::size_t index{};
-        for(auto& info : m_blocks)
+        for(auto& info : m_loops)
         {
             if(info.loop == loop)
             {
@@ -341,6 +341,7 @@ private:
     llvm::Function& m_function;
     llvm::DominatorTree m_tree;
     llvm::LoopInfo m_loop_info;
+    std::size_t m_indent{};
     std::vector<scc_info> m_sccs{};
     std::vector<block_info> m_blocks{};
     std::vector<value_info> m_values{};

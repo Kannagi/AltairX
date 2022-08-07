@@ -38,6 +38,14 @@ intrinsic_id get_intrinsic_id(llvm::Instruction& instruction)
             {
                 return intrinsic_id::smove;
             }
+            else if(name.startswith("altair.load"))
+            {
+                return intrinsic_id::load;
+            }
+            else if(name.startswith("altair.store"))
+            {
+                return intrinsic_id::store;
+            }
             else if(name.startswith("altair.spill"))
             {
                 return intrinsic_id::spill;
@@ -85,6 +93,43 @@ llvm::CallInst* insert_smove_intrinsic(llvm::Module& module, llvm::Value* reg, l
     return llvm::CallInst::Create(func_type, function.getCallee(), llvm::ArrayRef<llvm::Value*>{reg, value, shift}, "", position);
 }
 
+llvm::CallInst* insert_load_intrinsic(llvm::Module& module, llvm::Value* ptr, llvm::Value* offset, llvm::Type* type, llvm::Instruction* position)
+{
+    auto ptr_type   {ptr->getType()};
+    auto offset_type{offset->getType()};
+
+    auto func_type    {llvm::FunctionType::get(type, llvm::ArrayRef<llvm::Type*>{ptr_type, offset_type}, false)};
+    auto function_name{"altair.load_" + type_name(*type) + "_" + type_name(*ptr_type) + "_" + type_name(*offset_type)};
+    auto function     {module.getOrInsertFunction(function_name, func_type)};
+
+    return llvm::CallInst::Create(func_type, function.getCallee(), llvm::ArrayRef<llvm::Value*>{ptr, offset}, "", position);
+}
+
+llvm::CallInst* insert_store_intrinsic(llvm::Module& module, llvm::Value* ptr, llvm::Value* offset, llvm::Value* value, llvm::Instruction* position)
+{
+    auto ptr_type   {ptr->getType()};
+    auto offset_type{offset->getType()};
+    auto value_type {value->getType()};
+
+    auto func_type    {llvm::FunctionType::get(llvm::Type::getVoidTy(module.getContext()), llvm::ArrayRef<llvm::Type*>{ptr_type, offset_type, value_type}, false)};
+    auto function_name{"altair.store_" + type_name(*ptr_type) + "_" + type_name(*offset_type) + "_" + type_name(*value_type)};
+    auto function     {module.getOrInsertFunction(function_name, func_type)};
+
+    return llvm::CallInst::Create(func_type, function.getCallee(), llvm::ArrayRef<llvm::Value*>{ptr, offset, value}, "", position);
+}
+
+llvm::CallInst* insert_ptradd_intrinsic(llvm::Module& module, llvm::Value* ptr, llvm::Value* offset, llvm::Type* output_type, llvm::Instruction* position)
+{
+    auto ptr_type   {ptr->getType()};
+    auto offset_type{offset->getType()};
+
+    auto func_type    {llvm::FunctionType::get(output_type, llvm::ArrayRef<llvm::Type*>{ptr_type, offset_type}, false)};
+    auto function_name{"altair.ptradd_" + type_name(*offset_type)};
+    auto function     {module.getOrInsertFunction(function_name, func_type)};
+
+    return llvm::CallInst::Create(func_type, function.getCallee(), llvm::ArrayRef<llvm::Value*>{ptr, offset}, "", position);
+}
+
 llvm::CallInst* insert_spill_intrinsic(llvm::Module& module, llvm::Value* value, llvm::Instruction* position)
 {
     auto value_type{value->getType()};
@@ -101,18 +146,6 @@ llvm::CallInst* insert_fill_intrinsic(llvm::Module& module, llvm::Value* value, 
     auto function  {module.getOrInsertFunction("altair.fill_" + type_name(*value_type), func_type)};
 
     return llvm::CallInst::Create(func_type, function.getCallee(), llvm::ArrayRef<llvm::Value*>{value}, "", position);
-}
-
-llvm::CallInst* insert_ptradd_intrinsic(llvm::Module& module, llvm::Value* ptr, llvm::Value* offset, llvm::Type* output_type, llvm::Instruction* position)
-{
-    auto ptr_type   {ptr->getType()};
-    auto offset_type{offset->getType()};
-
-    auto func_type    {llvm::FunctionType::get(output_type, llvm::ArrayRef<llvm::Type*>{ptr_type, offset_type}, false)};
-    auto function_name{"altair.ptradd_" + type_name(*offset_type)};
-    auto function     {module.getOrInsertFunction(function_name, func_type)};
-
-    return llvm::CallInst::Create(func_type, function.getCallee(), llvm::ArrayRef<llvm::Value*>{ptr, offset}, "", position);
 }
 
 }

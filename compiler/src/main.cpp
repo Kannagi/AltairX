@@ -110,71 +110,6 @@ static std::ostream& print_values(Range&& range)
     return std::cout;
 }
 
-static void print_loop(const llvm::Loop* loop)
-{
-    const std::string ident(loop->getLoopDepth() * 4, ' ');
-
-    std::cout << ident << "Loop " << ar::get_value_label(*loop->getHeader()) << std::endl;
-
-    std::cout << ident << "  Blocks: ";
-
-    for(auto block : loop->blocks())
-    {
-        std::cout << ar::get_value_label(*block) << " ";
-    }
-
-    std::cout << std::endl;
-
-    llvm::SmallVector<llvm::BasicBlock*, 32> blocks{};
-
-    loop->getExitBlocks(blocks);
-    std::cout << ident << "  Successors: ";
-    print_values(blocks) << std::endl;
-
-    blocks.clear();
-    loop->getExitingBlocks(blocks);
-    std::cout << ident << "  Exiting blocks: ";
-    print_values(blocks) << std::endl;
-
-    blocks.clear();
-    loop->getLoopLatches(blocks);
-    std::cout << ident << "  Latches: ";
-    print_values(blocks) << std::endl;
-
-    llvm::BranchInst* guard{loop->getLoopGuardBranch()};
-    std::cout << ident << "  Guard: " << (guard ? ar::get_value_label(*guard->getParent()) : std::string{"None"}) << std::endl;
-
-    llvm::BasicBlock* preheader{loop->getLoopPreheader()};
-    std::cout << ident << "  Preheader: " << (preheader ? ar::get_value_label(*preheader) : std::string{"None"}) << std::endl;
-
-    llvm::BasicBlock* pred{loop->getLoopPredecessor()};
-    std::cout << ident << "  Predecessor: " << (pred ?ar:: get_value_label(*pred) : std::string{"None"}) << std::endl;
-
-    blocks.clear();
-    loop->getExitBlocks(blocks);
-    std::cout << ident << "  Successors: ";
-    print_values(blocks) << std::endl;
-
-    llvm::SmallVector<llvm::Loop*, 32> inners{};
-    loop->getInnerLoopsInPreorder(*loop, inners);
-
-    for(const llvm::Loop* inner : inners)
-    {
-        print_loop(inner);
-    }
-}
-
-static void print_loops(llvm::Function& function)
-{
-    llvm::DominatorTree tree{};
-    tree.recalculate(function);
-
-    llvm::LoopInfo loops{tree};
-    for(llvm::Loop* loop : loops)
-    {
-        print_loop(loop);
-    }
-}
 
 static void print_predecessors(llvm::Function& function)
 {
@@ -226,17 +161,7 @@ static void run(llvm::Module& module, const std::string& filename)
 
         std::cout << function.getName().str() << ":" << std::endl;
 
-        print_loops(function);
-        print_scc(function);
-        print_post_order(function);
-        print_predecessors(function);
-
         ar::register_allocator allocator{module, function};
-
-        const auto& phi_groups{allocator.phi_groups()};
-        const auto& sccs      {allocator.sccs()};
-        const auto& blocks    {allocator.blocks()};
-        const auto& values    {allocator.values()};
 
         const auto print_value = [&allocator](const llvm::Value& value)
         {
@@ -272,29 +197,14 @@ static void run(llvm::Module& module, const std::string& filename)
             print_value(*allocator.values()[i].value);
         }
 
-        for(auto&& scc : sccs)
+        for(auto&& block_info : allocator.blocks())
         {
-            for(auto block : scc.blocks)
-            {
-                auto&& block_info{allocator.info_of(block)};
-                std::cout << "  " << block_info.name << std::endl;
+            std::cout << "  " << block_info.name << std::endl;
 
-                for(auto&& value : *block)
-                {
-                    print_value(value);
-                }
+            for(auto&& value : *block_info.block)
+            {
+                print_value(value);
             }
-
-/*
-            if(info.affinity == register_allocator::register_affinity::branch)
-            {
-                std::cout <<  "BR | ";
-            }
-            else
-            {
-                std::cout << std::setw(2) << info.register_index << " | ";
-            }*/
-
         }
 
         std::cout << "---" << std::endl;

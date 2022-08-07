@@ -177,7 +177,43 @@ void insert_move_for_constant(llvm::Module& module, llvm::Function& function)
             }
             else if(llvm::CallInst* call{llvm::dyn_cast<llvm::CallInst>(&instruction)}; call)
             {
+                switch(get_intrinsic_id(*call))
+                {
+                case intrinsic_id::unknown:
+                    for(std::uint32_t i{}; i < call->arg_size(); ++i)
+                    {
+                        if(llvm::ConstantInt* value{llvm::dyn_cast<llvm::ConstantInt>(call->getArgOperand(i))}; value)
+                        {
+                            call->setArgOperand(i, insert_constant_int(module, value, 0, false, call));
+                        }
+                    }
+                    break;
 
+                case intrinsic_id::load:
+                    if(llvm::ConstantInt* value{llvm::dyn_cast<llvm::ConstantInt>(call->getArgOperand(1))}; value)
+                    {
+                        call->setArgOperand(1, insert_constant_int(module, value, 10, true, call));
+                    }
+                    break;
+
+                case intrinsic_id::store:
+                    if(llvm::ConstantInt* value{llvm::dyn_cast<llvm::ConstantInt>(call->getArgOperand(1))}; value)
+                    {
+                        call->setArgOperand(1, insert_constant_int(module, value, 10, true, call));
+                    }
+                    if(llvm::ConstantInt* value{llvm::dyn_cast<llvm::ConstantInt>(call->getArgOperand(2))}; value)
+                    {
+                        call->setArgOperand(2, insert_constant_int(module, value, 0, false, call));
+                    }
+                    break;
+
+                case intrinsic_id::moven:  break;
+                case intrinsic_id::moveu:  break;
+                case intrinsic_id::smove:  break;
+                case intrinsic_id::ptradd: break;
+                case intrinsic_id::spill:  break;
+                case intrinsic_id::fill:   break;
+                }
             }
             else if(llvm::BinaryOperator* binary{llvm::dyn_cast<llvm::BinaryOperator>(&instruction)}; binary)
             {
@@ -390,6 +426,86 @@ void decompose_getelementptr(llvm::Module& module, llvm::Function& function)
     for(auto gep : to_remove)
     {
         gep->eraseFromParent();
+    }
+}
+
+void optimize_load_store(llvm::Module& module, llvm::Function& function)
+{
+    std::vector<llvm::Instruction*> to_remove{};
+
+    const auto remove_if_useless = [&](llvm::CallInst* call)
+    {
+        bool can_remove{true};
+        for(llvm::User* user : call->users())
+        {
+            if(const auto instruction{llvm::dyn_cast<llvm::Instruction>(user)}; instruction)
+            {
+                const auto id{get_intrinsic_id(*instruction)};
+                if(!llvm::isa<llvm::LoadInst>(user) && !llvm::isa<llvm::StoreInst>(user) && id != intrinsic_id::load && id != intrinsic_id::store)
+                {
+                    can_remove = false;
+                    break;
+                }
+            }
+        }
+
+        if(can_remove)
+        {
+            to_remove.emplace_back(call);
+        }
+    };
+
+    for(llvm::BasicBlock& block : function)
+    {
+        for(llvm::Instruction& instruction : block)
+        {
+            if(auto load{llvm::dyn_cast<llvm::LoadInst>(&instruction)}; load)
+            {
+                if(auto ptradd{llvm::dyn_cast<llvm::CallInst>(load->getPointerOperand())}; ptradd && get_intrinsic_id(*ptradd) == intrinsic_id::ptradd)
+                {
+                    auto altair_load{insert_load_intrinsic(module, ptradd->getOperand(0), ptradd->getArgOperand(1), load->getType(), load)};
+
+                    for(llvm::User* user : llvm::SmallVector<llvm::User*>{load->user_begin(), load->user_end()})
+                    {
+                        user->replaceUsesOfWith(load, altair_load);
+                    }
+
+                    to_remove.emplace_back(load);
+                    remove_if_useless(ptradd);
+                }
+            }
+            else if(auto store{llvm::dyn_cast<llvm::StoreInst>(&instruction)}; store)
+            {
+                if(auto ptradd{llvm::dyn_cast<llvm::CallInst>(store->getPointerOperand())}; ptradd && get_intrinsic_id(*ptradd) == intrinsic_id::ptradd)
+                {
+                    insert_store_intrinsic(module, ptradd->getOperand(0), ptradd->getArgOperand(1), store->getValueOperand(), store);
+
+                    to_remove.emplace_back(store);
+                    remove_if_useless(ptradd);
+                }
+            }
+        }
+    }
+
+    std::sort(std::begin(to_remove), std::end(to_remove));
+    to_remove.erase(std::unique(std::begin(to_remove), std::end(to_remove)), to_remove.end());
+
+    //sort removed entries to ensure users are deleted before the used value
+    //that's a pretty heavy algorithm but it works
+    for(auto prev{std::begin(to_remove)}; prev != std::end(to_remove); ++prev)
+    {
+        for(auto next{prev}; next != std::end(to_remove); ++next)
+        {
+            if(std::find((*prev)->user_begin(), (*prev)->user_end(), *next) != (*prev)->user_end())
+            {
+                std::iter_swap(prev, next);
+            }
+        }
+    }
+
+    for(llvm::Instruction* instruction : to_remove)
+    {
+        instruction->eraseFromParent();
     }
 }
 

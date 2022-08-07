@@ -101,8 +101,7 @@ function_translator::function_translator(llvm::Module& module, llvm::Function& f
 ,m_function{function}
 ,m_allocator{allocator}
 {
-    ar::transforms::reorder_blocks(m_module, m_function);
-    ar::transforms::invert_branch_condition(m_module, m_function);
+
 }
 
 std::string function_translator::translate()
@@ -222,16 +221,14 @@ void function_translator::translate_instruction(const register_allocator::value_
         m_asm_code << indent;
         m_asm_code << translate_instruction(load) << "." << get_int_size_name(load) << " ";
         m_asm_code << get_register(load) << ", ";
-        m_asm_code << get_register(load->getPointerOperand()) << ", ";
-        m_asm_code << "0" << std::endl;
+        m_asm_code << get_register(load->getPointerOperand()) << "[0]" << std::endl;
     }
     else if(auto store{llvm::dyn_cast<llvm::StoreInst>(instruction.value)}; store)
     {
         m_asm_code << indent;
         m_asm_code << translate_instruction(store) << "." << get_int_size_name(store->getValueOperand()) << " ";
         m_asm_code << get_register(store->getValueOperand()) << ", ";
-        m_asm_code << get_register(store->getPointerOperand()) << ", ";
-        m_asm_code << "0" << std::endl;
+        m_asm_code << get_register(store->getPointerOperand()) << "[0]"<< std::endl;
     }
     else if(auto compare{llvm::dyn_cast<llvm::ICmpInst>(instruction.value)}; compare)
     {
@@ -303,6 +300,44 @@ void function_translator::translate_instruction(const register_allocator::value_
             m_asm_code << "smove." << shift_name[llvm::cast<llvm::ConstantInt>(call->getArgOperand(2))->getZExtValue()] << " ";
             m_asm_code << get_register(call) << ", ";
             m_asm_code << llvm::cast<llvm::ConstantInt>(call->getArgOperand(1))->getZExtValue() << std::endl;
+        }
+        else if(intrinsic == intrinsic_id::load)
+        {
+            if(llvm::ConstantInt* contant{llvm::dyn_cast<llvm::ConstantInt>(call->getOperand(1))}; contant)
+            {
+                m_asm_code << indent;
+                m_asm_code << "ldi." << get_int_size_name(call) << " ";
+                m_asm_code << get_register(call) << ", ";
+                m_asm_code << get_register(call->getArgOperand(0)) << "[";
+                m_asm_code << std::to_string(contant->getSExtValue()) << "]" << std::endl;
+            }
+            else
+            {
+                m_asm_code << indent;
+                m_asm_code << "ld." << get_int_size_name(call) << " ";
+                m_asm_code << get_register(call) << ", ";
+                m_asm_code << get_register(call->getArgOperand(0)) << "[";
+                m_asm_code << get_register(call->getArgOperand(1)) << "]" << std::endl;
+            }
+        }
+        else if(intrinsic == intrinsic_id::store)
+        {
+            if(llvm::ConstantInt* contant{llvm::dyn_cast<llvm::ConstantInt>(call->getOperand(1))}; contant)
+            {
+                m_asm_code << indent;
+                m_asm_code << "sti." << get_int_size_name(call->getArgOperand(2)) << " ";
+                m_asm_code << get_register(call->getArgOperand(2)) << ", ";
+                m_asm_code << get_register(call->getArgOperand(0)) << "[";
+                m_asm_code << std::to_string(contant->getSExtValue()) << "]" << std::endl;
+            }
+            else
+            {
+                m_asm_code << indent;
+                m_asm_code << "st." << get_int_size_name(call->getArgOperand(2)) << " ";
+                m_asm_code << get_register(call->getArgOperand(2)) << ", ";
+                m_asm_code << get_register(call->getArgOperand(0)) << "[";
+                m_asm_code << get_register(call->getArgOperand(1)) << "]" << std::endl;
+            }
         }
         else if(intrinsic == intrinsic_id::spill)
         {

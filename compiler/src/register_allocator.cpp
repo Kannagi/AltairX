@@ -14,12 +14,16 @@ namespace ar
 register_allocator::register_allocator(llvm::Module& module, llvm::Function& function)
 :m_module{module}
 ,m_function{function}
-,m_tree{m_function}
-,m_loop_info{m_tree}
 {
     ar::transforms::swap_add_sub(m_module, m_function);
     ar::transforms::decompose_getelementptr(m_module, m_function);
+    ar::transforms::optimize_load_store(m_module, m_function);
     ar::transforms::insert_move_for_constant(m_module, m_function);
+    ar::transforms::reorder_blocks(m_module, m_function);
+    ar::transforms::invert_branch_condition(m_module, m_function);
+
+    m_tree = llvm::DominatorTree{m_function};
+    m_loop_info = llvm::LoopInfo{m_tree};
 
     extract_sccs();
     extract_blocks();
@@ -140,6 +144,15 @@ void register_allocator::extract_loop(llvm::Loop* loop)
     info.loop = loop;
     info.predecessors = ar::loop_predecessors(*loop);
     info.successors = ar::loop_successors(*loop);
+
+    const std::string ident(loop->getLoopDepth() * 4, ' ');
+    std::cout << ident << "Loop " << ar::get_value_label(*loop->getHeader()) << std::endl;
+    std::cout << ident << "  Blocks: ";
+    for(auto block : loop->blocks())
+    {
+        std::cout << ar::get_value_label(*block) << " ";
+    }
+    std::cout << std::endl;
 
     llvm::SmallVector<llvm::Loop*, 32> inners{};
     loop->getInnerLoopsInPreorder(*loop, inners);
@@ -311,7 +324,7 @@ void register_allocator::compute_lifetimes()
         value_info& value{m_values[index]};
         value.usage.resize(std::size(m_values));
 
-        for(llvm::Value* user : value.value->users())
+        for(llvm::Value* user : value.value->users()) // register position of each user
         {
             write_usage(value, index_of(user));
         }
@@ -344,32 +357,44 @@ void register_allocator::fill_lifetime(size_t index)
 bool register_allocator::compute_lifetime_loop(size_t index, const llvm::BasicBlock* current)
 {
     value_info& info{m_values[index]};
+    const block_info& current_info{info_of(current)};
 
     //This is the block where the value is defined, stop here
     if(index_of(current) == info.block)
     {
         info.lifetime.add_range(index, m_blocks[info.block].end);
 
+        std::cout << "Add range [" << index << "; " << m_blocks[info.block].end << "] to " << get_value_label(*info.value) << std::endl;
+
         return true;
     }
 
-    const block_info& current_info{info_of(current)};
+    bool output = false;
+
     if(current_info.loop)
     {
         //If the predecessor is part of a loop header we direcly go to the predecessor of the loop
         //It will mark the whole loop as a part of the lifetime
-        for(const llvm::BasicBlock* loop_pred : info_of(current_info.loop).predecessors)
+        for(const llvm::BasicBlock* pred : info_of(current_info.loop).predecessors)
         {
-            if(compute_lifetime_loop(index, loop_pred))
+            if(compute_lifetime_loop(index, pred))
             {
+                const block_info& pred_info{info_of(pred)};
+                info.lifetime.add_range(pred_info.begin, pred_info.end);
+
+                std::cout << "Add range [" << pred_info.begin << "; " << pred_info.end << "] to " << get_value_label(*info.value)
+                          << " because of block " << get_value_label(*pred) << std::endl;
+
                 for(const llvm::BasicBlock* block : current_info.loop->blocks())
                 {
                     const block_info& loop_block{info_of(block)};
 
+                    std::cout << "Add range [" << loop_block.begin << "; " << loop_block.end << "] to " << get_value_label(*info.value)
+                              << " because of loop " << current_info.name << " block " << get_value_label(*block) << std::endl;
                     info.lifetime.add_range(loop_block.begin, loop_block.end);
                 }
 
-                return true;
+                output = true;
             }
         }
     }
@@ -381,24 +406,26 @@ bool register_allocator::compute_lifetime_loop(size_t index, const llvm::BasicBl
             if(compute_lifetime_loop(index, pred))
             {
                 const block_info& pred_info{info_of(pred)};
-
                 info.lifetime.add_range(pred_info.begin, pred_info.end);
 
-                return true;
+                std::cout << "Add range [" << pred_info.begin << "; " << pred_info.end << "] to " << get_value_label(*info.value)
+                          << " because of block " << get_value_label(*pred) << std::endl;
+
+                output = true;
             }
         }
     }
 
-    return false;
+    return output;
 }
 
 void register_allocator::compute_lifetime(size_t index, const llvm::Value* user)
 {
     value_info& info{m_values[index]};
-    const block_info& block{m_blocks[info.block]};
 
     const value_info& user_info {info_of(user)};
     const std::size_t user_index{index_of(user_info)};
+    const block_info& user_block{m_blocks[user_info.block]};
 
     if(user_info.block == info.block) //Used in same block
     {
@@ -406,7 +433,7 @@ void register_allocator::compute_lifetime(size_t index, const llvm::Value* user)
     }
     else //Used in other block
     {
-        compute_lifetime_loop(index, block.block);
+        compute_lifetime_loop(index, user_block.block);
     }
 }
 
@@ -427,6 +454,7 @@ void register_allocator::compute_phi_lifetime(size_t index, const llvm::PHINode*
             }
             else //Used in other block
             {
+                info.lifetime.add_range(pred_info.begin, pred_info.end); // must live in this block
                 compute_lifetime_loop(index, pred_info.block);
             }
         }

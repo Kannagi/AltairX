@@ -1,5 +1,7 @@
 #include "lifetime.hpp"
 
+#include <cassert>
+
 namespace ar
 {
 
@@ -167,9 +169,12 @@ lifetime::iterator lifetime::coalesce(iterator it)
     if(it != begin())
     {
         const auto prev{it - 1};
+
+        assert(prev->begin <= it->begin);
         if(prev->end >= it->begin)
         {
-            it->begin = prev->begin;
+            it->begin = std::min(it->begin, prev->begin);
+            it->end = std::max(it->end, prev->end);
             it = erase(prev);
         }
     }
@@ -194,6 +199,7 @@ void lifetime::coalesce_all()
 
     while(next != end())
     {
+        assert(it->begin <= next->begin);
         if(next->begin <= it->end)
         {
             next->begin = it->begin;
