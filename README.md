@@ -2,7 +2,7 @@
 New computer and new CPU PoC
 
 The main processor of the AltairX K1 is a VLIW In Order CPU.  
-It has 3 internal memory:  
+It has 4 internal memory:  
 
 64 KiB L1 instruction Cache 4-way.  
 32 KiB L1 data Cache RW 4-way.  
@@ -11,7 +11,7 @@ It has 3 internal memory:
 
 1 MiB L2 Scratchpad memory.  
 
-Algorithms cache used is MRU based Pseudo LRU (PLRUm).
+Algorithms cache used is MRU based Pseudo LRU (PLRUm).  
 If used 2-way Algorithms cache used is FIFO.
 
 The processor has no branch prediction, it will be based on the delay slot (1 cycle for Fetch) and 1 decode cycle + Jump (Delay)
