@@ -11,6 +11,9 @@ It has 3 internal memory:
 
 1 MiB L2 Scratchpad memory.  
 
+Algorithms cache used is MRU based Pseudo LRU (PLRUm).
+If used 2-way Algorithms cache used is FIFO.
+
 The processor has no branch prediction, it will be based on the delay slot (1 cycle for Fetch) and 1 decode cycle + Jump (Delay)
 
 The number of instructions is done via a "Pairing" bit, when it is equal to 1, there is another instruction to be executed in parallel, 0 indicates the end of the bundle.  
@@ -50,7 +53,7 @@ For floating point numbers in AltairX , it will not be 100% compatible with the 
 -Exceptions are not handled   
 
 For the calculation unit it has:  
-2ALU+2LSU 1VFPU 1EFU 1FPU-D 1DIV/MUL BRU/CMP  
+2ALU+2LSU 1VFPU 1EFU 1FPU-D 1DIV/MUL BRU  
 
 The advantage of this processor is that it has a simple design, and requires little transistor for "high performance" and therefore consume / cost less than CISC/RISC Out Of Order processors.
 

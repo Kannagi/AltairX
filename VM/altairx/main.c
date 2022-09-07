@@ -6,6 +6,18 @@
 
 #include "src/vm.h"
 
+/*
+unsigned char* code_to_execute = "\xB8\x13\x00\xCD\x10";
+void (*runCode)();
+
+
+	runCode = code_to_execute;
+
+	runCode();
+
+	return;*/
+
+
 int main(int argc, char** argv)
 {
 	int i,arg = 0;
@@ -31,6 +43,8 @@ int main(int argc, char** argv)
         	if(strcmp(argv[i],"-spmram") == 0) arg = 4;
         	if(strcmp(argv[i],"-spmt")   == 0) arg = 5;
         	if(strcmp(argv[i],"-spm2")   == 0) arg = 6;
+
+        	if(strcmp(argv[i],"-mode")   == 0) arg = 7;
         }else
         {
         	if(arg == 0)
@@ -64,13 +78,17 @@ int main(int argc, char** argv)
 						processor.mmap.nspm2 = atoi(argv[i]);
 					break;
 
+					case 7:
+						processor.mode = atoi(argv[i]);
+					break;
+
 				}
 				arg = 0;
 			}
 
         }
     }
-
+/*
     if(address[0] == 0)
     {
         printf("Enter a program\n");
@@ -86,7 +104,7 @@ int main(int argc, char** argv)
         printf("\nExemple :\nvm_altairx prog.bin -wram 32\n");
         return 0;
     }
-
+*/
 
 
 	AX_init_proc_mem(&processor);
@@ -96,7 +114,33 @@ int main(int argc, char** argv)
 	AX_add_core(&processor);
 	AX_boot_rom(processor.core[0],processor.mmap.rom,processor.mmap.nrom);
 
-	int error = AX_exe_core(processor.core[0]);
+	int error;
+
+	switch(processor.mode)
+	{
+		case 0:
+			error = AX_exe_core(processor.core[0]);
+			//error = AX_exe_core_mode0(processor.core[0]);
+		break;
+
+		case 1:
+			error = AX_exe_core_mode1(processor.core[0]);
+		break;
+
+		case 2:
+			error = AX_exe_core_mode2(processor.core[0]);
+		break;
+
+		case 3:
+			error = AX_exe_core_mode3(processor.core[0]);
+		break;
+
+		case 4:
+			//
+		break;
+	}
+
+
 
 	if(error != 1)
 		printf("%d\n",error);

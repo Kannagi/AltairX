@@ -1,11 +1,11 @@
-/* cpu.c example cpu-description file */
+ /* cpu.c example cpu-description file */
 /* (c) in 2002 by Volker Barthelmann */
 /* (c) in 2020 by Samy Meguenoun */
 #include <stdlib.h>
-#include "vasm.h"
+#include "vasm.h" 
 
 char *cpu_copyright="vasm Altair cpu backend 1.0 (c) 2020 Samy Mahjid Meguenoun";
-
+ 
 
 char *cpuname="AltairK1";
 int bitsperbyte=8;
@@ -72,7 +72,7 @@ int parse_operand(char *p,int len,operand *op,int requires)
     op->value = NULL;
     char arg[32];
     int i;
-
+    
     if(requires == OP_DATA )
     {
         op->value = parse_expr(&p);
@@ -309,6 +309,31 @@ int parse_operand(char *p,int len,operand *op,int requires)
     //Immediate
     if( (requires >= OP_IMM) && (requires <= OP_IML) )
     {
+        
+        if(len > 2)
+        {
+            if(p[0] == '0' && p[1] == 'x') 
+            {
+                unsigned long hexa = 0,number;
+                for(int i = 2;i < len;i++)
+                {
+                    if(p[i] >= '0' && p[i] <= '9')
+                        number = p[i]- '0';
+                    if(p[i] >= 'A' && p[i] <= 'F')
+                        number = p[i]- 'A' + 10;
+
+                    hexa += number<<( (len - i-1)*4);
+                }
+            }
+            op->val = 5;
+
+            
+        }else
+        {
+            
+
+        }
+
         //op->val = atoi(p);
         //op->fval = atof(p);
         op->value = parse_expr(&p);
@@ -373,12 +398,9 @@ dblock *eval_instruction(instruction *p,section *sec,taddr pc)
     int val;
     operand operand1,operand2,operand3;
 
-    //printf("%d\n",pc);
-
-
     int k1ext = 0x00;
 
-    if( (opcode&0x0F) == 0b0010 )
+    if( ((opcode>>5)&0x07) == 2 )
         k1ext = 0x02;
 
     if(p->qualifiers[0] != 0)
@@ -391,7 +413,7 @@ dblock *eval_instruction(instruction *p,section *sec,taddr pc)
 
         if(ext[0] == 'b') k1ext = 0;
         if(ext[0] == 'w') k1ext = 1;
-        if(ext[0] == 'l') k1ext = 2;
+        if(ext[0] == 'd') k1ext = 2;
         if(ext[0] == 'q') k1ext = 3;
 
         
@@ -435,6 +457,12 @@ dblock *eval_instruction(instruction *p,section *sec,taddr pc)
         eval_expr(operand1.value,&val,sec,pc);
         val = (val-pc-4-1)>>2;
 
+        int toffset = 0;
+        if(opcode&1)
+            toffset = 1;
+            
+        val -= toffset;
+
         operand1.val = val&0x3FFFFF;
 
         opcode |= (operand1.val<<10);
@@ -450,9 +478,10 @@ dblock *eval_instruction(instruction *p,section *sec,taddr pc)
         }else
         {
             val = (val+4-1)>>2;
+            
             operand1.val = val&0xFFFFFF;
         }
-
+        
         opcode |= (operand1.val<<8);
     }
 
@@ -503,7 +532,9 @@ dblock *eval_instruction(instruction *p,section *sec,taddr pc)
     {
         eval_expr(operand2.value,&val,sec,pc);
         operand2.val = val&0x3FFFF;
+        opcode &= 0xFFFFFCFF;
         opcode |= (operand2.val<<8);
+       
     } 
 
     if(operand2.type == OP_RRG)

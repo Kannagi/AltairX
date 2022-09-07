@@ -44,7 +44,8 @@ void *AX_Memory_Map(Core *core,uint64_t offset)
 	else if(offset&MEMORY_MAP_IO_BEGIN)
 	{
 		address = core->mmap.io;
-		max = 0x7FFFFF; //Max 8 Mio (miroir 32 Mio)
+		core->iorw = offset&0x7FFFF;
+		max = 0x7FFFF; //Max 512 Kio (miroir 32 Mio)
 	}
 	else //SPM
 	{
@@ -109,6 +110,7 @@ int AX_init_proc(Processor *processor)
 	processor->ncore = 1;
 	processor->mode = 0;
 
+
 	return 0;
 }
 
@@ -121,7 +123,7 @@ int AX_init_proc_mem(Processor *processor)
 	processor->mmap.spmt = malloc(processor->mmap.nspmt);
 	processor->mmap.spm2 = malloc(processor->mmap.nspm2);
 
-	processor->mmap.io = malloc(0x80000); // 8 Mio
+	processor->mmap.io = malloc(0x10000); // 1 Mio
 	return 0;
 }
 
@@ -139,6 +141,9 @@ int AX_add_core(Processor *processor)
 	core->cycle = 0;
 	core->delay = 0;
 	core->pc = 0x100/4;
+	core->io = -1;
+	core->iorw = 0;
+
 	core->wram = (uint32_t*)processor->mmap.wram;
 
 
@@ -168,28 +173,51 @@ int AX_add_core(Processor *processor)
 	return 0;
 }
 
+static void AX_exe_core_printinfo(Core *core)
+{
+	printf("\n%ld instructions\n",core->instruction);
+	printf("%ld cycle\n",core->cycle);
+
+	printf("IPC : %f\n\n",(float)core->instruction/(float)core->cycle);
+
+
+	printf("%ld inst cache cycle\n",core->icachemiss_cycle);
+	printf("%ld data cache cycle\n",core->dcachemiss_cycle);
+
+	printf("%ld total cycle\n",core->cycle+core->dcachemiss_cycle+core->icachemiss_cycle);
+
+	printf("%ld icache miss\n",core->icachemiss);
+	printf("%ld dcache miss\n",core->dcachemiss);
+}
+//-------------------------
+void AX_decode_executex64(Core *core);
+void AX_decode_execute2(Core *core);
 int AX_exe_core(Core *core)
 {
 	clock_t tbegin;
 
 	tbegin = clock();
 
-	int error = 0,t = 0;
+	int t = 0;
 
-	while(error == 0)
+	core->error = 0;
+
+	while(core->error == 0)
 	{
-		error = AX_decode(core);
-		AX_debug(core);
-		error += AX_execute(core);
+		AX_decode_execute(core);
 
-		AX_syscall_emul(core);
-		core->cycle++;
-/*
-		if(core->cycle > 20)
-			exit(0);
-*/
+
+		//AX_Pipeline_stall(core);
+		//AX_debug(core);
+
+		//AX_Cache_miss(core);
+		//AX_syscall_emul(core);
+
+
+		//if(core->cycle > 20) exit(0);
+
 		t++;
-		if(t > 0x80000)
+		if(t > 0x10000)
 		{
 			if(clock() > (tbegin+CLOCKS_PER_SEC) )
 			{
@@ -206,11 +234,85 @@ int AX_exe_core(Core *core)
 		//printf("%d\n",core->pc);
 	}
 
-	printf("%ld instructions\n",core->instruction);
-	printf("%ld cycle\n",core->cycle);
+	AX_exe_core_printinfo(core);
 
-	printf("IPC : %f\n",(float)core->instruction/(float)core->cycle);
-
-	return error;
+	return core->error;
 }
 
+//----------
+int AX_exe_core_mode0(Core *core)
+{
+	core->error = 0;
+
+	while(core->error == 0)
+	{
+		AX_decode_execute(core);
+
+		AX_syscall_emul(core);
+		core->cycle++;
+	}
+
+	AX_exe_core_printinfo(core);
+
+	return core->error;
+}
+
+//-------
+int AX_exe_core_mode1(Core *core)
+{
+	core->error = 0;
+
+	while(core->error == 0)
+	{
+		AX_decode_execute(core);
+		AX_debug(core);
+
+		AX_syscall_emul(core);
+		core->cycle++;
+	}
+
+	AX_exe_core_printinfo(core);
+
+	return core->error;
+}
+
+//-------
+int AX_exe_core_mode2(Core *core)
+{
+	core->error = 0;
+
+	while(core->error == 0)
+	{
+		AX_decode_execute(core);
+		AX_Pipeline_stall(core);
+
+		AX_Cache_miss(core);
+
+		AX_syscall_emul(core);
+		core->cycle++;
+	}
+
+	AX_exe_core_printinfo(core);
+
+	return core->error;
+}
+
+//-------
+int AX_exe_core_mode3(Core *core)
+{
+	int iocount = 0;
+	core->error = 0;
+
+
+	while(core->error == 0)
+	{
+		AX_decode_execute(core);
+
+		core->cycle++;
+		iocount++;
+	}
+
+	AX_exe_core_printinfo(core);
+
+	return core->error;
+}

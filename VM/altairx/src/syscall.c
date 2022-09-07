@@ -7,8 +7,6 @@
 #include "vm.h"
 
 
-
-
 int AX_syscall_emul(Core *core)
 {
 	static FILE *file;

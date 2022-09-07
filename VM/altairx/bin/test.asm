@@ -1,92 +1,52 @@
-;syscall
-;0x00
-;kernel console ,read/write file
 
-;0x01
-;GIF
 
-;0x02
-;SIF
-
-;0x03
-;input (clavier/souris/joypad)
-
-;0x04
-;Net
-
-;0x05
-;GUI
-
-	
 	include "macro.asm"
 	include "vector.asm"
- 
-	movei r60,1
+	
+	
 
-
-	fmovei v0,1.5
-
-
-	fmovei v1,1.0
-
-
-	addi r63,r63,5
-
-
-
-	fadd.p v0,v0,v1
 	nop
+	move r8,r9
+
+	do
+		moveu r59,5
+		cmpu r3,0
+
+		if_ne 
+		nop
+		    addi r3,r3,0xFF
+		endi
+		ldl r3,0
+		addi r4,r5,0
+	while _wh
+	addi r4,r5,5
+
+
+	moveu r3,$22
+	moveu r4,0
+	smove.w r4,$210
+	sti r3,0[r4]
+
+	endp
+		
+	move r8,r9
+	moven r1,-5
+
 	
-	syscall 0x00
+	moveu r6,1
+
+	loop:
+	addi r4,r6,5
+
+	mul P,r4,r3
+	divs Q,r6,r6
+	divu Q,r6,r6
+
+
+	moveu r4,$01
+
+	syscall
 	nop
-	
-lab2:
-	smove.w r5,$8000
-	smove.b r5,$0400
 
-
-
-	movei r8,1
-
-
-	ldi r6,0[r5]
-	movei r7,'0'
-
-	;addi r6,r6,1
-	add r6,r7,r8
-	sti r6,0[r5]
-	
-	movei r4,$01
-
-	syscall 0x00
-	nop
-	
-	call lfunc
-	nop
-	
-	
-	movei r10,$1	
-	cmpi r10,0
-	beq test
-	nop
-	movei r4,$00
-	syscall 0x00
-	nop
-	
-test:
-	
 	endp
 	nop
-
-	
-lfunc:
-	nop
-
-	ret
-	nop
-
-
-	org $400
-	dc.b "Hello World",$A,0
-	
-	
