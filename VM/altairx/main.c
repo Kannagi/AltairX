@@ -119,8 +119,9 @@ int main(int argc, char** argv)
 	switch(processor.mode)
 	{
 		case 0:
-			error = AX_exe_core(processor.core[0]);
+			//error = AX_exe_core(processor.core[0]);
 			//error = AX_exe_core_mode0(processor.core[0]);
+			error = AX_exe_core_mode1(processor.core[0]);
 		break;
 
 		case 1:

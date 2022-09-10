@@ -146,17 +146,23 @@ void AX_Pipeline_stall(Core *core)
 			core->busy_vreg[i]--;
 	}
 
+	if(core->busy_flag > 0)
+			core->busy_flag--;
+
+	uint32_t opcodes[2];
+	opcodes[0] = core->opcode1;
+	opcodes[1] = core->opcode2;
 
 	uint32_t clear = 0,tmp,pq,tmp2;
 	for(i = 0;i < swt;i++)
 	{
-		const uint32_t opcode = core->opcodes[i];
+		const uint32_t opcode = opcodes[i];
 
 		uint8_t regA = (opcode>>26)&0x3F;
 		const uint8_t regB = (opcode>>20)&0x3F;
 		const uint8_t regC = (opcode>>14)&0x3F;
 
-		const uint8_t unit = ( (opcode&0xFC)>>1 );
+		uint32_t unit = (opcode>>1)&0x7F;
 
 		uint8_t opid;
 
@@ -165,8 +171,10 @@ void AX_Pipeline_stall(Core *core)
 		else
 			opid = opcode2_rw[unit];
 
-		pq = 0;
+		if( (unit >= AX_STALL_BRU) && (unit <= AX_STALL_BRU_END) && (i == 0) )
+			clear = core->busy_flag;
 
+		pq = 0;
 
 		if(opid&AX_OPID_RX)
 		{
@@ -175,6 +183,7 @@ void AX_Pipeline_stall(Core *core)
 
 		if(opid&AX_OPID_RA_R)
 		{
+
 			if(opid & (AX_OPID_VA) )
 			{
 				tmp = core->busy_vreg[regA];
@@ -261,9 +270,12 @@ void AX_Pipeline_stall(Core *core)
 				core->busy_reg[regA] = AX_ALU_CYCLE+pq;
 		}
 
+		if( (unit >= AX_STALL_CMP) && (unit <= AX_STALL_CMP_END) && (i == 0) )
+			core->busy_flag = 3;
+
 	}
 
-	//printf("Cycle %d\n",clear+1);
+	printf("Cycle %d\n",clear+1);
 	core->cycle += clear;
 }
 

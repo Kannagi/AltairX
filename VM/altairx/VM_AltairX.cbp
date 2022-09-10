@@ -67,7 +67,6 @@
 		<Unit filename="src/decode_execute.c">
 			<Option compilerVar="CC" />
 		</Unit>
-		<Unit filename="src/execute_opti.h" />
 		<Unit filename="src/io.c">
 			<Option compilerVar="CC" />
 		</Unit>

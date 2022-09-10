@@ -7,7 +7,7 @@ It has 4 internal memory:
 64 KiB L1 instruction Cache 4-way.  
 32 KiB L1 data Cache RW 4-way.  
 32 KiB L1 data Cache R 4-way.  
-32 KiB L1 data Scratchpad memory.
+16 KiB L1 data Scratchpad memory.
 
 1 MiB L2 Scratchpad memory.  
 
@@ -30,7 +30,7 @@ To resolve pipeline conflicts, it has an accumulator internal to the ALU and to 
 To avoid multiple writes to registers due to unsynchronized pipeline, there are two special registers P and Q (Product and Quotient) which are registers 62 and 63, to handle mul / div / sqrt etc etc.  
 There is also a specific register for loops (register 60).  
 
-The processor has 64 general registers of 64 bits, and 64 registers of 128 bits for the FPU.  
+The processor has 64 general registers of 64 bits, and 64 registers of 128 bits for the VFPU.  
 The processor only has SIMD instructions for the FPU.  
 
 
@@ -79,7 +79,9 @@ AltairX Executable Header : https://docs.google.com/spreadsheets/d/1g7mEhaBIVBJ7
 
 Aldebaran G1 ISA : https://docs.google.com/spreadsheets/d/1LiSZbdd6wCpa-sZZ9uLg5eAyGxdpMl363waUP927xS4/edit?usp=sharing  
 
-GPU todo list : https://docs.google.com/spreadsheets/d/1eRX1vLHEJdrAsx2u1OiycSSz82G3cboVMcu8gBYkgGA/edit?usp=sharing  
+GPU todo list : https://docs.google.com/spreadsheets/d/1eRX1vLHEJdrAsx2u1OiycSSz82G3cboVMcu8gBYkgGA/edit?usp=sharing 
+
+Compiler todo list and calling convention : https://docs.google.com/document/d/1E5NZOjEt6VJfSfHW3z5Fhfy_PPxvRx1Uxr-N-eZfBqc/edit?usp=sharing 
 
 ## AltairX Pipeline  
 <img src="graph/Pipeline.png?raw=true" alt="Pipeline">

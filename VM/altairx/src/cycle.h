@@ -8,6 +8,12 @@
 #define AX_OPID_VA 0x20
 #define AX_OPID_RX 0x40
 #define AX_OPID_IM 0x80
+
+#define AX_STALL_CMP 0x40
+#define AX_STALL_CMP_END 0x47
+#define AX_STALL_BRU 0x50
+#define AX_STALL_BRU_END 0x59
+
 #define AX_ACCU 61
 
 #define AX_ALU_CYCLE 3

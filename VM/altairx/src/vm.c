@@ -249,7 +249,6 @@ int AX_exe_core_mode0(Core *core)
 		AX_decode_execute(core);
 
 		AX_syscall_emul(core);
-		core->cycle++;
 	}
 
 	AX_exe_core_printinfo(core);
@@ -267,8 +266,10 @@ int AX_exe_core_mode1(Core *core)
 		AX_decode_execute(core);
 		AX_debug(core);
 
+		AX_Pipeline_stall(core);
+		AX_Cache_miss(core);
+
 		AX_syscall_emul(core);
-		core->cycle++;
 	}
 
 	AX_exe_core_printinfo(core);
@@ -289,7 +290,6 @@ int AX_exe_core_mode2(Core *core)
 		AX_Cache_miss(core);
 
 		AX_syscall_emul(core);
-		core->cycle++;
 	}
 
 	AX_exe_core_printinfo(core);

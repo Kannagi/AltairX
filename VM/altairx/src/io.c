@@ -120,7 +120,9 @@ void __attribute__((optimize("-O3"), noinline)) AX_IO_Write(Core *core,uint64_t 
 	uint32_t  *iorw32 = &core->mmap.io[ioadr];
 	uint64_t  *iorw64 = &core->mmap.io[ioadr];
 
-	printf("%x\n",mmap_io);
+	uint64_t *wdata = data;
+
+	printf("%x\n",wdata[0]);
 
 
 	switch(mmap_io)

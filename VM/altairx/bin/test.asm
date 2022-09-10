@@ -2,8 +2,26 @@
 
 	include "macro.asm"
 	include "vector.asm"
+
+	moveu r4,5
+	move r5,r4
+	move r6,r5
+	cmpu r6,0
+	if_eq 
+	nop
+	    addi r3,r3,0xFF
+	    subi r4,r4,0xFF
+	endi
+	endp
+	nop
+
 	
-	
+	moveu r3,$22
+	moveu r4,0
+	smove.w r4,$200
+	sti r3,0[r4]
+
+	endp
 
 	nop
 	move r8,r9

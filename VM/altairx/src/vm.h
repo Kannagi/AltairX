@@ -80,7 +80,7 @@ typedef struct core
 	uint64_t icachemiss,dcachemiss;
     uint64_t icachemiss_cycle,dcachemiss_cycle;
 
-    uint32_t opcodes[AX_core_MAX_OPERATIONS];
+    //uint32_t opcodes[AX_core_MAX_OPERATIONS];
 
     uint32_t pc; //program-counter
     uint32_t br; //buffer-register
@@ -102,6 +102,7 @@ typedef struct core
 
 	uint8_t busy_reg[AX_core_IREG_COUNT];
 	uint8_t busy_vreg[AX_core_VREG_COUNT];
+	uint8_t busy_flag;
 
     uint8_t spm[AX_core_SPM_SIZE];
     uint32_t icache[AR_core_ICACHE_SIZE];
