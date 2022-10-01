@@ -1,5 +1,7 @@
 #include "utilities.hpp"
 
+#include "intrinsic.hpp"
+
 namespace ar
 {
 
@@ -72,25 +74,10 @@ bool is_external_call(const llvm::CallInst& call)
 {
     if(auto function{call.getCalledFunction()}; function)
     {
-        if(function->isIntrinsic()) // LLVM intrinsics are internal
-        {
-            return false;
-        }
-
-        if(function->isDeclaration())
-        {
-            if(function->getName().startswith("altair.")) //Altair intrinsics are internal
-            {
-                return false;
-            }
-
-            return true; //External function
-        }
-
-        return false; //Internal function
+        return !function->isIntrinsic() && !is_intrinsic(call);
     }
 
-    return true; //Indirect call is always external
+    return true; //indirect calls are always external
 }
 
 bool has_external_call(const llvm::Function& func)

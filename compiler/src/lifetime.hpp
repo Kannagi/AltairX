@@ -4,6 +4,8 @@
 #include <cstdint>
 #include <vector>
 #include <algorithm>
+#include <ostream>
+#include <iomanip>
 
 namespace ar
 {
@@ -92,6 +94,11 @@ public:
 
     std::size_t total_lifetime() const noexcept;
 
+    std::size_t total_span() const noexcept
+    {
+        return back().end - front().begin;
+    }
+
     bool overlap(const lifetime& other) const noexcept;
     bool overlap(const lifetime_range& range) const noexcept;
 
@@ -103,6 +110,16 @@ private:
     iterator coalesce(iterator it);
     void coalesce_all();
 };
+
+inline std::ostream& operator<<(std::ostream& os, const lifetime& lt)
+{
+    for(auto&& range : lt)
+    {
+        os << "[" << range.begin << "; " << range.end << "]";
+    }
+
+    return os;
+}
 
 }
 

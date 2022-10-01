@@ -19,6 +19,7 @@ add_executable(altair_compiler
     src/translator.hpp
     src/utilities.hpp
     src/register_allocator.hpp
+    src/stack_allocator.hpp
 
     src/lifetime.cpp
     src/intrinsic.cpp
@@ -34,6 +35,6 @@ target_compile_definitions(altair_compiler PRIVATE ${LLVM_DEFINITIONS})
 target_link_libraries(altair_compiler PRIVATE ${llvm_libs})
 set_target_properties(altair_compiler PROPERTIES CXX_STANDARD 17)
 
-if(MSVC)
-    target_compile_options(altair_compiler PRIVATE "/permissive- /wd4456 /wd4459 /wd4514 /wd4711 /Zc:__cplusplus")
-endif()
+#if(MSVC)
+    #target_compile_options(altair_compiler PRIVATE "/permissive- /wd4456 /wd4459 /wd4514 /wd4711 /Zc:__cplusplus")
+#endif()

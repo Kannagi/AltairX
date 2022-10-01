@@ -265,14 +265,14 @@ void invert_branch_condition(llvm::Module& module [[maybe_unused]], llvm::Functi
         {
         case llvm::CmpInst::Predicate::ICMP_EQ : return llvm::CmpInst::Predicate::ICMP_NE;
         case llvm::CmpInst::Predicate::ICMP_NE : return llvm::CmpInst::Predicate::ICMP_EQ;
-        case llvm::CmpInst::Predicate::ICMP_UGT: return llvm::CmpInst::Predicate::ICMP_ULE;
-        case llvm::CmpInst::Predicate::ICMP_UGE: return llvm::CmpInst::Predicate::ICMP_ULT;
-        case llvm::CmpInst::Predicate::ICMP_ULT: return llvm::CmpInst::Predicate::ICMP_UGE;
-        case llvm::CmpInst::Predicate::ICMP_ULE: return llvm::CmpInst::Predicate::ICMP_UGT;
-        case llvm::CmpInst::Predicate::ICMP_SGT: return llvm::CmpInst::Predicate::ICMP_SLE;
-        case llvm::CmpInst::Predicate::ICMP_SGE: return llvm::CmpInst::Predicate::ICMP_SLT;
-        case llvm::CmpInst::Predicate::ICMP_SLT: return llvm::CmpInst::Predicate::ICMP_SGE;
-        case llvm::CmpInst::Predicate::ICMP_SLE: return llvm::CmpInst::Predicate::ICMP_SGT;
+        case llvm::CmpInst::Predicate::ICMP_UGT: return llvm::CmpInst::Predicate::ICMP_ULT;
+        case llvm::CmpInst::Predicate::ICMP_UGE: return llvm::CmpInst::Predicate::ICMP_ULE;
+        case llvm::CmpInst::Predicate::ICMP_ULT: return llvm::CmpInst::Predicate::ICMP_UGT;
+        case llvm::CmpInst::Predicate::ICMP_ULE: return llvm::CmpInst::Predicate::ICMP_UGE;
+        case llvm::CmpInst::Predicate::ICMP_SGT: return llvm::CmpInst::Predicate::ICMP_SLT;
+        case llvm::CmpInst::Predicate::ICMP_SGE: return llvm::CmpInst::Predicate::ICMP_SLE;
+        case llvm::CmpInst::Predicate::ICMP_SLT: return llvm::CmpInst::Predicate::ICMP_SGT;
+        case llvm::CmpInst::Predicate::ICMP_SLE: return llvm::CmpInst::Predicate::ICMP_SGE;
         default:
             throw std::runtime_error{"Bad or unsuported comparison predicate " + std::to_string(predicate)};
         }
@@ -297,7 +297,7 @@ void invert_branch_condition(llvm::Module& module [[maybe_unused]], llvm::Functi
                 {
                     compare->setPredicate(get_inverse(compare->getPredicate()));
 
-                    auto true_path{branch->getSuccessor(0)};
+                    auto true_path {branch->getSuccessor(0)};
                     auto false_path{branch->getSuccessor(1)};
 
                     branch->setSuccessor(0, false_path);

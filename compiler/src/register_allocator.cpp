@@ -1,10 +1,13 @@
 #include "register_allocator.hpp"
 
 #include <iostream>
+#include <algorithm>
+#include <numeric>
 
 #include <llvm/ADT/SCCIterator.h>
 #include <llvm/ADT/PostOrderIterator.h>
 
+#include "intrinsic.hpp"
 #include "transform.hpp"
 #include "utilities.hpp"
 
@@ -32,10 +35,12 @@ register_allocator::register_allocator(llvm::Module& module, llvm::Function& fun
     extract_edges();
     extract_values();
 
-    compute_phi_groups();
     compute_lifetimes();
-
+    compute_phi_groups();
+    compute_smove_groups();
     compute_affinity();
+
+    sync_groups_members();
     allocate_registers();
 }
 
@@ -207,40 +212,6 @@ void register_allocator::extract_edges()
     }
 }
 
-void register_allocator::fill_leaf()
-{
-    assert(false && "not implemented");
-
-    //If there is external calls, we will only be leaf after the last external call in each possible execution path
-    if(ar::has_external_call(m_function))
-    {
-        for(scc_info& scc : m_sccs)
-        {
-            if(scc.loop)
-            {
-                for(llvm::BasicBlock* block : scc.blocks)
-                {
-                    if(ar::has_external_call(*block))
-                    {
-
-                    }
-                }
-            }
-            else
-            {
-
-            }
-        }
-    }
-    else //Otherwise there is no external call at all, then all block are leaf
-    {
-        for(block_info& block : m_blocks)
-        {
-            block.leaf = 0;
-        }
-    }
-}
-
 void register_allocator::extract_values()
 {
     m_values.reserve(m_function.getInstructionCount() + m_function.arg_size());
@@ -268,7 +239,7 @@ void register_allocator::extract_values()
 
             if(llvm::isa<llvm::CmpInst>(instruction))
             {
-                value.affinity = register_affinity::branch;
+                value.affinity = register_affinity::flags;
             }
             else if(llvm::isa<llvm::PHINode>(instruction))
             {
@@ -286,27 +257,89 @@ void register_allocator::compute_phi_groups()
     {
         for(llvm::PHINode& phi : block.phis())
         {
-            std::vector<llvm::Value*>& group{m_phi_groups.emplace_back()};
+            const std::size_t group_index{std::size(m_groups)};
+            group_info& group{m_groups.emplace_back()};
 
             for(llvm::Value* value : phi.incoming_values())
             {
-                group.emplace_back(value);
+                info_of(value).group = group_index;
+                group.members.emplace_back(value);
             }
 
-            group.emplace_back(&phi);
+            group.members.emplace_back(&phi);
+        }
+    }
+}
+
+void register_allocator::compute_smove_groups()
+{
+    //for(llvm::BasicBlock& block : m_function)
+    //{
+    //    for(llvm::Instruction& inst : block)
+    //    {
+    //        if(get_intrinsic_id(inst) == intrinsic_id::smove)
+    //        {
+    //            auto call{llvm::dyn_cast<llvm::CallInst>(&inst)};
+
+    //            // if the register already has a group, keep it
+    //            if(group_info* value_group{group_of(call->getArgOperand(0))}; value_group)
+    //            {
+    //                value_group->members.emplace_back(call);
+    //            }
+    //            else
+    //            {
+    //                const std::size_t group_index{std::size(m_groups)};
+
+    //                group_info& group{m_groups.emplace_back()};
+    //                group.members.emplace_back(call->getArgOperand(0));
+    //                group.members.emplace_back(call);
+
+    //                info_of(call->getArgOperand(0)).group = group_index;
+    //                info_of(call).group = group_index;
+    //            }
+    //        }
+    //    }
+    //}
+}
+
+void register_allocator::sync_groups_members()
+{
+    // if a member is non-leaf, no member can be since they need to share the same register
+    for(group_info& group : m_groups)
+    {
+        for(llvm::Value* member : group.members)
+        {
+             if(!info_of(member).leaf)
+             {
+                 group.leaf = false;
+                 break;
+             }
         }
     }
 
-    for(std::size_t i{}; i < std::size(m_phi_groups); ++i)
+    // The lifetime of the group is the coalescence of all members' lifetime
+    for(group_info& group : m_groups)
+    {
+        for(llvm::Value* member : group.members)
+        {
+            value_info& info{info_of(member)};
+
+            info.leaf = group.leaf;
+            group.lifetime.coalesce(info.lifetime);
+        }
+    }
+
+    for(std::size_t i{}; i < std::size(m_groups); ++i)
     {
         std::cout << "  Group #" << i << ": ";
 
-        for(llvm::Value* member : m_phi_groups[i])
+        for(llvm::Value* member : m_groups[i].members)
         {
             std::cout << get_value_label(*member) << " ";
         }
 
-        std::cout << std::endl;
+        std::cout << " | " << m_groups[i].lifetime << " | ";
+        std::cout << (m_groups[i].leaf ? "leaf" : "non leaf") << std::endl;
     }
 }
 
@@ -354,90 +387,55 @@ void register_allocator::fill_lifetime(size_t index)
     }
 }
 
-bool register_allocator::compute_lifetime_loop(size_t index, const llvm::BasicBlock* current)
+void register_allocator::compute_lifetime(std::size_t index, const llvm::Value* user)
 {
-    value_info& info{m_values[index]};
-    const block_info& current_info{info_of(current)};
-
-    //This is the block where the value is defined, stop here
-    if(index_of(current) == info.block)
+    walk_to(index, index_of(user), [this](const walk_to_info& info) mutable
     {
-        info.lifetime.add_range(index, m_blocks[info.block].end);
+        value_info& target{m_values[info.target]};
+        block_info& block {m_blocks[info.block]};
 
-        std::cout << "Add range [" << index << "; " << m_blocks[info.block].end << "] to " << get_value_label(*info.value) << std::endl;
-
-        return true;
-    }
-
-    bool output = false;
-
-    if(current_info.loop)
-    {
-        //If the predecessor is part of a loop header we direcly go to the predecessor of the loop
-        //It will mark the whole loop as a part of the lifetime
-        for(const llvm::BasicBlock* pred : info_of(current_info.loop).predecessors)
+        if(info.status == walk_to_status::local)
         {
-            if(compute_lifetime_loop(index, pred))
-            {
-                const block_info& pred_info{info_of(pred)};
-                info.lifetime.add_range(pred_info.begin, pred_info.end);
-
-                std::cout << "Add range [" << pred_info.begin << "; " << pred_info.end << "] to " << get_value_label(*info.value)
-                          << " because of block " << get_value_label(*pred) << std::endl;
-
-                for(const llvm::BasicBlock* block : current_info.loop->blocks())
-                {
-                    const block_info& loop_block{info_of(block)};
-
-                    std::cout << "Add range [" << loop_block.begin << "; " << loop_block.end << "] to " << get_value_label(*info.value)
-                              << " because of loop " << current_info.name << " block " << get_value_label(*block) << std::endl;
-                    info.lifetime.add_range(loop_block.begin, loop_block.end);
-                }
-
-                output = true;
-            }
+            target.lifetime.add_range(info.target, info.start);
         }
-    }
-    else
-    {
-        //Otherwise simply go through all predecessors
-        for(const llvm::BasicBlock* pred : llvm::predecessors(current))
+        else if(info.status == walk_to_status::begin)
         {
-            if(compute_lifetime_loop(index, pred))
-            {
-                const block_info& pred_info{info_of(pred)};
-                info.lifetime.add_range(pred_info.begin, pred_info.end);
-
-                std::cout << "Add range [" << pred_info.begin << "; " << pred_info.end << "] to " << get_value_label(*info.value)
-                          << " because of block " << get_value_label(*pred) << std::endl;
-
-                output = true;
-            }
+            target.lifetime.add_range(block.begin, info.start);
         }
-    }
+        else if(info.status == walk_to_status::step)
+        {
+            target.lifetime.add_range(block.begin, block.end);
+        }
+        else if(info.status == walk_to_status::end)
+        {
+            target.lifetime.add_range(info.target, block.end);
+        }
+    },
+    [this](const walk_to_info& info) mutable
+    {
+        value_info& target{m_values[info.target]};
+        block_info& block {m_blocks[info.block]};
 
-    return output;
+        if(info.status == walk_to_status::local)
+        {
+            target.leaf = target.leaf && check_external_calls(info.target, info.start);
+        }
+        else if(info.status == walk_to_status::begin)
+        {
+            target.leaf = target.leaf && check_external_calls(block.begin, info.start);
+        }
+        else if(info.status == walk_to_status::step)
+        {
+            target.leaf = target.leaf && check_external_calls(block.begin, block.end);
+        }
+        else if(info.status == walk_to_status::end)
+        {
+            target.leaf = target.leaf && check_external_calls(info.target, block.end);
+        }
+    });
 }
 
-void register_allocator::compute_lifetime(size_t index, const llvm::Value* user)
-{
-    value_info& info{m_values[index]};
-
-    const value_info& user_info {info_of(user)};
-    const std::size_t user_index{index_of(user_info)};
-    const block_info& user_block{m_blocks[user_info.block]};
-
-    if(user_info.block == info.block) //Used in same block
-    {
-        info.lifetime.add_range(index, user_index);
-    }
-    else //Used in other block
-    {
-        compute_lifetime_loop(index, user_block.block);
-    }
-}
-
-void register_allocator::compute_phi_lifetime(size_t index, const llvm::PHINode* phi)
+void register_allocator::compute_phi_lifetime(std::size_t index, const llvm::PHINode* phi)
 {
     value_info& info{m_values[index]};
 
@@ -445,37 +443,81 @@ void register_allocator::compute_phi_lifetime(size_t index, const llvm::PHINode*
     {
         if(phi->getIncomingValueForBlock(pred) == info.value) // Find the pred that has the value
         {
-            const block_info& pred_info {info_of(pred)};
-            const std::size_t pred_index{index_of(pred_info)};
+            const block_info& pred_info{info_of(pred)};
 
-            if(pred_index == info.block)
+            walk_to(index, index_of(pred_info.block->getTerminator()), [this](const walk_to_info& info) mutable
             {
-                info.lifetime.add_range(index, pred_info.end); //Extend lifetime till end of block
-            }
-            else //Used in other block
+                value_info& target{m_values[info.target]};
+                block_info& block {m_blocks[info.block]};
+
+                if(info.status == walk_to_status::local)
+                {
+                    target.lifetime.add_range(info.target, info.start + 1); // include terminator
+                }
+                else if(info.status == walk_to_status::begin)
+                {
+                    target.lifetime.add_range(block.begin, block.end);
+                }
+                else if(info.status == walk_to_status::step)
+                {
+                    target.lifetime.add_range(block.begin, block.end);
+                }
+                else if(info.status == walk_to_status::end)
+                {
+                    target.lifetime.add_range(info.target, block.end);
+                }
+            },
+            [this](const walk_to_info& info) mutable
             {
-                info.lifetime.add_range(pred_info.begin, pred_info.end); // must live in this block
-                compute_lifetime_loop(index, pred_info.block);
-            }
+                value_info& target{m_values[info.target]};
+                block_info& block {m_blocks[info.block]};
+
+                if(info.status == walk_to_status::local)
+                {
+                    target.leaf = target.leaf && check_external_calls(info.target, info.start + 1); // include terminator
+                }
+                else if(info.status == walk_to_status::begin)
+                {
+                    target.leaf = target.leaf && check_external_calls(block.begin, block.end);
+                }
+                else if(info.status == walk_to_status::step)
+                {
+                    target.leaf = target.leaf && check_external_calls(block.begin, block.end);
+                }
+                else if(info.status == walk_to_status::end)
+                {
+                    target.leaf = target.leaf && check_external_calls(info.target, block.end);
+                }
+            });
         }
     }
+}
+
+bool register_allocator::check_external_calls(std::size_t begin, std::size_t end) const
+{
+    for(std::size_t i{begin + 1}; i <= end; ++i)
+    {
+        if(auto call{llvm::dyn_cast<llvm::CallInst>(m_values[i].value)}; call)
+        {
+            return !is_external_call(*call);
+        }
+    }
+
+    return true;
 }
 
 void register_allocator::compute_spill_weight()
 {
     for(value_info& info : m_values)
     {
+        const bool loop{static_cast<bool>(m_sccs[m_blocks[info.block].scc].loop)};
+
         for(bool use : info.usage)
         {
             if(use)
             {
-                ++info.spill_weight;
+                info.spill_weight += 1 + loop * 8;
             }
-        }
-
-        if(m_sccs[m_blocks[info.block].scc].loop)
-        {
-            info.spill_weight *= 2;
         }
     }
 }
@@ -495,48 +537,27 @@ void register_allocator::compute_affinity()
             }
             else if(llvm::isa<llvm::CmpInst>(&value))
             {
-                info_of(&value).affinity = register_affinity::branch;
+                info_of(&value).affinity = register_affinity::flags;
             }
         }
     }
 }
 
-void register_allocator::fill_register_info()
-{
-    m_registers[0].type = register_type::special; //SP (SPM)
-    m_registers[1].type = register_type::special; //SP
-
-    for(std::size_t i{2}; i <= 10; ++i) //Args and return
-    {
-        m_registers[i].type = register_type::generic_volatile;
-    }
-
-    for(std::size_t i{11}; i <= 26; ++i) //Generic non volatile
-    {
-        m_registers[i].type = register_type::generic_non_volatile;
-    }
-
-    for(std::size_t i{27}; i <= 19; ++i) //Generic volatile
-    {
-        m_registers[i].type = register_type::generic_volatile;
-    }
-
-    m_registers[60].type = register_type::special; //Loop
-    m_registers[61].type = register_type::special; //Accumulator
-    m_registers[62].type = register_type::special; //Product
-    m_registers[63].type = register_type::special; //Quotient
-
-    m_registers[64].type = register_type::branch; //BR
-}
-
 /*
-r0      (1)  | SP/Buffer SPM
-r1      (1)  | SP
-r2-r10  (9)  | functions arguments and return values (volatile)
+r0      (1)  | Stack pointer
+r1      (1)  | Pointer
+r2      (1)  | SPM (compiler)
+r3-r10  (8)  | functions arguments and return values (volatile)
 r11-r26 (16) | general purpose (non-volatile)
-r27-r59 (33) | general purpose (volatile)
-r60-r63 (4)  | special registers (loop, accumulator, product, quotient)
-BR           | Branch Register
+r27-r55 (29) | general purpose (volatile)
+r56          | Zero
+r57          | Bypass
+r58          | Branch Register
+r59          | Link Register
+r60          | Register L for Loop
+r61          | Accumulator
+r62          | Register P for MUL
+r63          | Register Q for DIV
 
 Total volatile: 43
 
@@ -546,40 +567,164 @@ v20-v60 (41) | general purpose (volatile)
 v61-v63 (3)  | special registers (Accumulator, product, quotient)
 
 Total volatile: 49
+
+stack frame, all [] are optionnal:
+
+ R0
+ |
+ v                                  CALLEE                                                          CALLER
+{[V octets : locals][4 octets : caller addr][C octets : stack params]}{[V octets : locals][4 octets : caller addr][C octets : stack params]}
+ ^                                                                                                                                         ^
+ |                                                                                                                                         |
+ X                                                                                                                                         Y
+
+
+X < Y (the lesser R0 the bigger the stack = descending adresses)
+
+[V octets : locals] is a stack by itself, and use the following structure:
+    [C octets : spill area] space for register spilling
+    [C octets : alloca area] space for statically sized stack allocations
+    [V octets : malloca area] space for dynamically sized stack allocations
 */
+
+void register_allocator::fill_register_info()
+{
+    for(std::size_t i{0}; i <= 2; ++i) //Args and return
+    {
+        m_registers[i].type = register_type::special; //SP
+    }
+
+    for(std::size_t i{3}; i <= 10; ++i) //Args and return
+    {
+        m_registers[i].type = register_type::generic_volatile;
+    }
+
+    for(std::size_t i{11}; i <= 26; ++i) //Generic non volatile
+    {
+        m_registers[i].type = register_type::generic_non_volatile;
+    }
+
+    for(std::size_t i{27}; i <= 55; ++i) //Generic volatile
+    {
+        m_registers[i].type = register_type::generic_volatile;
+    }
+
+    for(std::size_t i{56}; i <= 63; ++i) //Special
+    {
+        m_registers[i].type = register_type::special;
+    }
+
+    m_registers[64].type = register_type::flags;
+}
+
+void register_allocator::generate_queue()
+{
+    m_queue.clear();
+    m_queue.reserve(std::size(m_values));
+
+    for(std::size_t i{}; i < std::size(m_values); ++i)
+    {
+        if(!std::empty(m_values[i].lifetime) && m_values[i].affinity == register_affinity::generic)
+        {
+            m_queue.emplace_back(i);
+        }
+    }
+
+    std::sort(std::begin(m_queue), std::end(m_queue), [this](std::size_t left, std::size_t right)
+    {
+        return m_values[left].lifetime.total_span() > m_values[right].lifetime.total_span();
+    });
+
+    std::cout << "Queue: ";
+    for(auto index : m_queue)
+    {
+        std::cout << get_value_label(*m_values[index].value) << ", ";
+    }
+    std::cout << std::endl;
+}
 
 void register_allocator::allocate_registers()
 {
-    for(std::size_t i{}; i < std::min(m_function.arg_size(), std::size_t{9}); ++i)
+    for(std::size_t i{}; i < std::size(m_values); ++i)
     {
-        const std::size_t index{i + 2};
+        if(auto call{llvm::dyn_cast<llvm::CallInst>(m_values[i].value)}; call && !is_intrinsic(*call))
+        {
+            for(std::uint32_t i{}; i < call->arg_size(); ++i)
+            {
+                llvm::Value* arg{call->getArgOperand(i)};
+                value_info& arg_info{info_of(arg)};
 
-        m_registers[index].lifetime.coalesce(m_values[i].lifetime);
-        m_values[i].register_index = index;
+                arg_info.affinity = register_affinity::argument;
+
+                if(i < 8) // arg need to be put in a register
+                {
+                    arg_info.default_register = i + 3;
+                }
+            }
+        }
+
+    }
+
+    for(std::size_t i{}; i < std::min(m_function.arg_size(), std::size_t{8}); ++i)
+    {
+        if(m_values[i].leaf)
+        {
+            const std::size_t register_index{i + 3};
+
+            m_registers[register_index].lifetime.coalesce(m_values[i].lifetime);
+            m_values[i].register_index = register_index;
+        }
+        else
+        {
+            //if a parameter is non-leaf then we need to move the parameter volatile register to a non-volatile one
+            //or we need to spill/fill around calls
+            //if the number of call is == 1 (call in loops count as 8 calls)
+            //  - spill around the call
+            //otherwise move (addi 0) it in a non volatile register
+            //  -
+        }
     }
 
     //Other args are on the stack
-    assert(m_function.arg_size() <= 9 && "The compiler does not handle more that 9 args yet");
-    /*
-        for(const std::vector<llvm::Value*>& group : m_phi_groups)
-        {
-            for(llvm::Value* member : group)
-            {
-                std::size_t value_index{index_of(member)};
+    for(std::size_t i{8}; i < m_function.arg_size(); ++i)
+    {
+        //m_stack.emplace_back(m_function.getArg(i), m_function.getArg(i)->getType()->getScalarSizeInBits() / 8, m_values[i].lifetime);
+    }
 
-                for(std::size_t i{2}; i < 61; ++i)
+    for(const group_info& group : m_groups)
+    {
+        // leaf value is synced between members of phi groups
+        // assume phi group members are non overlapping
+
+        const std::size_t begin{group.leaf ? 25u : 9u};
+        const std::size_t end  {group.leaf ? 57u : 24u};
+
+        bool assigned{};
+        for(std::size_t i{begin}; i <= end; ++i)
+        {
+            if(!m_registers[i].lifetime.overlap(group.lifetime))
+            {
+                m_registers[i].lifetime.coalesce(group.lifetime);
+                for(llvm::Value* member : group.members)
                 {
-                    if(!m_registers[i].lifetime.overlap(m_values[value_index].lifetime))
-                    {
-                        m_registers[i].lifetime.coalesce(m_values[value_index].lifetime);
-                        m_values[value_index].register_index = i;
-                    }
+                    info_of(member).register_index = i;
                 }
+
+                assigned = true;
+                break;
             }
-        }*/
+        }
+
+        if(!assigned)
+        {
+            throw std::runtime_error{"Group can not be assigned to any register"};
+        }
+    }
 
     for(std::size_t i{m_function.arg_size()}; i < std::size(m_values); ++i)
     {
+        generate_queue();
+
         auto& value{m_values[i]};
 
         auto instruction{llvm::dyn_cast<llvm::Instruction>(value.value)};
@@ -587,10 +732,12 @@ void register_allocator::allocate_registers()
         {
             if(value.affinity == register_affinity::ret)
             {
-                m_registers[2].lifetime.coalesce(value.lifetime);
-                value.register_index = 2;
+                assert(!m_registers[3].lifetime.overlap(value.lifetime) && "Return value overlapping");
+
+                m_registers[3].lifetime.coalesce(value.lifetime);
+                value.register_index = 3;
             }
-            else if(value.affinity == register_affinity::branch)
+            else if(value.affinity == register_affinity::flags)
             {
                 assert(!m_registers[64].lifetime.overlap(value.lifetime) && "The compiler don't reorder cmp yet");
 
@@ -599,24 +746,67 @@ void register_allocator::allocate_registers()
             }
             else
             {
-                value.register_index = assing_register(i);
+                if(auto reg = assing_register(i); reg != no_register)
+                {
+                    value.register_index = reg;
+                }
+                else
+                {
+                    //spill
+                    //split
+                    //fill
+                }
             }
         }
     }
 }
 
-size_t register_allocator::assing_register(size_t value_index)
+std::size_t register_allocator::assing_register(std::size_t value_index)
 {
-    for(std::size_t i{2}; i < 61; ++i)
+    const value_info& value{m_values[value_index]};
+
+    if(value.leaf)
     {
-        if(!m_registers[i].lifetime.overlap(m_values[value_index].lifetime))
+        for(std::size_t i{25}; i <= 57; ++i)
         {
-            m_registers[i].lifetime.coalesce(m_values[value_index].lifetime);
-            return i;
+            if(!m_registers[i].lifetime.overlap(m_values[value_index].lifetime))
+            {
+                m_registers[i].lifetime.coalesce(m_values[value_index].lifetime);
+                return i;
+            }
+        }
+
+        for(std::size_t i{3}; i <= 10; ++i)
+        {
+            if(!m_registers[i].lifetime.overlap(m_values[value_index].lifetime))
+            {
+                m_registers[i].lifetime.coalesce(m_values[value_index].lifetime);
+                return i;
+            }
+        }
+
+        for(std::size_t i{9}; i <= 24; ++i)
+        {
+            if(!m_registers[i].lifetime.overlap(m_values[value_index].lifetime))
+            {
+                m_registers[i].lifetime.coalesce(m_values[value_index].lifetime);
+                return i;
+            }
+        }
+    }
+    else
+    {
+        for(std::size_t i{9}; i <= 24; ++i)
+        {
+            if(!m_registers[i].lifetime.overlap(m_values[value_index].lifetime))
+            {
+                m_registers[i].lifetime.coalesce(m_values[value_index].lifetime);
+                return i;
+            }
         }
     }
 
-    return std::numeric_limits<std::size_t>::max();
+    return no_register;
 }
 
 }

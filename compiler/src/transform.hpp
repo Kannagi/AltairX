@@ -17,22 +17,15 @@ void reorder_blocks(llvm::Module& module, llvm::Function& function);
 
 /*
 Replace select with normal branching, example:
-    a = cmp ...
-    d = select a, b, c
-    use d ...
+  | %cond = icmp sgt i32 %a, %b
+  | %value = select %cond, %a, %b
 
 is equivalent to:
-    a = cmp ...
-    br a, true, false
-  true:
-    d1 = expr that generated b
-    br end
-  false:
-    d2 = expr that generated c
-    br end
-  end:
-    d = phi [true, d1], [false, d2]
-    use d ...
+  | cmp r1, r2
+  | bgs label
+  | addi r3, r1, 0 ; assign true path on delay slot
+  | addi r3, r2, 0 ; replace with false path if jump did not trigger
+  | label:
 */
 void remove_select(llvm::Module& module, llvm::Function& function);
 
@@ -74,6 +67,26 @@ Will be transformed into:
 void check_cmp(llvm::Module& module, llvm::Function& function);
 
 /*
+LLVM use cmp to cast integers to bools, this should be replaced by altair.bool when possible (i.e not used in br)
+Example:
+| %2 = icmp ne i32 %0, 0
+| ret i1 %2
+
+Will be transformed in
+
+| %2 = call i1 altair.bool_i32(i32 %0)
+| ret i1 %2
+
+a != b -> bool(a - b)
+a == b -> bool(a - b) xor 1
+a < b  -> slt(a, b)
+a > b  -> slt(b, a)
+a <= b -> slt(b, a) xor 1
+a >= b -> slt(a, b) xor 1
+*/
+void bool_conversions(llvm::Module& module, llvm::Function& function);
+
+/*
 Returns may have constant operands, in that case we generates move just before the ret instruction
 that assigns the value to a temporary variable. This steps is used by the register allocator.
 */
@@ -81,18 +94,6 @@ void insert_extend_for_phis(llvm::Module& module, llvm::Function& function);
 
 /*
 Generates move instruction for constant values if needed
-TODO: check range
-Range for moves:
-    moveiu:
-        [0x00; 0x0003 FFFF]
-    movei:
-        [0x00; 0x0001 FFFF]
-        [0xFFFF FFFF FFFE 0000; 0xFFFF FFFF FFFF FFFF] (sign extention)
-    smove:
-        [0x0000000000000000; 0x000000000000FFFF]
-        [0x0000000000010000; 0x00000000FFFF0000]
-        [0x0000000100000000; 0x0000FFFF00000000]
-        [0x0001000000000000; 0xFFFF000000000000]
 */
 void insert_move_for_constant(llvm::Module& module, llvm::Function& function);
 
@@ -159,6 +160,8 @@ void optimize_load_store(llvm::Module& module, llvm::Function& function);
 Performs all transforms in the right order
 */
 //void perform_transforms(llvm::Module& module, llvm::Function& function);
+
+llvm::Value* find_best_position(llvm::Module& module, llvm::Function& function, llvm::Value* value);
 
 }
 

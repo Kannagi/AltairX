@@ -33,9 +33,6 @@ et l'autre buffer est préchargé pendant ce temps là
 0x18000 - 0x1FFFF Buffer B (32 Kio) (prefetch)
 */
 
-constexpr const char boot[] = "jump main ;This is the bootstrap\n\n";
-
-
 /*
 template<typename ForwardIt>
 static ForwardIt coalesce(ForwardIt begin, ForwardIt end)
@@ -151,6 +148,8 @@ static void print_predecessors(llvm::Function& function)
 static void run(llvm::Module& module, const std::string& filename)
 {
     std::ofstream output_file{filename + ".asm"};
+    output_file << "jump main ;This is the bootstrap\n";
+    output_file << "nop\n\n";
 
     for(llvm::Function& function : module.functions())
     {
@@ -167,21 +166,24 @@ static void run(llvm::Module& module, const std::string& filename)
         {
             auto&& info{allocator.info_of(&value)};
 
-            std::cout << "   " << std::setw(4) << ar::get_value_label(*info.value) << " | ";
+            std::cout << "    " << std::setw(4) << ar::get_value_label(*info.value) << " | ";
             std::cout << std::setw(4) << allocator.index_of(info) << " | ";
-            std::cout << std::setw(15) << info.name << " | ";
+            std::cout << std::setw(8) << info.name << " | ";
 
             if(info.register_index == std::numeric_limits<std::size_t>::max())
             {
                 std::cout << "void | ";
+                std::cout << (info.leaf ? "    leaf" : "not leaf") << " | ";
             }
             else if(info.register_index == 64)
             {
                 std::cout << "  BR | ";
+                std::cout << "    leaf | ";
             }
             else
             {
                 std::cout << std::setw(4) << info.register_index << " | ";
+                std::cout << (info.leaf ? "    leaf" : "not leaf") << " | ";
             }
 
             for(auto&& range : info.lifetime)

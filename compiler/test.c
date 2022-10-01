@@ -2,9 +2,11 @@
 #include <stdlib.h>
 #include <stdbool.h>
 
+
+uint64_t testmove(uint64_t i);
 uint64_t testmove(uint64_t i)
 {
-    return i + 18446744073709551478ull;
+    return i + 184467447091478ull;
 }
 
 int32_t bar(int32_t a, int32_t b, int32_t c, int32_t d);
@@ -19,6 +21,7 @@ int32_t bar(int32_t a, int32_t b, int32_t c, int32_t d)
     return a + b;
 }
 
+void foo(int* array, size_t count);
 void foo(int* array, size_t count)
 {
     array[0] = 1;
@@ -47,15 +50,18 @@ struct B {
   struct A z[];
 };
 
+int* testptr(struct B* s, size_t index);
 int* testptr(struct B* s, size_t index) {
   return &s[0].z[index].b[5][13];
 }
 
+int negate(int i);
 int negate(int i)
 {
     return -i;
 }
 
+void bubble_sort(int* array, size_t count);
 void bubble_sort(int* array, size_t count)
 {
     for(size_t i = 0; i < count - 1; ++i) 
@@ -71,6 +77,8 @@ void bubble_sort(int* array, size_t count)
         }
     }
 }
+
+
 
 /*
 static double a0 = +1.0;
@@ -129,57 +137,28 @@ data make_data(uint8_t a, uint32_t b, uint32_t c, uint64_t d)
     return output;
 }
 
-/*
-int32_t imin(int32_t a, int32_t b);
-int32_t imin(int32_t a, int32_t b)
+uint64_t use_data(data d);
+uint64_t use_data(data d)
 {
-    if(a < b)
+    return d.a * d.d + d.c;
+}
+
+int external_func(int i);
+
+int* external_func_user(int* array, int* end);
+int* external_func_user(int* array, int* end)
+{
+    while(array != end)
     {
-        return a;
+        int temp = external_func(array[0]);
+        array[0] = array[0] * temp;
+        array[0] = external_func(array[0] * 2);
+
+        array++;
     }
 
-    return b;
+    return array;
 }
-
-int32_t func(int32_t a, int32_t b);
-int32_t func(int32_t a, int32_t b)
-{
-    return min(a, b);
-}
-
-data func_that_returns_data(uint32_t x);
-
-data func_that_call_the_func_that_returns_data(uint32_t x);
-data func_that_call_the_func_that_returns_data(uint32_t x)
-{
-    return func_that_returns_data(x);
-}
-
-
-struct data2
-{
-    int32_t a; 
-    int32_t b; 
-};
-
-int32_t bar(int32_t a, int32_t b);
-int32_t bar(int32_t a, int32_t b)
-{
-    switch(a)
-    {
-        case 0: return 42;
-        case 1: return b;
-        default: return b * a; 
-    }
-}
-
-void do_data(data d);
-void call_do_data(data d);
-void call_do_data(data d)
-{
-    do_data(d);
-}
-*/
 
 int main()
 {

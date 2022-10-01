@@ -1,7 +1,7 @@
 ; ModuleID = 'test.c'
 source_filename = "test.c"
 target datalayout = "e-m:w-p270:32:32-p271:32:32-p272:64:64-i64:64-f80:128-n8:16:32:64-S128"
-target triple = "x86_64-pc-windows-msvc19.29.30136"
+target triple = "x86_64-pc-windows-msvc19.33.31629"
 
 %struct.B = type { i32, i64, [0 x %struct.A] }
 %struct.A = type { i8, [10 x [20 x i32]], i8 }
@@ -9,7 +9,7 @@ target triple = "x86_64-pc-windows-msvc19.29.30136"
 
 ; Function Attrs: mustprogress nofree norecurse nosync nounwind readnone willreturn uwtable
 define dso_local i64 @testmove(i64 noundef %0) local_unnamed_addr #0 {
-  %2 = add i64 %0, -138
+  %2 = add i64 %0, 184467447091478
   ret i64 %2
 }
 
@@ -170,15 +170,59 @@ define dso_local void @make_data(ptr noalias nocapture writeonly sret(%struct.da
   ret void
 }
 
+; Function Attrs: argmemonly mustprogress nofree norecurse nosync nounwind readonly willreturn uwtable
+define dso_local i64 @use_data(ptr nocapture noundef readonly %0) local_unnamed_addr #4 {
+  %2 = load i8, ptr %0, align 8, !tbaa !15
+  %3 = zext i8 %2 to i64
+  %4 = getelementptr inbounds %struct.data, ptr %0, i64 0, i32 3
+  %5 = load i64, ptr %4, align 8, !tbaa !20
+  %6 = mul i64 %5, %3
+  %7 = getelementptr inbounds %struct.data, ptr %0, i64 0, i32 2
+  %8 = load i32, ptr %7, align 8, !tbaa !19
+  %9 = zext i32 %8 to i64
+  %10 = add i64 %6, %9
+  ret i64 %10
+}
+
+; Function Attrs: nounwind uwtable
+define dso_local ptr @external_func_user(ptr noundef %0, ptr noundef readnone %1) local_unnamed_addr #5 {
+  %3 = icmp eq ptr %0, %1
+  br i1 %3, label %14, label %4
+
+4:                                                ; preds = %2, %4
+  %5 = phi ptr [ %12, %4 ], [ %0, %2 ]
+  %6 = load i32, ptr %5, align 4, !tbaa !7
+  %7 = call i32 @external_func(i32 noundef %6) #7
+  %8 = load i32, ptr %5, align 4, !tbaa !7
+  %9 = mul nsw i32 %8, %7
+  store i32 %9, ptr %5, align 4, !tbaa !7
+  %10 = shl nsw i32 %9, 1
+  %11 = call i32 @external_func(i32 noundef %10) #7
+  store i32 %11, ptr %5, align 4, !tbaa !7
+  %12 = getelementptr inbounds i32, ptr %5, i64 1
+  %13 = icmp eq ptr %12, %1
+  br i1 %13, label %14, label %4, !llvm.loop !21
+
+14:                                               ; preds = %4, %2
+  %15 = phi ptr [ %0, %2 ], [ %1, %4 ]
+  ret ptr %15
+}
+
+declare dso_local i32 @external_func(i32 noundef) local_unnamed_addr #6
+
 ; Function Attrs: nofree norecurse nosync nounwind readnone uwtable
 define dso_local i32 @main() local_unnamed_addr #1 {
   ret i32 25
 }
 
-attributes #0 = { mustprogress nofree norecurse nosync nounwind readnone willreturn uwtable "frame-pointer"="none" "min-legal-vector-width"="0" "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
-attributes #1 = { nofree norecurse nosync nounwind readnone uwtable "frame-pointer"="none" "min-legal-vector-width"="0" "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
-attributes #2 = { argmemonly nofree norecurse nosync nounwind uwtable "frame-pointer"="none" "min-legal-vector-width"="0" "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
-attributes #3 = { argmemonly mustprogress nofree norecurse nosync nounwind willreturn writeonly uwtable "frame-pointer"="none" "min-legal-vector-width"="0" "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
+attributes #0 = { mustprogress nofree norecurse nosync nounwind readnone willreturn uwtable "disable-tail-calls"="true" "frame-pointer"="none" "min-legal-vector-width"="0" "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
+attributes #1 = { nofree norecurse nosync nounwind readnone uwtable "disable-tail-calls"="true" "frame-pointer"="none" "min-legal-vector-width"="0" "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
+attributes #2 = { argmemonly nofree norecurse nosync nounwind uwtable "disable-tail-calls"="true" "frame-pointer"="none" "min-legal-vector-width"="0" "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
+attributes #3 = { argmemonly mustprogress nofree norecurse nosync nounwind willreturn writeonly uwtable "disable-tail-calls"="true" "frame-pointer"="none" "min-legal-vector-width"="0" "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
+attributes #4 = { argmemonly mustprogress nofree norecurse nosync nounwind readonly willreturn uwtable "disable-tail-calls"="true" "frame-pointer"="none" "min-legal-vector-width"="0" "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
+attributes #5 = { nounwind uwtable "disable-tail-calls"="true" "frame-pointer"="none" "min-legal-vector-width"="0" "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
+attributes #6 = { "disable-tail-calls"="true" "frame-pointer"="none" "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
+attributes #7 = { nounwind }
 
 !llvm.module.flags = !{!0, !1, !2}
 !llvm.ident = !{!3}
@@ -204,3 +248,4 @@ attributes #3 = { argmemonly mustprogress nofree norecurse nosync nounwind willr
 !18 = !{!16, !8, i64 4}
 !19 = !{!16, !8, i64 8}
 !20 = !{!16, !17, i64 16}
+!21 = distinct !{!21, !5, !6}
