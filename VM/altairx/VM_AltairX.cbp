@@ -13,9 +13,6 @@
 				<Option type="1" />
 				<Option compiler="gcc" />
 				<Option parameters=" prog.bin" />
-				<Compiler>
-					<Add option="-w" />
-				</Compiler>
 			</Target>
 			<Target title="bin Windows">
 				<Option output="bin/vm_altairx.exe" prefix_auto="0" extension_auto="0" />
@@ -52,8 +49,12 @@
 		<Linker>
 			<Add option="-flto" />
 			<Add option="-s" />
+			<Add option="-lm" />
 		</Linker>
 		<Unit filename="main.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/AX-S/AXS.c">
 			<Option compilerVar="CC" />
 		</Unit>
 		<Unit filename="src/cycle.c">
@@ -77,6 +78,9 @@
 			<Option compilerVar="CC" />
 		</Unit>
 		<Unit filename="src/vm.h" />
+		<Unit filename="test.c">
+			<Option compilerVar="CC" />
+		</Unit>
 		<Extensions />
 	</Project>
 </CodeBlocks_project_file>

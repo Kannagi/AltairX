@@ -165,7 +165,7 @@
 	<stdint.h>
 	"src/vm.h"
 
-1662680353 source:/home/Kannagi/Documents/Projet/AltairX/Git_AX/VM/altairx/main.c
+1667704077 source:/home/Kannagi/Documents/Projet/AltairX/Git_AX/VM/altairx/main.c
 	<stdio.h>
 	<stdlib.h>
 	<time.h>
@@ -219,7 +219,7 @@
 	<stdint.h>
 	"vm.h"
 
-1662682136 source:/home/Kannagi/Documents/Projet/AltairX/Git_AX/VM/altairx/src/cycle.c
+1662682309 source:/home/Kannagi/Documents/Projet/AltairX/Git_AX/VM/altairx/src/cycle.c
 	<stdio.h>
 	<stdlib.h>
 	<assert.h>
@@ -237,7 +237,7 @@
 	<stdint.h>
 	"vm.h"
 
-1662682274 /home/Kannagi/Documents/Projet/AltairX/Git_AX/VM/altairx/src/cycle.h
+1665600554 /home/Kannagi/Documents/Projet/AltairX/Git_AX/VM/altairx/src/cycle.h
 
 1660411019 /home/Kannagi/Documents/Projet/AltairX/Git_AX/VM/altairx/src/decode.h
 
@@ -268,4 +268,22 @@
 	"execute_opti.h"
 
 1662122644 /home/Kannagi/Documents/Projet/AltairX/Git_AX/VM/altairx/src/execute_opti.h
+
+1666846173 source:/home/Kannagi/Documents/Projet/AltairX/Git_AX/VM/altairx/src/AX-S/AXS.c
+	<stdio.h>
+	<stdlib.h>
+	<assert.h>
+	<string.h>
+	<math.h>
+	<stdint.h>
+	"vm.h"
+
+1667965243 source:/home/Kannagi/Documents/Projet/AltairX/Git_AX/VM/altairx/test.c
+	<stdio.h>
+	<stdlib.h>
+	<time.h>
+	<string.h>
+	<stdint.h>
+	"src/vm.h"
+	<stdint.h>
 

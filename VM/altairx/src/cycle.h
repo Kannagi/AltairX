@@ -12,7 +12,7 @@
 #define AX_STALL_CMP 0x40
 #define AX_STALL_CMP_END 0x47
 #define AX_STALL_BRU 0x50
-#define AX_STALL_BRU_END 0x59
+#define AX_STALL_BRU_END 0x5F
 
 #define AX_ACCU 61
 

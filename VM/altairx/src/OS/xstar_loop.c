@@ -11,12 +11,13 @@ void XSTAR_OS(void)
 	while(soff)
 	{
 		/*
-		scheduling();
-		XSG();
+		XSTAR_OS_scheduling();
+		XSTAR_OS_Graphics(); //16ms
 
-		PS_2();
-		interrupt();
-		syscall();
-		io();*/
+		//----interrupt code
+		XSTAR_OS_MouseKey();
+		XSTAR_OS_interrupt();
+		XSTAR_OS_syscall();
+		XSTAR_OS_io();*/
 	}
 }

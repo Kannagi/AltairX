@@ -1,3 +1,58 @@
+
+
+int main() {
+	char cde[31];
+	Formation f;
+	initform(&f);
+	Epreuve e;
+
+	f.nbUE = -1;
+	do {
+		scanf("%s", &cde);
+		if (strcmp(cde, "formation") == 0) // C2
+		{
+			formation(&f);
+		} // TODO
+		else if (strcmp(cde, "epreuve") == 0) // C3
+		{
+			if (!formation) {
+				printf("Le nombre d'UE n'est pas defini\n");
+				continue;
+			}
+			epreuve(&f);
+		} // TODO
+		else if (strcmp(cde, "coefficients") == 0) // C4
+		{
+			coefficients(&f);
+		} // TODO
+		else if (strcmp(cde, "note") == 0) // C5
+		{
+			note(&f);
+		} // TODO
+		else if (strcmp(cde, "notes") == 0) // C6
+		{
+			Verifnote(&f);
+		} // TODO
+		else if (strcmp(cde, "releve") == 0) // C7
+		{
+		} // TODO
+		else if (strcmp(cde, "decision") == 0) // C8
+		{
+		} // TODO
+	} while (strcmp(cde, "exit") != 0); // C1
+}
+
+//-----------------------
+
+
+
+
+
+
+
+
+
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
@@ -6,20 +61,13 @@
 
 #include "src/vm.h"
 
-/*
-unsigned char* code_to_execute = "\xB8\x13\x00\xCD\x10";
-void (*runCode)();
 
 
-	runCode = code_to_execute;
-
-	runCode();
-
-	return;*/
-
-
-int main(int argc, char** argv)
+int main2(int argc, char** argv)
 {
+	test_perf2();
+	return 0;
+
 	int i,arg = 0;
 
     char address[500];

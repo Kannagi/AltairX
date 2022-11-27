@@ -1,7 +1,7 @@
 # AltairX
-New computer and new CPU PoC
+New computer and new CPU.
 
-The main processor of the AltairX K1 is a VLIW In Order CPU.  
+The main processor of the AltairX is a VLIW In Order CPU.  
 It has 4 internal memory:  
 
 64 KiB L1 instruction Cache 4-way.  
@@ -20,30 +20,32 @@ The number of instructions is done via a "Pairing" bit, when it is equal to 1, t
 
 <img src="graph/Altair_instruction.png?raw=true" alt="arch">   
 
-The goal of this processor is to reach the minimum of latency, and to solve the problem of latency of the RAM.  
-For this, the compiler will have to do two things:  
-- resolve pipeline conflicts  
+The goal of this processor is to achieve the minimum CPU latency, and to solve the RAM latency problem.
+To do this, the compiler will have to do two things:
+- resolve pipeline conflicts
+- indicate the instructions to be executed in parallel
+- optimize connections
 - prefetch instruction and data
-- use SPM 
-
-To resolve pipeline conflicts, it has an accumulator internal to the ALU and to the VFPU which is register 61.  
-To avoid multiple writes to registers due to unsynchronized pipeline, there are two special registers P and Q (Product and Quotient) which are registers 62 and 63, to handle mul / div / sqrt etc etc.  
-There is also a specific register for loops (register 60).  
-
-The processor has 64 general registers of 64 bits, and 64 registers of 128 bits for the VFPU.  
-The processor only has SIMD instructions for the FPU.  
+- use SPM
 
 
-It has 151 instructions distributed like this:  
-ALU : 36  
-LSU : 28  
-CMP : 8  
-Other : 2  
+To resolve pipeline conflicts, it has an accumulator internal to the ALU and VFPU which is register 62.
+To avoid latencies between the ALU and the LSU, there is a manual Bypass which is register 63.
+To avoid multiple writes to registers due to unsynchronized pipeline, there are two special registers P and Q (Product and Quotient), to handle mul/div/sqrt etc etc.
+There is also a specific register for loops.
+
+The processor has 64 general registers of 64 bits, and 64 registers of 128 bits for the VFPU.
+The processor only has SIMD instructions for the FPU.
+
+
+It has 140 instructions distributed like this:  
+ALU : 32  
+LSU : 16+8(prefetch)    
+Other : 8 
 BRU : 20  
 VFPU : 32  
-EFU : 12  
-FPU-D : 8  
-DMA : 5  
+EFU : 16  
+FPU-D : 16  
 
 For floating point numbers in AltairX , it will not be 100% compatible with the standard with IEEE 754  
 -Non-normalized numbers are not handled (they are equal to zero).  
@@ -62,7 +64,7 @@ The advantage of this processor is that it has a simple design, and requires lit
 - Terminate virtual machine (cycle emulation and device management) 
 
 ## Target configuration
-8 cores : AltairX K1 2.5 GHz  
+8 cores : AltairX 2.5 GHz  
 DD3 1600 MHz , 8GB in a unified memory  
 GPU Aldebaran G1 1 GHz , 2 CU , 256 GFlops  
 
