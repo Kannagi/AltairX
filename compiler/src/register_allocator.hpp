@@ -86,12 +86,13 @@ public:
     static constexpr std::size_t no_use{std::numeric_limits<std::size_t>::max()};
     static constexpr std::size_t no_register{std::numeric_limits<std::size_t>::max()};
     static constexpr std::size_t no_group{std::numeric_limits<std::size_t>::max()};
+    static constexpr double unspillable{std::numeric_limits<double>::max()};
 
 public:
     enum class register_affinity : std::uint32_t
     {
         generic,     //This value is a variable with no special purpose
-        argument,    //This value is a function argument, they have a predefined register that can not be changed
+        argument,    //This value is a function argument, they have a predefined register or stack position that can not be changed
         spill,       //This value is spilled, must not assign any register
         flags,       //This value is related to branching, and uses a the special and unique register: FR
         ret,         //This value is part of the returned values (so it should be placed in the right register)
@@ -117,11 +118,13 @@ public:
         std::size_t last_use{}; // Index of the last usage
         ar::lifetime lifetime{};
         register_affinity affinity{register_affinity::generic}; //what kind of value it is
-        std::uint32_t spill_weight{};
+        double spill_weight{};
+        double split_cost{};
         std::size_t default_register{}; // For "argument" and "ret" affinity, register_index contains the forced register if any.
         std::size_t register_index{no_register}; // The actual assigned register
         std::size_t group{no_group};
         bool leaf{true}; // if true then this value can be assigned to volatile register (i.e lifetime does not include indirect call)
+        bool need_split{};
     };
 
     struct block_info
@@ -310,7 +313,7 @@ public:
 
     const group_info* group_of(llvm::Value* value) const noexcept
     {
-        if(const auto index{info_of(value).group}; index != std::numeric_limits<std::uint32_t>::max())
+        if(const auto index{info_of(value).group}; index != no_group)
         {
             return &m_groups[index];
         }
@@ -320,7 +323,7 @@ public:
 
     group_info* group_of(llvm::Value* value) noexcept
     {
-        if(const auto index{info_of(value).group}; index != std::numeric_limits<std::uint32_t>::max())
+        if(const auto index{info_of(value).group}; index != no_group)
         {
             return &m_groups[index];
         }
@@ -476,6 +479,7 @@ private:
     //give static register to all phi node operands to make them disapear in hell
     void compute_phi_groups();
     void compute_smove_groups();
+    void compute_zext_groups();
     void sync_groups_members();
 
     //Give each value (if applicable) a spill weight
@@ -487,7 +491,9 @@ private:
     void fill_register_info();
     //Give each value a register
     void generate_queue();
+    void insert_queue(std::size_t value_index);
     void allocate_registers();
+    void allocate_register(std::size_t value_index);
     std::size_t assing_register(std::size_t value_index);
 
 private:

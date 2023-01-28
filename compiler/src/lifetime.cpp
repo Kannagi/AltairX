@@ -143,6 +143,14 @@ void lifetime::coalesce(const lifetime& other)
     coalesce_all();
 }
 
+void lifetime::remove(const lifetime& other)
+{
+    for(auto&& range : other)
+    {
+        remove_range(range);
+    }
+}
+
 lifetime lifetime::holes()
 {
     lifetime output{};

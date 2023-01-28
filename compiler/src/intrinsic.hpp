@@ -16,7 +16,7 @@ enum class intrinsic_id : std::uint32_t
     moven,   // <T> %value = call altair.moven_<T>(<T> %value)
     moveu,   // <T> %value = call altair.moveu_<T>(<T> %value)
     smove,   // <T> %reg = call altair.smove_<T>_<U>_<V>(<T> %reg, <U> %value, <T> %shift)
-    load,    // <T> %i = call altair.load_<T>_<U>(ptr %ptr, <T> 2, <U> %offset)
+    load,    // <T> %i = call altair.load_<T>_<U>(ptr %ptr, <U> %offset)
     store,   // call altair.store_<T>_<U>(ptr %ptr, <T> %value, <U> %offset)
     ptradd,  // ptr %i = call altair.ptradd_<T>(ptr %ptr, <T> %offset)
     spill,   // ptr %i = call altair.spill_<T>(<T> %value)

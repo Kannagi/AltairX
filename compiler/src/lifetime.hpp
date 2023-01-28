@@ -103,6 +103,7 @@ public:
     bool overlap(const lifetime_range& range) const noexcept;
 
     void coalesce(const lifetime& other);
+    void remove(const lifetime& other);
 
     lifetime holes();
 
