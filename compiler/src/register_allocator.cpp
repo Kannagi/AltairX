@@ -38,6 +38,7 @@ register_allocator::register_allocator(llvm::Module& module, llvm::Function& fun
     compute_lifetimes();
     compute_phi_groups();
     compute_smove_groups();
+    compute_zext_trunc_groups();
     compute_affinity();
 
     sync_groups_members();
@@ -302,30 +303,40 @@ void register_allocator::compute_smove_groups()
     }
 }
 
-void register_allocator::compute_zext_groups()
+void register_allocator::compute_zext_trunc_groups()
 {
+    const auto process = [this](llvm::Instruction* inst)
+    {
+        // if the register already has a group, keep it
+        if(group_info* value_group{group_of(inst->getOperand(0))}; value_group)
+        {
+            value_group->members.emplace_back(inst);
+        }
+        else
+        {
+            const std::size_t group_index{std::size(m_groups)};
+
+            group_info& group{m_groups.emplace_back()};
+            group.members.emplace_back(inst->getOperand(0));
+            group.members.emplace_back(inst);
+
+            info_of(inst->getOperand(0)).group = group_index;
+            info_of(inst).group = group_index;
+        }
+    };
+
     for(llvm::BasicBlock& block : m_function)
     {
         for(llvm::Instruction& inst : block)
         {
             if(auto zext{llvm::dyn_cast<llvm::ZExtInst>(&inst)}; zext)
             {
-                // if the register already has a group, keep it
-                if(group_info* value_group{group_of(zext->getOperand(0))}; value_group)
-                {
-                    value_group->members.emplace_back(zext);
-                }
-                else
-                {
-                    const std::size_t group_index{std::size(m_groups)};
+                process(zext);
+            }
 
-                    group_info& group{m_groups.emplace_back()};
-                    group.members.emplace_back(zext->getOperand(0));
-                    group.members.emplace_back(zext);
-
-                    info_of(zext->getOperand(0)).group = group_index;
-                    info_of(zext).group = group_index;
-                }
+            if(auto trunc{llvm::dyn_cast<llvm::TruncInst>(&inst)}; trunc)
+            {
+                process(trunc);
             }
         }
     }
@@ -338,11 +349,11 @@ void register_allocator::sync_groups_members()
     {
         for(llvm::Value* member : group.members)
         {
-             if(!info_of(member).leaf)
-             {
-                 group.leaf = false;
-                 break;
-             }
+            if(!info_of(member).leaf)
+            {
+                group.leaf = false;
+                break;
+            }
         }
     }
 
@@ -581,17 +592,6 @@ void register_allocator::compute_affinity()
 }
 
 /*
-r0      (1)  | Stack pointer
-r1      (1)  | Pointer
-r2      (1)  | SPM (compiler)
-r3-r10  (8)  | functions arguments and return values (volatile)
-r11-r26 (16) | general purpose (non-volatile)
-r27-r61 (35) | general purpose (volatile)
-r62          | Accumulator
-r63          | Bypass
-
-Total volatile: 43
-
 v0-v7   (8)  | functions arguments and return values (volatile)
 v8-v19  (12) | general purpose (non-volatile)
 v20-v60 (41) | general purpose (volatile)
@@ -620,32 +620,35 @@ X < Y (the lesser R0 the bigger the stack = descending adresses)
 
 void register_allocator::fill_register_info()
 {
-    for(std::size_t i{0}; i <= 2; ++i) //Args and return
-    {
-        m_registers[i].type = register_type::special; //SP
-    }
+    m_registers[stack_register].type = register_type::special;
+    m_registers[pointer_register].type = register_type::special;
+    m_registers[spm_register].type = register_type::special;
 
-    for(std::size_t i{3}; i <= 10; ++i) //Args and return
+    for(std::size_t i{args_registers_begin}; i < args_registers_end; ++i)
     {
         m_registers[i].type = register_type::generic_volatile;
     }
 
-    for(std::size_t i{11}; i <= 26; ++i) //Generic non volatile
+    for(std::size_t i{non_volatile_registers_begin}; i < non_volatile_registers_end; ++i)
     {
         m_registers[i].type = register_type::generic_non_volatile;
     }
 
-    for(std::size_t i{27}; i <= 55; ++i) //Generic volatile
+    for(std::size_t i{volatile_registers_begin}; i < volatile_registers_end; ++i)
     {
         m_registers[i].type = register_type::generic_volatile;
     }
 
-    for(std::size_t i{56}; i <= 63; ++i) //Special
-    {
-        m_registers[i].type = register_type::special;
-    }
+    m_registers[zero_register].type = register_type::special;
+    m_registers[loop_register].type = register_type::special;
+    m_registers[branch_register].type = register_type::special;
+    m_registers[link_register].type = register_type::special;
+    m_registers[bypass_register].type = register_type::special;
+    m_registers[accumulator_register].type = register_type::special;
+    m_registers[multiplicator_register].type = register_type::special;
+    m_registers[quotient_register].type = register_type::special;
 
-    m_registers[64].type = register_type::flags;
+    m_registers[flags_register].type = register_type::flags;
 }
 
 static bool allocation_priority_comparator(const register_allocator::value_info& left, const register_allocator::value_info& right)
@@ -692,32 +695,13 @@ void register_allocator::insert_queue(std::size_t value_index)
 
 void register_allocator::allocate_registers()
 {
-    for(std::size_t i{}; i < std::size(m_values); ++i)
-    {
-        if(auto call{llvm::dyn_cast<llvm::CallInst>(m_values[i].value)}; call && !is_intrinsic(*call))
-        {
-            for(std::uint32_t i{}; i < call->arg_size(); ++i)
-            {
-                llvm::Value* arg{call->getArgOperand(i)};
-                value_info& arg_info{info_of(arg)};
-
-                arg_info.affinity = register_affinity::argument;
-
-                if(i < 8) // arg need to be put in a register
-                {
-                    arg_info.default_register = i + 3;
-                }
-            }
-        }
-
-    }
-
+    // Put the right register for arguments this function argument
     for(std::size_t i{}; i < std::min(m_function.arg_size(), std::size_t{8}); ++i)
     {
         if(m_values[i].leaf)
         {
-            m_registers[m_values[i].default_register].lifetime.coalesce(m_values[i].lifetime);
-            m_values[i].register_index = m_values[i].default_register;
+            m_values[i].register_index = args_registers_begin + i;
+            m_registers[m_values[i].register_index].lifetime.coalesce(m_values[i].lifetime);
         }
         else
         {
@@ -737,16 +721,49 @@ void register_allocator::allocate_registers()
         //insert load where needed
     }
 
+    // assign the ret value to the ret register
+    for(std::size_t i{}; i < std::size(m_values); ++i)
+    {
+        if(m_values[i].affinity == register_affinity::ret)
+        {
+            m_values[i].register_index = args_registers_begin; // args begin == ret
+            m_values[i].spill_weight = unspillable;
+            m_registers[m_values[i].register_index].lifetime.coalesce(m_values[i].lifetime);
+        }
+    }
+
+    // Mark call arguments as arguments and set their required register
+    for(std::size_t i{}; i < std::size(m_values); ++i)
+    {
+        if(auto call{llvm::dyn_cast<llvm::CallInst>(m_values[i].value)}; call && !is_intrinsic(*call))
+        {
+            for(std::uint32_t i{}; i < call->arg_size(); ++i)
+            {
+                llvm::Value* arg{call->getArgOperand(i)};
+                value_info& arg_info{info_of(arg)};
+
+                arg_info.affinity = register_affinity::argument;
+
+                if(i < 8) // arg need to be put in a register
+                {
+                    arg_info.default_register = args_registers_begin + 3;
+                }
+            }
+        }
+
+    }
+
+    // Assign register for groups
+    // Assume that there are enough registers to handle all groups lifetimes without overlaping
+    // Assume phi group members are non overlapping
+    // Leaf value must be synced between members of phi groups
     for(const group_info& group : m_groups)
     {
-        // leaf value is synced between members of phi groups
-        // assume phi group members are non overlapping
-
-        const std::size_t begin{group.leaf ? 25u : 9u};
-        const std::size_t end  {group.leaf ? 57u : 24u};
+        const std::size_t begin{group.leaf ? volatile_registers_begin : non_volatile_registers_begin};
+        const std::size_t end  {group.leaf ? volatile_registers_end : non_volatile_registers_end};
 
         bool assigned{};
-        for(std::size_t i{begin}; i <= end; ++i)
+        for(std::size_t i{begin}; i < end; ++i)
         {
             if(!m_registers[i].lifetime.overlap(group.lifetime))
             {
@@ -799,17 +816,17 @@ void register_allocator::allocate_register(std::size_t value_index)
 
     if(value.affinity == register_affinity::ret)
     {
-        assert(!m_registers[3].lifetime.overlap(value.lifetime) && "Return value overlapping");
+        assert(!m_registers[args_registers_begin].lifetime.overlap(value.lifetime) && "Return value overlapping");
 
-        m_registers[3].lifetime.coalesce(value.lifetime);
-        value.register_index = 3;
+        m_registers[args_registers_begin].lifetime.coalesce(value.lifetime);
+        value.register_index = args_registers_begin;
     }
     else if(value.affinity == register_affinity::flags)
     {
-        assert(!m_registers[64].lifetime.overlap(value.lifetime) && "The compiler don't reorder cmp yet");
+        assert(!m_registers[flags_register].lifetime.overlap(value.lifetime) && "The compiler don't reorder cmp yet");
 
-        m_registers[64].lifetime.coalesce(value.lifetime);
-        value.register_index = 64;
+        m_registers[flags_register].lifetime.coalesce(value.lifetime);
+        value.register_index = flags_register;
     }
     else
     {
@@ -853,7 +870,8 @@ std::size_t register_allocator::assing_register(std::size_t value_index)
 
     if(value.leaf)
     {
-        for(std::size_t i{25}; i <= 57; ++i) // first try in the volatile generic registers
+        // first try in the volatile generic registers
+        for(std::size_t i{volatile_registers_begin}; i < volatile_registers_end; ++i)
         {
             if(!m_registers[i].lifetime.overlap(m_values[value_index].lifetime))
             {
@@ -862,7 +880,8 @@ std::size_t register_allocator::assing_register(std::size_t value_index)
             }
         }
 
-        for(std::size_t i{3}; i <= 10; ++i) // then try in the volatile args/ret registers
+        // then try in the volatile args/ret registers
+        for(std::size_t i{args_registers_begin}; i < args_registers_end; ++i)
         {
             if(!m_registers[i].lifetime.overlap(m_values[value_index].lifetime))
             {
@@ -871,7 +890,8 @@ std::size_t register_allocator::assing_register(std::size_t value_index)
             }
         }
 
-        for(std::size_t i{9}; i <= 24; ++i) // then try in the saved registers
+        // then try in the non volatile registers
+        for(std::size_t i{non_volatile_registers_begin}; i < non_volatile_registers_end; ++i)
         {
             if(!m_registers[i].lifetime.overlap(m_values[value_index].lifetime))
             {
@@ -882,7 +902,7 @@ std::size_t register_allocator::assing_register(std::size_t value_index)
     }
     else
     {
-        for(std::size_t i{9}; i <= 24; ++i) // try in the saved registers
+        for(std::size_t i{non_volatile_registers_begin}; i < non_volatile_registers_end; ++i) // try in the saved registers
         {
             if(!m_registers[i].lifetime.overlap(m_values[value_index].lifetime))
             {

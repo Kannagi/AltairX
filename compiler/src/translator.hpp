@@ -32,6 +32,9 @@ private:
 
     std::string get_opcode(const llvm::BinaryOperator* binary);
     std::string translate_instruction(const llvm::ICmpInst* compare);
+    std::string translate_instruction(const llvm::ZExtInst* zext);
+    std::string translate_instruction(const llvm::TruncInst* trunc);
+    std::string translate_instruction(const llvm::SExtInst* sext);
     std::string translate_instruction(const llvm::LoadInst* load);
     std::string translate_instruction(const llvm::StoreInst* store);
     std::string translate_instruction(const llvm::BranchInst* branch, const llvm::CmpInst* compare);

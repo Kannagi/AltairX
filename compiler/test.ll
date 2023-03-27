@@ -1,7 +1,7 @@
 ; ModuleID = 'test.c'
 source_filename = "test.c"
 target datalayout = "e-m:w-p270:32:32-p271:32:32-p272:64:64-i64:64-f80:128-n8:16:32:64-S128"
-target triple = "x86_64-pc-windows-msvc19.33.31629"
+target triple = "x86_64-pc-windows-msvc19.34.31935"
 
 %struct.B = type { i32, i64, [0 x %struct.A] }
 %struct.A = type { i8, [10 x [20 x i32]], i8 }
@@ -87,6 +87,12 @@ define dso_local nonnull ptr @testptr(ptr noundef readnone %0, i64 noundef %1) l
 ; Function Attrs: mustprogress nofree norecurse nosync nounwind readnone willreturn uwtable
 define dso_local i32 @negate(i32 noundef %0) local_unnamed_addr #0 {
   %2 = sub nsw i32 0, %0
+  ret i32 %2
+}
+
+; Function Attrs: mustprogress nofree norecurse nosync nounwind readnone willreturn uwtable
+define dso_local i32 @sext(i16 noundef %0) local_unnamed_addr #0 {
+  %2 = sext i16 %0 to i32
   ret i32 %2
 }
 
@@ -230,7 +236,7 @@ attributes #7 = { nounwind }
 !0 = !{i32 1, !"wchar_size", i32 2}
 !1 = !{i32 7, !"PIC Level", i32 2}
 !2 = !{i32 7, !"uwtable", i32 2}
-!3 = !{!"clang version 16.0.0 (https://github.com/llvm/llvm-project.git 37da2a141c6aa02e3ef86a9010ef2b2d793a2c66)"}
+!3 = !{!"clang version 15.0.1"}
 !4 = distinct !{!4, !5, !6}
 !5 = !{!"llvm.loop.mustprogress"}
 !6 = !{!"llvm.loop.unroll.disable"}

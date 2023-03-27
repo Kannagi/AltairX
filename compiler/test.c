@@ -61,6 +61,12 @@ int negate(int i)
     return -i;
 }
 
+int sext(short s);
+int sext(short s)
+{
+    return (int)(s);
+}
+
 void bubble_sort(int* array, size_t count);
 void bubble_sort(int* array, size_t count)
 {

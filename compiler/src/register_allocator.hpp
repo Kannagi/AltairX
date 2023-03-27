@@ -84,8 +84,27 @@ class register_allocator
 {
 public:
     static constexpr std::size_t no_use{std::numeric_limits<std::size_t>::max()};
-    static constexpr std::size_t no_register{std::numeric_limits<std::size_t>::max()};
     static constexpr std::size_t no_group{std::numeric_limits<std::size_t>::max()};
+    static constexpr std::size_t no_register{std::numeric_limits<std::size_t>::max()};
+    static constexpr std::size_t stack_register{0};
+    static constexpr std::size_t pointer_register{1};
+    static constexpr std::size_t spm_register{2};
+    static constexpr std::size_t args_registers_begin{3};
+    static constexpr std::size_t args_registers_end{11};
+    static constexpr std::size_t non_volatile_registers_begin{11};
+    static constexpr std::size_t non_volatile_registers_end{27};
+    static constexpr std::size_t volatile_registers_begin{27};
+    static constexpr std::size_t volatile_registers_end{56};
+    static constexpr std::size_t zero_register{56};
+    static constexpr std::size_t loop_register{57};
+    static constexpr std::size_t branch_register{58};
+    static constexpr std::size_t link_register{59};
+    static constexpr std::size_t bypass_register{60};
+    static constexpr std::size_t accumulator_register{61};
+    static constexpr std::size_t multiplicator_register{62};
+    static constexpr std::size_t quotient_register{63};
+    static constexpr std::size_t flags_register{64};
+
     static constexpr double unspillable{std::numeric_limits<double>::max()};
 
 public:
@@ -479,7 +498,7 @@ private:
     //give static register to all phi node operands to make them disapear in hell
     void compute_phi_groups();
     void compute_smove_groups();
-    void compute_zext_groups();
+    void compute_zext_trunc_groups();
     void sync_groups_members();
 
     //Give each value (if applicable) a spill weight

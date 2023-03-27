@@ -216,6 +216,31 @@ void function_translator::translate_instruction(const register_allocator::value_
         }
 
     }
+    else if(auto zext{llvm::dyn_cast<llvm::ZExtInst>(instruction.value)}; zext)
+    {
+        // this op is a no-op on our arch
+        // zero-extending a register is simply changing the operand size on the user
+        m_asm_code << indent << "; "; // NOP (commented "debug information") !!
+        m_asm_code << translate_instruction(zext) << "." << get_int_size_name(zext) << " ";
+        m_asm_code << get_register(zext) << ", ";
+        m_asm_code << get_register(zext->getOperand(0)) << std::endl;
+    }
+    else if(auto trunc{llvm::dyn_cast<llvm::TruncInst>(instruction.value)}; trunc)
+    {
+        // this op is a no-op on our arch
+        // trunc-ing a register is simply changing the operand size on the user
+        m_asm_code << indent << "; "; // NOP (commented "debug information") !!
+        m_asm_code << translate_instruction(trunc) << "." << get_int_size_name(trunc) << " ";
+        m_asm_code << get_register(trunc) << ", ";
+        m_asm_code << get_register(trunc->getOperand(0)) << std::endl;
+    }
+    else if(auto sext{llvm::dyn_cast<llvm::SExtInst>(instruction.value)}; sext)
+    {
+        m_asm_code << indent;
+        m_asm_code << translate_instruction(sext) << "." << get_int_size_name(sext) << " ";
+        m_asm_code << get_register(sext) << ", ";
+        m_asm_code << get_register(sext->getOperand(0)) << std::endl;
+    }
     else if(auto load{llvm::dyn_cast<llvm::LoadInst>(instruction.value)}; load)
     {
         m_asm_code << indent;
@@ -365,7 +390,6 @@ void function_translator::translate_instruction(const register_allocator::value_
                 m_asm_code << get_register(call->getArgOperand(0)) << ", ";
                 m_asm_code << get_register(call->getArgOperand(1)) << std::endl;
             }
-
         }
     }
     else if(auto ret{llvm::dyn_cast<llvm::ReturnInst>(instruction.value)}; ret)
@@ -404,6 +428,21 @@ std::string function_translator::get_opcode(const llvm::BinaryOperator* binary)
     default:
         throw std::runtime_error{"Bad or unsuported opcode for binary operation: " + std::to_string(binary->getOpcode())};
     }
+}
+
+std::string function_translator::translate_instruction(const llvm::ZExtInst* zext [[maybe_unused]])
+{
+    return "zext";
+}
+
+std::string function_translator::translate_instruction(const llvm::TruncInst* trunc [[maybe_unused]])
+{
+    return "trunc";
+}
+
+std::string function_translator::translate_instruction(const llvm::SExtInst* sext [[maybe_unused]])
+{
+    return "sext";
 }
 
 std::string function_translator::translate_instruction(const llvm::LoadInst* load [[maybe_unused]])
