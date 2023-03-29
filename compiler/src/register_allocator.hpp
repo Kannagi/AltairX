@@ -116,6 +116,7 @@ public:
         flags,       //This value is related to branching, and uses a the special and unique register: FR
         ret,         //This value is part of the returned values (so it should be placed in the right register)
         accumulator, //This value is should be placed in a local accumulator (unused, yet)
+        global,      //This value is a label
     };
 
     enum class register_type : std::uint32_t
@@ -179,6 +180,7 @@ public:
         std::vector<llvm::Value*> members{};
         ar::lifetime lifetime{}; // members coalesced lifetimes
         bool leaf{true}; // if a member is non leaf, the whole group is non leaf
+        bool ret{}; // if a member is the return value, the whole group will be in the ret register
     };
 
     struct register_info
@@ -486,6 +488,7 @@ private:
     void extract_edges();
 
     //Store values info
+    void extract_global_values();
     void extract_values();
 
     //analyze value lifetime

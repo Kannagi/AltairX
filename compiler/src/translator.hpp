@@ -40,7 +40,7 @@ private:
     std::string translate_instruction(const llvm::BranchInst* branch, const llvm::CmpInst* compare);
 
     std::string get_block_label(const register_allocator::block_info& block);
-    std::string get_register(llvm::Value* value);
+    std::string get_operand(llvm::Value* value);
     std::string get_size_name(llvm::Value* value);
 
 private:

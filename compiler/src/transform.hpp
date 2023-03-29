@@ -72,7 +72,7 @@ Example:
 | %2 = icmp ne i32 %0, 0
 | ret i1 %2
 
-Will be transformed in
+Will be transformed into:
 
 | %2 = call i1 altair.bool_i32(i32 %0)
 | ret i1 %2
@@ -87,15 +87,38 @@ a >= b -> slt(a, b) xor 1
 void bool_conversions(llvm::Module& module, llvm::Function& function);
 
 /*
-Returns may have constant operands, in that case we generates move just before the ret instruction
-that assigns the value to a temporary variable. This steps is used by the register allocator.
-*/
-void insert_extend_for_phis(llvm::Module& module, llvm::Function& function);
-
-/*
 Generates move instruction for constant values if needed
 */
 void insert_move_for_constant(llvm::Module& module, llvm::Function& function);
+
+/*
+Generates move instruction for global load if needed
+
+| .data
+| adr_data : "Hello World"
+|
+| .text
+| moveu r2,adr_data&0xFFFF
+| smove.w r2,r2,(adr_data&0xFFFF0000)>>16
+| ld r3,0[r2]
+
+Example:
+
+| @global_str = internal constant [13 x i8] c"Hello world!\00", align 1
+| define dso_local nonnull ptr @get_message() local_unnamed_addr #0 {
+|   ret ptr @global_str
+| }
+
+Will be transformed into:
+
+| @global_str = internal constant [13 x i8] c"Hello world!\00", align 1
+| define dso_local nonnull ptr @get_message() local_unnamed_addr #0 {
+|   %2 = call ptr @altair.moveu_ptr(ptr @global_str)
+|   %3 = call ptr @altair.smove_ptr_ptr_i64(ptr %2, ptr @global_str, i64 1)
+|   ret ptr %3
+| }
+*/
+void insert_move_for_global_load(llvm::Module& module, llvm::Function& function);
 
 /*
 Sometimes, we may benefit from fallthrough by inverting condition

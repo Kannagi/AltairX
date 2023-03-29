@@ -1,6 +1,96 @@
 jump main ;This is the bootstrap
 nop
 
+.data
+global_str : "Hello world!\x00"
+base64_table : "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00>\x00\x00\x00?456789:;<=\x00\x00\x00\x00\x00\x00\x00\x00\x01\x02\x03\x04\x05\x06\x07\x08\x09\x0a\x0b\x0c\x0d\x0e\x0f\x10\x11\x12\x13\x14\x15\x16\x17\x18\x19\x00\x00\x00\x00\x00\x00\x1a\x1b\x1c\x1d\x1e\x1f !"#$%&'()*+,-./0123\x00\x00\x00\x00\x00"
+
+.text
+get_message:
+get_message_%0:
+    moveu r3, global_str&0xFFFF
+    ret
+    smove.w r3, (global_str&0xFFFF0000)>>16
+
+
+set_global:
+set_global_%1:
+    moveu r27, global_int&0xFFFF
+    smove.w r27, (global_int&0xFFFF0000)>>16
+    ret
+    sti.l r3, r27[0]
+
+
+parse_base64:
+parse_base64_%3:
+    cmpiu r4, 0
+    beq parse_base64_%61
+    moveu r28, 0
+
+parse_base64_%6:
+    lsli.q r29, r28, 0
+    ld.b r29, r3[r29]
+    andi.b r29, r29, 127
+    ; zext.q r29, r29
+    lsli.q r30, r29, 0
+    moveu r29, base64_table&0xFFFF
+    smove.w r29, (base64_table&0xFFFF0000)>>16
+    ld.b r29, r29[r30]
+    ; zext.l r29, r29
+    lsli.l r32, r29, 18
+    ori.q r29, r28, 1
+    lsli.q r29, r29, 0
+    ld.b r29, r3[r29]
+    andi.b r29, r29, 127
+    ; zext.q r29, r29
+    lsli.q r30, r29, 0
+    moveu r29, base64_table&0xFFFF
+    smove.w r29, (base64_table&0xFFFF0000)>>16
+    ld.b r29, r29[r30]
+    ; zext.l r29, r29
+    lsli.l r31, r29, 12
+    or.l r33, r31, r32
+    ori.q r29, r28, 2
+    lsli.q r29, r29, 0
+    ld.b r29, r3[r29]
+    andi.b r29, r29, 127
+    ; zext.q r29, r29
+    lsli.q r30, r29, 0
+    moveu r29, base64_table&0xFFFF
+    smove.w r29, (base64_table&0xFFFF0000)>>16
+    ld.b r29, r29[r30]
+    ; zext.l r29, r29
+    lsli.l r30, r29, 6
+    or.l r32, r30, r31
+    ori.q r29, r28, 3
+    lsli.q r29, r29, 0
+    ld.b r29, r3[r29]
+    andi.b r29, r29, 127
+    ; zext.q r29, r29
+    lsli.q r31, r29, 0
+    moveu r29, base64_table&0xFFFF
+    smove.w r29, (base64_table&0xFFFF0000)>>16
+    ld.b r31, r29[r31]
+    lsri.l r29, r33, 16
+    ; trunc.b r29, r29
+    sti.b r29, r27[0]
+    lsri.l r29, r32, 8
+    ; trunc.b r29, r29
+    sti.b r29, r27[1]
+    ; trunc.b r30, r30
+    or.b r29, r31, r30
+    addi.q r27, r27, 3
+    sti.b r29, r27[2]
+    addi.q r28, r28, 4
+    cmp r28, r4
+    bl parse_base64_%6
+    nop
+
+parse_base64_%61:
+    ret
+    nop
+
+
 testmove:
 testmove_%1:
     moveu r27, 4374
@@ -197,19 +287,21 @@ use_data_%1:
 
 external_func_user:
 external_func_user_%2:
-    cmp r11, r11
+    cmp r3, r3
     beq external_func_user_%14
     nop
 
 external_func_user_%4:
     ldi.l r18446744073709551615, r11[0]
+    <unimplemented intrinsic>
     ldi.l r27, r11[0]
     mul.l r27, r27, r28
     sti.l r27, r11[0]
     lsli.l r18446744073709551615, r27, 1
+    <unimplemented intrinsic>
     sti.l r27, r11[0]
     addi.q r11, r11, 4
-    cmp r11, r11
+    cmp r11, r3
     bne external_func_user_%4
     nop
 

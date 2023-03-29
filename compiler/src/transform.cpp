@@ -257,6 +257,29 @@ void insert_move_for_constant(llvm::Module& module, llvm::Function& function)
     }
 }
 
+void insert_move_for_global_load(llvm::Module& module, llvm::Function& function)
+{
+    for(llvm::BasicBlock& block : function)
+    {
+        for(llvm::Instruction& instruction : block)
+        {
+            for(const llvm::Use& use : instruction.operands())
+            {
+                llvm::Value* value = use.get();
+
+                if(auto label{llvm::dyn_cast<llvm::GlobalVariable>(value)}; label)
+                {
+                    llvm::Instruction* low{insert_moveu_intrinsic(module, label, &instruction)};
+                    auto shift{llvm::ConstantInt::get(llvm::Type::getInt64Ty(module.getContext()), 1)};
+                    llvm::Instruction* high{insert_smove_intrinsic(module, low, label, shift, &instruction)};
+
+                    use.getUser()->setOperand(use.getOperandNo(), high);
+                }
+            }
+        }
+    }
+}
+
 void invert_branch_condition(llvm::Module& module [[maybe_unused]], llvm::Function& function)
 {
     const auto get_inverse = [](llvm::CmpInst::Predicate predicate)

@@ -22,6 +22,7 @@ register_allocator::register_allocator(llvm::Module& module, llvm::Function& fun
     ar::transforms::decompose_getelementptr(m_module, m_function);
     ar::transforms::optimize_load_store(m_module, m_function);
     ar::transforms::insert_move_for_constant(m_module, m_function);
+    ar::transforms::insert_move_for_global_load(m_module, m_function);
     ar::transforms::reorder_blocks(m_module, m_function);
     ar::transforms::invert_branch_condition(m_module, m_function);
 
@@ -33,6 +34,9 @@ register_allocator::register_allocator(llvm::Module& module, llvm::Function& fun
     extract_loop_headers();
     extract_loops();
     extract_edges();
+
+    m_values.reserve(m_function.getInstructionCount() + m_function.arg_size() + m_module.global_size());
+    extract_global_values();
     extract_values();
 
     compute_lifetimes();
@@ -213,10 +217,23 @@ void register_allocator::extract_edges()
     }
 }
 
+void register_allocator::extract_global_values()
+{
+    //for(auto& global : m_module.global_values())
+    //{
+    //    if(auto global_variable{llvm::dyn_cast<llvm::GlobalVariable>(&global)}; global_variable)
+    //    {
+    //        std::cout << "Global: " << get_value_label(global) << std::endl;
+    //        value_info& value{m_values.emplace_back()};
+    //        value.value    = &global;
+    //        value.name     = get_value_label(global);
+    //        value.affinity = register_affinity::global;
+    //    }
+    //}
+}
+
 void register_allocator::extract_values()
 {
-    m_values.reserve(m_function.getInstructionCount() + m_function.arg_size());
-
     for(llvm::Argument& arg : m_function.args())
     {
         value_info& value{m_values.emplace_back()};
@@ -352,7 +369,11 @@ void register_allocator::sync_groups_members()
             if(!info_of(member).leaf)
             {
                 group.leaf = false;
-                break;
+            }
+
+            if(info_of(member).affinity == register_affinity::ret)
+            {
+                group.ret = true;
             }
         }
     }
@@ -380,6 +401,7 @@ void register_allocator::sync_groups_members()
 
         std::cout << " | " << m_groups[i].lifetime << " | ";
         std::cout << (m_groups[i].leaf ? "leaf" : "non leaf") << std::endl;
+        std::cout << (m_groups[i].ret ? "ret" : "non ret") << std::endl;
     }
 }
 
@@ -759,6 +781,19 @@ void register_allocator::allocate_registers()
     // Leaf value must be synced between members of phi groups
     for(const group_info& group : m_groups)
     {
+        if(group.ret)
+        {
+            for(llvm::Value* member : group.members)
+            {
+                auto& info{info_of(member)};
+
+                info.register_index = args_registers_begin; // args begin == ret
+                info.spill_weight = unspillable;
+            }
+
+            continue;
+        }
+
         const std::size_t begin{group.leaf ? volatile_registers_begin : non_volatile_registers_begin};
         const std::size_t end  {group.leaf ? volatile_registers_end : non_volatile_registers_end};
 

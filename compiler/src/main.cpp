@@ -5,12 +5,14 @@
 #include <vector>
 #include <unordered_map>
 #include <unordered_set>
+#include <charconv>
 
 #include <llvm/IR/Module.h>
 #include <llvm/IRReader/IRReader.h>
 #include <llvm/Support/SourceMgr.h>
 #include <llvm/ADT/SCCIterator.h>
 #include <llvm/ADT/PostOrderIterator.h>
+#include <llvm/IR/Constants.h>
 
 #include "utilities.hpp"
 #include "register_allocator.hpp"
@@ -123,6 +125,81 @@ static void print_predecessors(llvm::Function& function)
     }
 }
 
+static std::string stringify(llvm::StringRef data)
+{
+    std::string output{"\""};
+
+    for(auto value : data)
+    {
+        if(value == '\\')
+        {
+            output += "\\\\";
+        }
+        else if(std::isprint(static_cast<unsigned char>(value)))
+        {
+            output += value;
+        }
+        else
+        {
+            std::array<char, 2> tmp{};
+            auto [ptr, ec] = std::to_chars(tmp.data(), tmp.data() + tmp.size(), static_cast<unsigned char>(value), 16);
+            if (ec != std::errc())
+            {
+                throw std::runtime_error{"To chars failed"};
+            }
+
+            output += "\\x";
+            if(std::distance(std::data(tmp), ptr) > 1)
+            {
+                output += tmp[0];
+                output += tmp[1];
+            }
+            else
+            {
+                output += '0';
+                output += tmp[0];
+            }
+        }
+    }
+
+    output += '\"';
+
+    return output;
+}
+
+static std::string constant_to_string(llvm::Constant* constant)
+{
+    if(auto sequential{llvm::dyn_cast<llvm::ConstantDataSequential>(constant)}; sequential)
+    {
+        return stringify(sequential->getAsString());
+    }
+
+    throw std::runtime_error{"unsupported constant type"};
+}
+
+static std::string generate_dot_data(llvm::Module& module)
+{
+    std::string output{};
+
+    for(llvm::GlobalVariable& global : module.globals())
+    {
+        if(global.isConstant())
+        {
+            output += ar::get_value_label(global);
+            output += " : ";
+            output += constant_to_string(global.getInitializer());
+            output += "\n";
+        }
+        else
+        {
+            std::cout << "Non constant global are not supported, yet.\n";
+            std::cout << "Ignoring \"" << ar::get_value_label(global) << "\"" << std::endl;
+        }
+    }
+
+    return output;
+}
+
 ///Code generation steps:
 /// 1: Transformation of the IR for analysis:
 ///    Transforms the IR by adding, removing, or rewriting part or it,
@@ -150,6 +227,10 @@ static void run(llvm::Module& module, const std::string& filename)
     std::ofstream output_file{filename + ".asm"};
     output_file << "jump main ;This is the bootstrap\n";
     output_file << "nop\n\n";
+    output_file << ".data\n";
+    output_file << generate_dot_data(module);
+    output_file << "\n";
+    output_file << ".text\n";
 
     for(llvm::Function& function : module.functions())
     {

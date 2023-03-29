@@ -35,6 +35,7 @@ llvm::CallInst* insert_store_intrinsic(llvm::Module& module, llvm::Value* ptr, l
 llvm::CallInst* insert_ptradd_intrinsic(llvm::Module& module, llvm::Value* ptr, llvm::Value* offset, llvm::Type* output_type, llvm::Instruction* position);
 llvm::CallInst* insert_spill_intrinsic(llvm::Module& module, llvm::Value* value, llvm::Instruction* position);
 llvm::CallInst* insert_fill_intrinsic(llvm::Module& module, llvm::Type* type, llvm::Value* ptr, llvm::Instruction* position);
+
 }
 
 #endif

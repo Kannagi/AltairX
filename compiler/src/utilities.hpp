@@ -20,7 +20,7 @@ constexpr bool has_single_bit(T x) noexcept
 template<typename T>
 constexpr T ilog2(T n) noexcept
 {
-    return (n > 1) ? 1 + log2(n >> 1) : 0;
+    return (n > 1) ? 1 + static_cast<T>(log2(n >> 1)) : 0;
 }
 
 constexpr std::size_t int_size(std::uint64_t value) noexcept

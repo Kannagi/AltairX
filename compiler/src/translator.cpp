@@ -202,17 +202,17 @@ void function_translator::translate_instruction(const register_allocator::value_
         {
             m_asm_code << indent;
             m_asm_code << get_opcode(binary) << "i." << get_int_size_name(binary) << " ";
-            m_asm_code << get_register(binary) << ", ";
-            m_asm_code << get_register(binary->getOperand(0)) << ", ";
+            m_asm_code << get_operand(binary) << ", ";
+            m_asm_code << get_operand(binary->getOperand(0)) << ", ";
             m_asm_code << std::to_string(contant->getSExtValue()) << std::endl;
         }
         else
         {
             m_asm_code << indent;
             m_asm_code << get_opcode(binary) << "." << get_int_size_name(binary) << " ";
-            m_asm_code << get_register(binary) << ", ";
-            m_asm_code << get_register(binary->getOperand(0)) << ", ";
-            m_asm_code << get_register(binary->getOperand(1)) << std::endl;
+            m_asm_code << get_operand(binary) << ", ";
+            m_asm_code << get_operand(binary->getOperand(0)) << ", ";
+            m_asm_code << get_operand(binary->getOperand(1)) << std::endl;
         }
 
     }
@@ -222,8 +222,8 @@ void function_translator::translate_instruction(const register_allocator::value_
         // zero-extending a register is simply changing the operand size on the user
         m_asm_code << indent << "; "; // NOP (commented "debug information") !!
         m_asm_code << translate_instruction(zext) << "." << get_int_size_name(zext) << " ";
-        m_asm_code << get_register(zext) << ", ";
-        m_asm_code << get_register(zext->getOperand(0)) << std::endl;
+        m_asm_code << get_operand(zext) << ", ";
+        m_asm_code << get_operand(zext->getOperand(0)) << std::endl;
     }
     else if(auto trunc{llvm::dyn_cast<llvm::TruncInst>(instruction.value)}; trunc)
     {
@@ -231,29 +231,29 @@ void function_translator::translate_instruction(const register_allocator::value_
         // trunc-ing a register is simply changing the operand size on the user
         m_asm_code << indent << "; "; // NOP (commented "debug information") !!
         m_asm_code << translate_instruction(trunc) << "." << get_int_size_name(trunc) << " ";
-        m_asm_code << get_register(trunc) << ", ";
-        m_asm_code << get_register(trunc->getOperand(0)) << std::endl;
+        m_asm_code << get_operand(trunc) << ", ";
+        m_asm_code << get_operand(trunc->getOperand(0)) << std::endl;
     }
     else if(auto sext{llvm::dyn_cast<llvm::SExtInst>(instruction.value)}; sext)
     {
         m_asm_code << indent;
         m_asm_code << translate_instruction(sext) << "." << get_int_size_name(sext) << " ";
-        m_asm_code << get_register(sext) << ", ";
-        m_asm_code << get_register(sext->getOperand(0)) << std::endl;
+        m_asm_code << get_operand(sext) << ", ";
+        m_asm_code << get_operand(sext->getOperand(0)) << std::endl;
     }
     else if(auto load{llvm::dyn_cast<llvm::LoadInst>(instruction.value)}; load)
     {
         m_asm_code << indent;
         m_asm_code << translate_instruction(load) << "." << get_int_size_name(load) << " ";
-        m_asm_code << get_register(load) << ", ";
-        m_asm_code << get_register(load->getPointerOperand()) << "[0]" << std::endl;
+        m_asm_code << get_operand(load) << ", ";
+        m_asm_code << get_operand(load->getPointerOperand()) << "[0]" << std::endl;
     }
     else if(auto store{llvm::dyn_cast<llvm::StoreInst>(instruction.value)}; store)
     {
         m_asm_code << indent;
         m_asm_code << translate_instruction(store) << "." << get_int_size_name(store->getValueOperand()) << " ";
-        m_asm_code << get_register(store->getValueOperand()) << ", ";
-        m_asm_code << get_register(store->getPointerOperand()) << "[0]"<< std::endl;
+        m_asm_code << get_operand(store->getValueOperand()) << ", ";
+        m_asm_code << get_operand(store->getPointerOperand()) << "[0]"<< std::endl;
     }
     else if(auto compare{llvm::dyn_cast<llvm::ICmpInst>(instruction.value)}; compare)
     {
@@ -264,14 +264,14 @@ void function_translator::translate_instruction(const register_allocator::value_
             {
                 m_asm_code << indent;
                 m_asm_code << translate_instruction(compare) << "i ";
-                m_asm_code << get_register(compare->getOperand(0)) << ", ";
+                m_asm_code << get_operand(compare->getOperand(0)) << ", ";
                 m_asm_code << std::to_string(value) << std::endl;
             }
             else
             {
                 m_asm_code << indent;
                 m_asm_code << translate_instruction(compare) + "iu ";
-                m_asm_code << get_register(compare->getOperand(0)) + ", ";
+                m_asm_code << get_operand(compare->getOperand(0)) + ", ";
                 m_asm_code << std::to_string(value) << std::endl;
             }
         }
@@ -279,8 +279,8 @@ void function_translator::translate_instruction(const register_allocator::value_
         {
             m_asm_code << indent;
             m_asm_code << translate_instruction(compare) + " ";
-            m_asm_code << get_register(compare->getOperand(0)) + ", ";
-            m_asm_code << get_register(compare->getOperand(1)) << std::endl;
+            m_asm_code << get_operand(compare->getOperand(0)) + ", ";
+            m_asm_code << get_operand(compare->getOperand(1)) << std::endl;
         }
 
     }
@@ -306,14 +306,22 @@ void function_translator::translate_instruction(const register_allocator::value_
         if(intrinsic == intrinsic_id::moven)
         {
             m_asm_code << indent;
-            m_asm_code << "moven " << get_register(call) << ", ";
+            m_asm_code << "moven " << get_operand(call) << ", ";
             m_asm_code << llvm::cast<llvm::ConstantInt>(call->getArgOperand(0))->getSExtValue() << std::endl;
         }
         else if(intrinsic == intrinsic_id::moveu)
         {
             m_asm_code << indent;
-            m_asm_code << "moveu " << get_register(call) << ", ";
-            m_asm_code << llvm::cast<llvm::ConstantInt>(call->getArgOperand(0))->getZExtValue() << std::endl;
+            m_asm_code << "moveu " << get_operand(call) << ", ";
+
+            if(auto int_value{llvm::dyn_cast<llvm::ConstantInt>(call->getArgOperand(0))}; int_value)
+            {
+                m_asm_code << int_value->getZExtValue() << std::endl;
+            }
+            else if(auto global_value{llvm::dyn_cast<llvm::GlobalVariable>(call->getArgOperand(0))}; global_value)
+            {
+                m_asm_code << get_value_label(*global_value) << "&0xFFFF" << std::endl;
+            }
         }
         else if(intrinsic == intrinsic_id::smove)
         {
@@ -321,10 +329,24 @@ void function_translator::translate_instruction(const register_allocator::value_
 
             assert(m_allocator.info_of(call).register_index == m_allocator.info_of(call->getArgOperand(0)).register_index);
 
+            const auto shift_value{llvm::cast<llvm::ConstantInt>(call->getArgOperand(2))->getZExtValue()};
             m_asm_code << indent;
-            m_asm_code << "smove." << shift_name[llvm::cast<llvm::ConstantInt>(call->getArgOperand(2))->getZExtValue()] << " ";
-            m_asm_code << get_register(call) << ", ";
-            m_asm_code << llvm::cast<llvm::ConstantInt>(call->getArgOperand(1))->getZExtValue() << std::endl;
+            m_asm_code << "smove." << shift_name[shift_value] << " ";
+            m_asm_code << get_operand(call) << ", ";
+
+            if(auto int_value{llvm::dyn_cast<llvm::ConstantInt>(call->getArgOperand(1))}; int_value)
+            {
+                m_asm_code << int_value->getZExtValue() << std::endl;
+            }
+            else if(auto global_value{llvm::dyn_cast<llvm::GlobalVariable>(call->getArgOperand(1))}; global_value)
+            {
+                if(shift_value != 1)
+                {
+                    throw std::runtime_error{"Can not compose addresse on more than 32-bits"};
+                }
+
+                m_asm_code << "(" << get_value_label(*global_value) << "&0xFFFF0000)>>16" << std::endl;
+            }
         }
         else if(intrinsic == intrinsic_id::load)
         {
@@ -332,17 +354,17 @@ void function_translator::translate_instruction(const register_allocator::value_
             {
                 m_asm_code << indent;
                 m_asm_code << "ldi." << get_int_size_name(call) << " ";
-                m_asm_code << get_register(call) << ", ";
-                m_asm_code << get_register(call->getArgOperand(0)) << "[";
+                m_asm_code << get_operand(call) << ", ";
+                m_asm_code << get_operand(call->getArgOperand(0)) << "[";
                 m_asm_code << std::to_string(contant->getSExtValue()) << "]" << std::endl;
             }
             else
             {
                 m_asm_code << indent;
                 m_asm_code << "ld." << get_int_size_name(call) << " ";
-                m_asm_code << get_register(call) << ", ";
-                m_asm_code << get_register(call->getArgOperand(0)) << "[";
-                m_asm_code << get_register(call->getArgOperand(1)) << "]" << std::endl;
+                m_asm_code << get_operand(call) << ", ";
+                m_asm_code << get_operand(call->getArgOperand(0)) << "[";
+                m_asm_code << get_operand(call->getArgOperand(1)) << "]" << std::endl;
             }
         }
         else if(intrinsic == intrinsic_id::store)
@@ -351,17 +373,17 @@ void function_translator::translate_instruction(const register_allocator::value_
             {
                 m_asm_code << indent;
                 m_asm_code << "sti." << get_int_size_name(call->getArgOperand(2)) << " ";
-                m_asm_code << get_register(call->getArgOperand(2)) << ", ";
-                m_asm_code << get_register(call->getArgOperand(0)) << "[";
+                m_asm_code << get_operand(call->getArgOperand(2)) << ", ";
+                m_asm_code << get_operand(call->getArgOperand(0)) << "[";
                 m_asm_code << std::to_string(contant->getSExtValue()) << "]" << std::endl;
             }
             else
             {
                 m_asm_code << indent;
                 m_asm_code << "st." << get_int_size_name(call->getArgOperand(2)) << " ";
-                m_asm_code << get_register(call->getArgOperand(2)) << ", ";
-                m_asm_code << get_register(call->getArgOperand(0)) << "[";
-                m_asm_code << get_register(call->getArgOperand(1)) << "]" << std::endl;
+                m_asm_code << get_operand(call->getArgOperand(2)) << ", ";
+                m_asm_code << get_operand(call->getArgOperand(0)) << "[";
+                m_asm_code << get_operand(call->getArgOperand(1)) << "]" << std::endl;
             }
         }
         else if(intrinsic == intrinsic_id::spill)
@@ -378,18 +400,23 @@ void function_translator::translate_instruction(const register_allocator::value_
             {
                 m_asm_code << indent;
                 m_asm_code << "addi.q ";
-                m_asm_code << get_register(call) << ", ";
-                m_asm_code << get_register(call->getArgOperand(0)) << ", ";
+                m_asm_code << get_operand(call) << ", ";
+                m_asm_code << get_operand(call->getArgOperand(0)) << ", ";
                 m_asm_code << std::to_string(contant->getSExtValue()) << std::endl;
             }
             else
             {
                 m_asm_code << indent;
                 m_asm_code << "add.q ";
-                m_asm_code << get_register(call) << ", ";
-                m_asm_code << get_register(call->getArgOperand(0)) << ", ";
-                m_asm_code << get_register(call->getArgOperand(1)) << std::endl;
+                m_asm_code << get_operand(call) << ", ";
+                m_asm_code << get_operand(call->getArgOperand(0)) << ", ";
+                m_asm_code << get_operand(call->getArgOperand(1)) << std::endl;
             }
+        }
+        else
+        {
+            m_asm_code << indent;
+            m_asm_code << "<unimplemented intrinsic>" << std::endl;
         }
     }
     else if(auto ret{llvm::dyn_cast<llvm::ReturnInst>(instruction.value)}; ret)
@@ -493,8 +520,13 @@ std::string function_translator::get_block_label(const register_allocator::block
     return m_function.getName().str() + "_" + get_value_label(*block.block);
 }
 
-std::string function_translator::get_register(llvm::Value* value)
+std::string function_translator::get_operand(llvm::Value* value)
 {
+    if(auto global{llvm::dyn_cast<llvm::GlobalValue>(value)}; global)
+    {
+        return get_value_label(*global);
+    }
+
     return "r" + std::to_string(m_allocator.info_of(value).register_index);
 }
 
