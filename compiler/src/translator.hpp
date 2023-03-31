@@ -13,7 +13,7 @@ class function_translator
     static constexpr std::string_view indent{"    "};
 
 public:
-    function_translator(llvm::Module& module, llvm::Function& function, const register_allocator& allocator);
+    function_translator(const register_allocator& allocator);
 
     ~function_translator() = default;
     function_translator(const function_translator&) = delete;

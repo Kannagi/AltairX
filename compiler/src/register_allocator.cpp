@@ -8,7 +8,6 @@
 #include <llvm/ADT/PostOrderIterator.h>
 
 #include "intrinsic.hpp"
-#include "transform.hpp"
 #include "utilities.hpp"
 
 namespace ar
@@ -18,35 +17,49 @@ register_allocator::register_allocator(llvm::Module& module, llvm::Function& fun
 :m_module{module}
 ,m_function{function}
 {
-    ar::transforms::swap_add_sub(m_module, m_function);
-    ar::transforms::decompose_getelementptr(m_module, m_function);
-    ar::transforms::optimize_load_store(m_module, m_function);
-    ar::transforms::insert_move_for_constant(m_module, m_function);
-    ar::transforms::insert_move_for_global_load(m_module, m_function);
-    ar::transforms::reorder_blocks(m_module, m_function);
-    ar::transforms::invert_branch_condition(m_module, m_function);
 
+}
+
+void register_allocator::perform_analysis()
+{
     m_tree = llvm::DominatorTree{m_function};
     m_loop_info = llvm::LoopInfo{m_tree};
 
+    m_sccs.clear();
+    m_blocks.clear();
+    m_values.clear();
+    m_loops.clear();
+    m_groups.clear();
+
     extract_sccs();
     extract_blocks();
-    extract_loop_headers();
+    extract_scc_edges();
     extract_loops();
-    extract_edges();
-
-    m_values.reserve(m_function.getInstructionCount() + m_function.arg_size() + m_module.global_size());
-    extract_global_values();
     extract_values();
+    extract_lifetimes();
+    extract_groups();
+}
 
-    compute_lifetimes();
-    compute_phi_groups();
-    compute_smove_groups();
-    compute_zext_trunc_groups();
-    compute_affinity();
-
-    sync_groups_members();
+void register_allocator::perform_register_allocation()
+{
+    compute_spill_weight();
     allocate_registers();
+}
+
+std::size_t register_allocator::get_scc(const llvm::BasicBlock* block)
+{
+    for(std::size_t index{}; index < std::size(m_sccs); ++index)
+    {
+        for(const llvm::BasicBlock* sccblock : m_sccs[index].blocks)
+        {
+            if(sccblock == block)
+            {
+                return index;
+            }
+        }
+    }
+
+    throw std::runtime_error{"Invalid AST"};
 }
 
 void register_allocator::extract_sccs()
@@ -83,97 +96,7 @@ void register_allocator::extract_blocks()
     std::reverse(std::begin(m_blocks), std::end(m_blocks));
 }
 
-size_t register_allocator::get_scc(const llvm::BasicBlock* block)
-{
-    for(std::size_t index{}; index < std::size(m_sccs); ++index)
-    {
-        for(const llvm::BasicBlock* sccblock : m_sccs[index].blocks)
-        {
-            if(sccblock == block)
-            {
-                return index;
-            }
-        }
-    }
-
-    throw std::runtime_error{"Invalid AST"};
-}
-
-void register_allocator::extract_loop_headers()
-{
-    for(llvm::Loop* loop : m_loop_info)
-    {
-        extract_loop_headers_recurse(loop);
-    }
-}
-
-void register_allocator::extract_loop_headers_recurse(llvm::Loop* loop)
-{
-    info_of(loop->getHeader()).loop = loop;
-
-    llvm::SmallVector<llvm::Loop*, 32> inners{};
-    loop->getInnerLoopsInPreorder(*loop, inners);
-
-    for(llvm::Loop* inner : inners)
-    {
-        extract_loop_headers_recurse(inner);
-    }
-}
-
-void register_allocator::extract_loops()
-{
-    for(llvm::Loop* loop : m_loop_info)
-    {
-        extract_loop(loop);
-    }
-
-    for(const loop_info& loop : m_loops)
-    {
-        std::cout << "Predecessors of loop " << get_value_label(*loop.loop->getHeader()) << ": ";
-        for(llvm::BasicBlock* pred : loop.predecessors)
-        {
-            std::cout << get_value_label(*pred) << " ";
-        }
-        std::cout << std::endl;
-    }
-
-    for(const loop_info& loop : m_loops)
-    {
-        std::cout << "Successors   of loop " << get_value_label(*loop.loop->getHeader()) << ": ";
-        for(llvm::BasicBlock* succ : loop.successors)
-        {
-            std::cout << get_value_label(*succ) << " ";
-        }
-        std::cout << std::endl;
-    }
-}
-
-void register_allocator::extract_loop(llvm::Loop* loop)
-{
-    auto& info{m_loops.emplace_back()};
-    info.loop = loop;
-    info.predecessors = ar::loop_predecessors(*loop);
-    info.successors = ar::loop_successors(*loop);
-
-    const std::string ident(loop->getLoopDepth() * 4, ' ');
-    std::cout << ident << "Loop " << ar::get_value_label(*loop->getHeader()) << std::endl;
-    std::cout << ident << "  Blocks: ";
-    for(auto block : loop->blocks())
-    {
-        std::cout << ar::get_value_label(*block) << " ";
-    }
-    std::cout << std::endl;
-
-    llvm::SmallVector<llvm::Loop*, 32> inners{};
-    loop->getInnerLoopsInPreorder(*loop, inners);
-
-    for(llvm::Loop* inner : inners)
-    {
-        extract_loop(inner);
-    }
-}
-
-void register_allocator::extract_edges()
+void register_allocator::extract_scc_edges()
 {
     for(const block_info& block : m_blocks)
     {
@@ -217,23 +140,86 @@ void register_allocator::extract_edges()
     }
 }
 
-void register_allocator::extract_global_values()
+void register_allocator::extract_loops()
 {
-    //for(auto& global : m_module.global_values())
-    //{
-    //    if(auto global_variable{llvm::dyn_cast<llvm::GlobalVariable>(&global)}; global_variable)
-    //    {
-    //        std::cout << "Global: " << get_value_label(global) << std::endl;
-    //        value_info& value{m_values.emplace_back()};
-    //        value.value    = &global;
-    //        value.name     = get_value_label(global);
-    //        value.affinity = register_affinity::global;
-    //    }
-    //}
+    store_loop_headers();
+
+    for(llvm::Loop* loop : m_loop_info)
+    {
+        store_loop(loop);
+    }
+
+    for(const loop_info& loop : m_loops)
+    {
+        std::cout << "Predecessors of loop " << get_value_label(*loop.loop->getHeader()) << ": ";
+        for(llvm::BasicBlock* pred : loop.predecessors)
+        {
+            std::cout << get_value_label(*pred) << " ";
+        }
+        std::cout << std::endl;
+    }
+
+    for(const loop_info& loop : m_loops)
+    {
+        std::cout << "Successors   of loop " << get_value_label(*loop.loop->getHeader()) << ": ";
+        for(llvm::BasicBlock* succ : loop.successors)
+        {
+            std::cout << get_value_label(*succ) << " ";
+        }
+        std::cout << std::endl;
+    }
+}
+
+void register_allocator::store_loop_headers()
+{
+    for(llvm::Loop* loop : m_loop_info)
+    {
+        store_loop_headers_recurse(loop);
+    }
+}
+
+void register_allocator::store_loop_headers_recurse(llvm::Loop* loop)
+{
+    info_of(loop->getHeader()).loop = loop;
+
+    llvm::SmallVector<llvm::Loop*, 32> inners{};
+    loop->getInnerLoopsInPreorder(*loop, inners);
+
+    for(llvm::Loop* inner : inners)
+    {
+        store_loop_headers_recurse(inner);
+    }
+}
+
+void register_allocator::store_loop(llvm::Loop* loop)
+{
+    auto& info{m_loops.emplace_back()};
+    info.loop = loop;
+    info.predecessors = ar::loop_predecessors(*loop);
+    info.successors = ar::loop_successors(*loop);
+
+    const std::string ident(loop->getLoopDepth() * 4, ' ');
+    std::cout << ident << "Loop " << ar::get_value_label(*loop->getHeader()) << std::endl;
+    std::cout << ident << "  Blocks: ";
+    for(auto block : loop->blocks())
+    {
+        std::cout << ar::get_value_label(*block) << " ";
+    }
+    std::cout << std::endl;
+
+    llvm::SmallVector<llvm::Loop*, 32> inners{};
+    loop->getInnerLoopsInPreorder(*loop, inners);
+
+    for(llvm::Loop* inner : inners)
+    {
+        store_loop(inner);
+    }
 }
 
 void register_allocator::extract_values()
 {
+    m_values.reserve(m_function.getInstructionCount() + m_function.arg_size());
+
     for(llvm::Argument& arg : m_function.args())
     {
         value_info& value{m_values.emplace_back()};
@@ -267,145 +253,55 @@ void register_allocator::extract_values()
 
         block.end = std::size(m_values);
     }
+
+    fill_affinity();
 }
 
-void register_allocator::compute_phi_groups()
+void register_allocator::fill_affinity()
 {
-    for(llvm::BasicBlock& block : m_function)
+    // Mark call arguments as arguments and set their required register
+    for(std::size_t i{}; i < std::size(m_values); ++i)
     {
-        for(llvm::PHINode& phi : block.phis())
+        if(auto ret{llvm::dyn_cast<llvm::ReturnInst>(m_values[i].value)}; ret)
         {
-            const std::size_t group_index{std::size(m_groups)};
-            group_info& group{m_groups.emplace_back()};
-
-            for(llvm::Value* value : phi.incoming_values())
+            if(llvm::Value* ret_value{ret->getReturnValue()}; ret_value)
             {
-                info_of(value).group = group_index;
-                group.members.emplace_back(value);
-            }
-
-            group.members.emplace_back(&phi);
-        }
-    }
-}
-
-void register_allocator::compute_smove_groups()
-{
-    for(llvm::BasicBlock& block : m_function)
-    {
-        for(llvm::Instruction& inst : block)
-        {
-            if(get_intrinsic_id(inst) == intrinsic_id::smove)
-            {
-                auto call{llvm::dyn_cast<llvm::CallInst>(&inst)};
-
-                // if the register already has a group, keep it
-                if(group_info* value_group{group_of(call->getArgOperand(0))}; value_group)
+                if(const auto ret_index{index_of(ret_value)}; ret_index != std::size(m_values))
                 {
-                    value_group->members.emplace_back(call);
+                    auto& ret_info{m_values[ret_index]};
+                    ret_info.affinity = register_affinity::ret;
+                    ret_info.default_register = ret_register;
                 }
-                else
+            }
+        }
+        else if(auto cmp{llvm::dyn_cast<llvm::CmpInst>(m_values[i].value)}; cmp)
+        {
+            m_values[i].affinity = register_affinity::flags;
+            m_values[i].default_register = flags_register;
+        }
+        else if(auto call{llvm::dyn_cast<llvm::CallInst>(m_values[i].value)}; call && !is_intrinsic(*call))
+        {
+            for(std::uint32_t i{}; i < call->arg_size(); ++i)
+            {
+                llvm::Value* arg{call->getArgOperand(i)};
+
+                if(const auto arg_index{index_of(arg)}; arg_index != std::size(m_values))
                 {
-                    const std::size_t group_index{std::size(m_groups)};
+                    value_info& arg_info{m_values[arg_index]};
 
-                    group_info& group{m_groups.emplace_back()};
-                    group.members.emplace_back(call->getArgOperand(0));
-                    group.members.emplace_back(call);
+                    arg_info.affinity = register_affinity::argument;
 
-                    info_of(call->getArgOperand(0)).group = group_index;
-                    info_of(call).group = group_index;
+                    if(i < 8) // arg need to be put in a register
+                    {
+                        arg_info.default_register = args_registers_begin + i;
+                    }
                 }
             }
         }
     }
 }
 
-void register_allocator::compute_zext_trunc_groups()
-{
-    const auto process = [this](llvm::Instruction* inst)
-    {
-        // if the register already has a group, keep it
-        if(group_info* value_group{group_of(inst->getOperand(0))}; value_group)
-        {
-            value_group->members.emplace_back(inst);
-        }
-        else
-        {
-            const std::size_t group_index{std::size(m_groups)};
-
-            group_info& group{m_groups.emplace_back()};
-            group.members.emplace_back(inst->getOperand(0));
-            group.members.emplace_back(inst);
-
-            info_of(inst->getOperand(0)).group = group_index;
-            info_of(inst).group = group_index;
-        }
-    };
-
-    for(llvm::BasicBlock& block : m_function)
-    {
-        for(llvm::Instruction& inst : block)
-        {
-            if(auto zext{llvm::dyn_cast<llvm::ZExtInst>(&inst)}; zext)
-            {
-                process(zext);
-            }
-
-            if(auto trunc{llvm::dyn_cast<llvm::TruncInst>(&inst)}; trunc)
-            {
-                process(trunc);
-            }
-        }
-    }
-}
-
-void register_allocator::sync_groups_members()
-{
-    // if a member is non-leaf, no member can be since they need to share the same register
-    for(group_info& group : m_groups)
-    {
-        for(llvm::Value* member : group.members)
-        {
-            if(!info_of(member).leaf)
-            {
-                group.leaf = false;
-            }
-
-            if(info_of(member).affinity == register_affinity::ret)
-            {
-                group.ret = true;
-            }
-        }
-    }
-
-    // The lifetime of the group is the coalescence of all members' lifetime
-    for(group_info& group : m_groups)
-    {
-        for(llvm::Value* member : group.members)
-        {
-            value_info& info{info_of(member)};
-
-            info.leaf = group.leaf;
-            group.lifetime.coalesce(info.lifetime);
-        }
-    }
-
-    for(std::size_t i{}; i < std::size(m_groups); ++i)
-    {
-        std::cout << "  Group #" << i << ": ";
-
-        for(llvm::Value* member : m_groups[i].members)
-        {
-            std::cout << get_value_label(*member) << " ";
-        }
-
-        std::cout << " | " << m_groups[i].lifetime << " | ";
-        std::cout << (m_groups[i].leaf ? "leaf" : "non leaf") << std::endl;
-        std::cout << (m_groups[i].ret ? "ret" : "non ret") << std::endl;
-    }
-}
-
-void register_allocator::compute_lifetimes()
+void register_allocator::extract_lifetimes()
 {
     const auto write_usage = [](value_info& value, std::size_t index)
     {
@@ -568,6 +464,153 @@ bool register_allocator::check_external_calls(std::size_t begin, std::size_t end
     return true;
 }
 
+void register_allocator::extract_groups()
+{
+    compute_phi_groups();
+    compute_smove_groups();
+    compute_zext_trunc_groups();
+    sync_groups_members();
+}
+
+void register_allocator::compute_phi_groups()
+{
+    for(llvm::BasicBlock& block : m_function)
+    {
+        for(llvm::PHINode& phi : block.phis())
+        {
+            const std::size_t group_index{std::size(m_groups)};
+            group_info& group{m_groups.emplace_back()};
+
+            for(llvm::Value* value : phi.incoming_values())
+            {
+                if(const auto value_index{index_of(value)}; value_index != std::size(m_values))
+                {
+                    m_values[value_index].group = group_index;
+                    group.members.emplace_back(value);
+                }
+            }
+
+            group.members.emplace_back(&phi);
+        }
+    }
+}
+
+void register_allocator::compute_smove_groups()
+{
+    for(llvm::BasicBlock& block : m_function)
+    {
+        for(llvm::Instruction& inst : block)
+        {
+            if(get_intrinsic_id(inst) == intrinsic_id::smove)
+            {
+                auto call{llvm::dyn_cast<llvm::CallInst>(&inst)};
+
+                // if the register already has a group, keep it
+                if(group_info* value_group{group_of(call->getArgOperand(0))}; value_group)
+                {
+                    value_group->members.emplace_back(call);
+                }
+                else
+                {
+                    const std::size_t group_index{std::size(m_groups)};
+
+                    group_info& group{m_groups.emplace_back()};
+                    group.members.emplace_back(call->getArgOperand(0));
+                    group.members.emplace_back(call);
+
+                    info_of(call->getArgOperand(0)).group = group_index;
+                    info_of(call).group = group_index;
+                }
+            }
+        }
+    }
+}
+
+void register_allocator::compute_zext_trunc_groups()
+{
+    const auto process = [this](llvm::Instruction* inst)
+    {
+        // if the register already has a group, keep it
+        if(group_info* value_group{group_of(inst->getOperand(0))}; value_group)
+        {
+            value_group->members.emplace_back(inst);
+        }
+        else
+        {
+            const std::size_t group_index{std::size(m_groups)};
+
+            group_info& group{m_groups.emplace_back()};
+            group.members.emplace_back(inst->getOperand(0));
+            group.members.emplace_back(inst);
+
+            info_of(inst->getOperand(0)).group = group_index;
+            info_of(inst).group = group_index;
+        }
+    };
+
+    for(llvm::BasicBlock& block : m_function)
+    {
+        for(llvm::Instruction& inst : block)
+        {
+            if(auto zext{llvm::dyn_cast<llvm::ZExtInst>(&inst)}; zext)
+            {
+                process(zext);
+            }
+
+            if(auto trunc{llvm::dyn_cast<llvm::TruncInst>(&inst)}; trunc)
+            {
+                process(trunc);
+            }
+        }
+    }
+}
+
+void register_allocator::sync_groups_members()
+{
+    // if a member is non-leaf, no member can be since they need to share the same register
+    for(group_info& group : m_groups)
+    {
+        for(llvm::Value* member : group.members)
+        {
+            if(!info_of(member).leaf)
+            {
+                group.leaf = false;
+            }
+
+            if(info_of(member).affinity == register_affinity::ret)
+            {
+                group.ret = true;
+            }
+        }
+    }
+
+    // The lifetime of the group is the coalescence of all members' lifetime
+    for(group_info& group : m_groups)
+    {
+        for(llvm::Value* member : group.members)
+        {
+            value_info& info{info_of(member)};
+
+            info.leaf = group.leaf;
+            group.lifetime.coalesce(info.lifetime);
+        }
+    }
+
+    for(std::size_t i{}; i < std::size(m_groups); ++i)
+    {
+        std::cout << "  Group #" << i << ": ";
+
+        for(llvm::Value* member : m_groups[i].members)
+        {
+            std::cout << get_value_label(*member) << " ";
+        }
+
+        std::cout << " | " << m_groups[i].lifetime << " | ";
+        std::cout << (m_groups[i].leaf ? "leaf" : "non leaf") << " | ";
+        std::cout << (m_groups[i].ret ? "ret" : "non ret") << std::endl;
+    }
+}
+
 void register_allocator::compute_spill_weight()
 {
     /*
@@ -587,27 +630,6 @@ void register_allocator::compute_spill_weight()
             if(use)
             {
                 info.spill_weight += 1.0 + loop_factor;
-            }
-        }
-    }
-}
-
-void register_allocator::compute_affinity()
-{
-    for(llvm::BasicBlock& block : m_function)
-    {
-        for(llvm::Value& value : block)
-        {
-            if(auto ret{llvm::dyn_cast<llvm::ReturnInst>(&value)}; ret)
-            {
-                if(llvm::Value* ret_value{ret->getReturnValue()}; ret_value)
-                {
-                    info_of(ret_value).affinity = register_affinity::ret;
-                }
-            }
-            else if(llvm::isa<llvm::CmpInst>(&value))
-            {
-                info_of(&value).affinity = register_affinity::flags;
             }
         }
     }
@@ -644,7 +666,6 @@ void register_allocator::fill_register_info()
 {
     m_registers[stack_register].type = register_type::special;
     m_registers[pointer_register].type = register_type::special;
-    m_registers[spm_register].type = register_type::special;
 
     for(std::size_t i{args_registers_begin}; i < args_registers_end; ++i)
     {
@@ -661,14 +682,8 @@ void register_allocator::fill_register_info()
         m_registers[i].type = register_type::generic_volatile;
     }
 
-    m_registers[zero_register].type = register_type::special;
-    m_registers[loop_register].type = register_type::special;
-    m_registers[branch_register].type = register_type::special;
-    m_registers[link_register].type = register_type::special;
     m_registers[bypass_register].type = register_type::special;
     m_registers[accumulator_register].type = register_type::special;
-    m_registers[multiplicator_register].type = register_type::special;
-    m_registers[quotient_register].type = register_type::special;
 
     m_registers[flags_register].type = register_type::flags;
 }
@@ -748,31 +763,10 @@ void register_allocator::allocate_registers()
     {
         if(m_values[i].affinity == register_affinity::ret)
         {
-            m_values[i].register_index = args_registers_begin; // args begin == ret
+            m_values[i].register_index = ret_register;
             m_values[i].spill_weight = unspillable;
             m_registers[m_values[i].register_index].lifetime.coalesce(m_values[i].lifetime);
         }
-    }
-
-    // Mark call arguments as arguments and set their required register
-    for(std::size_t i{}; i < std::size(m_values); ++i)
-    {
-        if(auto call{llvm::dyn_cast<llvm::CallInst>(m_values[i].value)}; call && !is_intrinsic(*call))
-        {
-            for(std::uint32_t i{}; i < call->arg_size(); ++i)
-            {
-                llvm::Value* arg{call->getArgOperand(i)};
-                value_info& arg_info{info_of(arg)};
-
-                arg_info.affinity = register_affinity::argument;
-
-                if(i < 8) // arg need to be put in a register
-                {
-                    arg_info.default_register = args_registers_begin + 3;
-                }
-            }
-        }
-
     }
 
     // Assign register for groups
@@ -787,7 +781,7 @@ void register_allocator::allocate_registers()
             {
                 auto& info{info_of(member)};
 
-                info.register_index = args_registers_begin; // args begin == ret
+                info.register_index = ret_register;
                 info.spill_weight = unspillable;
             }
 
@@ -851,10 +845,10 @@ void register_allocator::allocate_register(std::size_t value_index)
 
     if(value.affinity == register_affinity::ret)
     {
-        assert(!m_registers[args_registers_begin].lifetime.overlap(value.lifetime) && "Return value overlapping");
+        assert(!m_registers[ret_register].lifetime.overlap(value.lifetime) && "Return value overlapping");
 
-        m_registers[args_registers_begin].lifetime.coalesce(value.lifetime);
-        value.register_index = args_registers_begin;
+        m_registers[ret_register].lifetime.coalesce(value.lifetime);
+        value.register_index = ret_register;
     }
     else if(value.affinity == register_affinity::flags)
     {

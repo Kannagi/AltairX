@@ -4,7 +4,7 @@
 
 #include "intrinsic.hpp"
 #include "utilities.hpp"
-#include "transform.hpp"
+#include "early_transforms.hpp"
 
 #include <llvm/IR/Constants.h>
 
@@ -96,9 +96,9 @@ Freeze, FreezeInst                 // Freeze instruction.
 namespace ar
 {
 
-function_translator::function_translator(llvm::Module& module, llvm::Function& function, const register_allocator& allocator)
-:m_module{module}
-,m_function{function}
+function_translator::function_translator(const register_allocator& allocator)
+:m_module{allocator.module()}
+,m_function{allocator.function()}
 ,m_allocator{allocator}
 {
 

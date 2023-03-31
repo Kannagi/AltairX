@@ -10,12 +10,14 @@ find_package(LLVM REQUIRED
         )
 
 message(STATUS "Found LLVM ${LLVM_PACKAGE_VERSION}")
-message(STATUS "Using LLVMConfig.cmake in: ${LLVM_DIR}")
+message(STATUS "Using LLVM located in: ${LLVM_DIR}")
 
 add_executable(altair_compiler
     src/lifetime.hpp
     src/intrinsic.hpp
-    src/transform.hpp
+    src/early_transforms.hpp
+    src/mid_transforms.hpp
+    src/late_transforms.hpp
     src/translator.hpp
     src/utilities.hpp
     src/register_allocator.hpp
@@ -23,7 +25,9 @@ add_executable(altair_compiler
 
     src/lifetime.cpp
     src/intrinsic.cpp
-    src/transform.cpp
+    src/early_transforms.cpp
+    src/mid_transforms.cpp
+    src/late_transforms.cpp
     src/translator.cpp
     src/utilities.cpp
     src/register_allocator.cpp

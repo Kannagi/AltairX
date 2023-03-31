@@ -86,23 +86,17 @@ public:
     static constexpr std::size_t no_use{std::numeric_limits<std::size_t>::max()};
     static constexpr std::size_t no_group{std::numeric_limits<std::size_t>::max()};
     static constexpr std::size_t no_register{std::numeric_limits<std::size_t>::max()};
-    static constexpr std::size_t stack_register{0};
-    static constexpr std::size_t pointer_register{1};
-    static constexpr std::size_t spm_register{2};
-    static constexpr std::size_t args_registers_begin{3};
-    static constexpr std::size_t args_registers_end{11};
-    static constexpr std::size_t non_volatile_registers_begin{11};
-    static constexpr std::size_t non_volatile_registers_end{27};
-    static constexpr std::size_t volatile_registers_begin{27};
-    static constexpr std::size_t volatile_registers_end{56};
-    static constexpr std::size_t zero_register{56};
-    static constexpr std::size_t loop_register{57};
-    static constexpr std::size_t branch_register{58};
-    static constexpr std::size_t link_register{59};
-    static constexpr std::size_t bypass_register{60};
-    static constexpr std::size_t accumulator_register{61};
-    static constexpr std::size_t multiplicator_register{62};
-    static constexpr std::size_t quotient_register{63};
+    static constexpr std::size_t stack_register{0}; // stack pointer (lds/sts)
+    static constexpr std::size_t pointer_register{1}; // long pointer (ldp/stp)
+    static constexpr std::size_t args_registers_begin{2};
+    static constexpr std::size_t ret_register{args_registers_begin};
+    static constexpr std::size_t args_registers_end{10};
+    static constexpr std::size_t non_volatile_registers_begin{10};
+    static constexpr std::size_t non_volatile_registers_end{26};
+    static constexpr std::size_t volatile_registers_begin{26};
+    static constexpr std::size_t volatile_registers_end{62};
+    static constexpr std::size_t bypass_register{62};
+    static constexpr std::size_t accumulator_register{63};
     static constexpr std::size_t flags_register{64};
 
     static constexpr double unspillable{std::numeric_limits<double>::max()};
@@ -114,9 +108,8 @@ public:
         argument,    //This value is a function argument, they have a predefined register or stack position that can not be changed
         spill,       //This value is spilled, must not assign any register
         flags,       //This value is related to branching, and uses a the special and unique register: FR
-        ret,         //This value is part of the returned values (so it should be placed in the right register)
+        ret,         //This value is part of the returned values, they have a predefined register
         accumulator, //This value is should be placed in a local accumulator (unused, yet)
-        global,      //This value is a label
     };
 
     enum class register_type : std::uint32_t
@@ -129,26 +122,29 @@ public:
 
     struct value_info
     {
+        // Analysis info, filled by perform_analysis()
         llvm::Value* value{};
         std::string name{}; // For debug only
         std::size_t block{}; // Index of parent block
         std::vector<bool> usage{}; // Index of the value usages
-        std::size_t definition{}; // Index of the value definition (may be located after first usage because of phi nodes)
         std::size_t first_use{no_use}; // Index of the first usage
         std::size_t last_use{}; // Index of the last usage
         ar::lifetime lifetime{};
         register_affinity affinity{register_affinity::generic}; //what kind of value it is
-        double spill_weight{};
-        double split_cost{};
         std::size_t default_register{}; // For "argument" and "ret" affinity, register_index contains the forced register if any.
-        std::size_t register_index{no_register}; // The actual assigned register
         std::size_t group{no_group};
         bool leaf{true}; // if true then this value can be assigned to volatile register (i.e lifetime does not include indirect call)
+
+        // Allocation info, filled during or after register allocation
+        double spill_weight{};
+        double split_cost{};
+        std::size_t register_index{no_register}; // The actual assigned register
         bool need_split{};
     };
 
     struct block_info
     {
+        // Analysis info, filled by perform_analysis()
         llvm::BasicBlock* block{};
         std::string name{}; // For debug only
         std::size_t begin{}; //Index of the first instruction of the block
@@ -160,6 +156,7 @@ public:
 
     struct scc_info
     {
+        // Analysis info, filled by perform_analysis()
         std::vector<llvm::BasicBlock*> blocks{};
         std::vector<llvm::BasicBlock*> predecessors{}; //LLVM does not provide easy function for multiple predecessors
         std::vector<llvm::BasicBlock*> successors{}; //LLVM does not provide easy function for multiple successors
@@ -170,6 +167,7 @@ public:
 
     struct loop_info
     {
+        // Analysis info, filled by perform_analysis()
         llvm::Loop* loop{};
         std::vector<llvm::BasicBlock*> predecessors{}; //LLVM does not provide easy function for multiple predecessors
         std::vector<llvm::BasicBlock*> successors{}; //LLVM does not provide easy function for multiple successors
@@ -177,6 +175,7 @@ public:
 
     struct group_info
     {
+        // Analysis info, filled by perform_analysis()
         std::vector<llvm::Value*> members{};
         ar::lifetime lifetime{}; // members coalesced lifetimes
         bool leaf{true}; // if a member is non leaf, the whole group is non leaf
@@ -198,12 +197,21 @@ public:
 
 public:
     register_allocator(llvm::Module& module, llvm::Function& function);
-
     ~register_allocator() = default;
     register_allocator(const register_allocator&) = delete;
     register_allocator(register_allocator&&) = delete;
     register_allocator& operator=(const register_allocator&) = delete;
     register_allocator& operator=(register_allocator&&) = delete;
+
+    llvm::Module& module() const noexcept
+    {
+        return m_module;
+    }
+
+    llvm::Function& function() const noexcept
+    {
+        return m_function;
+    }
 
     //sccs accessors
     const std::vector<scc_info>& sccs() const noexcept
@@ -352,6 +360,20 @@ public:
         return nullptr;
     }
 
+    // Add an instruction before specified position
+    // This function update the whole context of the register allocator coherent
+    // After a call to this function, all indices previously stored outside of allocator structures
+    // are invalid.
+    //std::size_t add_instruction(llvm::Instruction* inst, llvm::Instruction* position);
+
+    // This function calls all analysis functions in the right order
+    // It reset the whole state before doing it
+    // It must be called after modifying the AST to have up to date information
+    void perform_analysis();
+
+    // Perform the actual register allocation
+    void perform_register_allocation();
+
 private:
     // walk_to_status::local is given once to callback when the target and start are in the same block
     // walk_to_status::begin is given once to callback when the target is not in the same block as the user, it contains the user block
@@ -464,54 +486,46 @@ private:
         }
     }
 
-private:
-    //Extract sccs informations
-    //sccs are stored in preorder
-    void extract_sccs();
-
-    //Extract basic blocks informations
-    //Blocks are stored in preorder
-    void extract_blocks();
-
-    //Find the scc block belong to
+    // Find the scc block belong to
     std::size_t get_scc(const llvm::BasicBlock* block);
 
-    //Give to all loop header the reference over the loop instance
-    void extract_loop_headers();
-    void extract_loop_headers_recurse(llvm::Loop* loop);
-
-    //Store edges (predecessors and successors) of each loop
+private:
+    // v First perform_analysis step v
+    // Extract SSCs informations
+    // SCCs are stored in preorder
+    void extract_sccs();
+    // Extract basic blocks informations
+    // Blocks are stored in preorder
+    void extract_blocks();
+    // Store edges (predecessors and successors) of each scc
+    void extract_scc_edges();
+    // Give to all loop header the reference over the loop instance
     void extract_loops();
-    void extract_loop(llvm::Loop* loop);
-
-    //Store edges (predecessors and successors) of each scc
-    void extract_edges();
-
-    //Store values info
-    void extract_global_values();
+    void store_loop_headers();
+    void store_loop_headers_recurse(llvm::Loop* loop);
+    void store_loop(llvm::Loop* loop);
+    // Store values info
     void extract_values();
-
-    //analyze value lifetime
-    void compute_lifetimes();
+    void fill_affinity(); // Give each value its register affinity
+    // Analyze value lifetime
+    void extract_lifetimes();
     void fill_lifetime(std::size_t index);
     void compute_lifetime(std::size_t index, const llvm::Value* user);
     void compute_phi_lifetime(std::size_t index, const llvm::PHINode* phi);
     bool check_external_calls(std::size_t begin, std::size_t end) const;
-
-    //give static register to all phi node operands to make them disapear in hell
+    // Give static register to all phi node operands to make them disapear in hell
+    void extract_groups();
     void compute_phi_groups();
     void compute_smove_groups();
     void compute_zext_trunc_groups();
     void sync_groups_members();
+    // ^Last perform_analysis step^
 
-    //Give each value (if applicable) a spill weight
+    // Give each value (if applicable) a spill weight
     void compute_spill_weight();
-    //Give each value its register affinity
-    void compute_affinity();
-
-    //Init register info
+    // Init register info
     void fill_register_info();
-    //Give each value a register
+    // Give each value a register
     void generate_queue();
     void insert_queue(std::size_t value_index);
     void allocate_registers();
@@ -523,12 +537,13 @@ private:
     llvm::Function& m_function;
     llvm::DominatorTree m_tree;
     llvm::LoopInfo m_loop_info;
-    std::size_t m_indent{};
     std::vector<scc_info> m_sccs{};
     std::vector<block_info> m_blocks{};
-    std::vector<value_info> m_values{};
     std::vector<loop_info> m_loops{};
+    std::vector<value_info> m_values{};
     std::vector<group_info> m_groups{};
+
+    std::size_t m_indent{}; // for display
 
     std::array<register_info, 65> m_registers{};
     std::vector<stack_entry_info> m_stack{};

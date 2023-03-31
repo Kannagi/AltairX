@@ -1,11 +1,12 @@
-#ifndef ALTAIR_COMPILER_TRANSFORM_HPP_INCLUDED
-#define ALTAIR_COMPILER_TRANSFORM_HPP_INCLUDED
+#ifndef ALTAIR_COMPILER_EARLY_TRANSFORMS_HPP_INCLUDED
+#define ALTAIR_COMPILER_EARLY_TRANSFORMS_HPP_INCLUDED
 
 #include <llvm/IR/Instructions.h>
 #include <llvm/IR/Function.h>
 #include <llvm/IR/Module.h>
 
-namespace ar::transforms
+// Early transforms are performed before any register allocation analysis
+namespace ar::early_transforms
 {
 
 /*
@@ -27,7 +28,7 @@ is equivalent to:
   | addi r3, r2, 0 ; replace with false path if jump did not trigger
   | label:
 */
-void remove_select(llvm::Module& module, llvm::Function& function);
+//void remove_select(llvm::Module& module, llvm::Function& function);
 
 /*
 Add with negative immediate on right operand should be replace by a sub of -operand2
@@ -64,10 +65,10 @@ Will be transformed into:
 |  %12 = select i1 %9, i32 -1, i32 %11
 |  ret i32 %12
 */
-void check_cmp(llvm::Module& module, llvm::Function& function);
+//void check_cmp(llvm::Module& module, llvm::Function& function);
 
 /*
-LLVM use cmp to cast integers to bools, this should be replaced by altair.bool when possible (i.e not used in br)
+LLVM use cmp to cast integers to bools, this should be replaced by altair.bool when possible
 Example:
 | %2 = icmp ne i32 %0, 0
 | ret i1 %2
@@ -84,41 +85,7 @@ a > b  -> slt(b, a)
 a <= b -> slt(b, a) xor 1
 a >= b -> slt(a, b) xor 1
 */
-void bool_conversions(llvm::Module& module, llvm::Function& function);
-
-/*
-Generates move instruction for constant values if needed
-*/
-void insert_move_for_constant(llvm::Module& module, llvm::Function& function);
-
-/*
-Generates move instruction for global load if needed
-
-| .data
-| adr_data : "Hello World"
-|
-| .text
-| moveu r2,adr_data&0xFFFF
-| smove.w r2,r2,(adr_data&0xFFFF0000)>>16
-| ld r3,0[r2]
-
-Example:
-
-| @global_str = internal constant [13 x i8] c"Hello world!\00", align 1
-| define dso_local nonnull ptr @get_message() local_unnamed_addr #0 {
-|   ret ptr @global_str
-| }
-
-Will be transformed into:
-
-| @global_str = internal constant [13 x i8] c"Hello world!\00", align 1
-| define dso_local nonnull ptr @get_message() local_unnamed_addr #0 {
-|   %2 = call ptr @altair.moveu_ptr(ptr @global_str)
-|   %3 = call ptr @altair.smove_ptr_ptr_i64(ptr %2, ptr @global_str, i64 1)
-|   ret ptr %3
-| }
-*/
-void insert_move_for_global_load(llvm::Module& module, llvm::Function& function);
+//void bool_conversions(llvm::Module& module, llvm::Function& function);
 
 /*
 Sometimes, we may benefit from fallthrough by inverting condition
@@ -175,7 +142,7 @@ void decompose_getelementptr(llvm::Module& module, llvm::Function& function);
 
 /*
 Load and store in altair do an additional addition to the pointer before the op
-this can remove adds and somtimes even moven/u + add (imm version)
+this can remove adds and sometimes even moven/u + add (imm version)
 */
 void optimize_load_store(llvm::Module& module, llvm::Function& function);
 
@@ -184,7 +151,7 @@ Performs all transforms in the right order
 */
 //void perform_transforms(llvm::Module& module, llvm::Function& function);
 
-llvm::Value* find_best_position(llvm::Module& module, llvm::Function& function, llvm::Value* value);
+//llvm::Value* find_best_position(llvm::Module& module, llvm::Function& function, llvm::Value* value);
 
 }
 

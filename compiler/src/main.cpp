@@ -6,6 +6,7 @@
 #include <unordered_map>
 #include <unordered_set>
 #include <charconv>
+#include <chrono>
 
 #include <llvm/IR/Module.h>
 #include <llvm/IRReader/IRReader.h>
@@ -15,6 +16,9 @@
 #include <llvm/IR/Constants.h>
 
 #include "utilities.hpp"
+#include "early_transforms.hpp"
+#include "mid_transforms.hpp"
+#include "late_transforms.hpp"
 #include "register_allocator.hpp"
 #include "translator.hpp"
 
@@ -241,7 +245,23 @@ static void run(llvm::Module& module, const std::string& filename)
 
         std::cout << function.getName().str() << ":" << std::endl;
 
+        // Early transforms
+        ar::early_transforms::swap_add_sub(module, function);
+        ar::early_transforms::decompose_getelementptr(module, function);
+        ar::early_transforms::optimize_load_store(module, function);
+        ar::early_transforms::reorder_blocks(module, function);
+        ar::early_transforms::invert_branch_condition(module, function);
+
         ar::register_allocator allocator{module, function};
+        allocator.perform_analysis(); // initial analysis
+
+        // Mid transforms
+        ar::mid_transforms::insert_move_for_constant(allocator);
+        ar::mid_transforms::insert_move_for_global_load(allocator);
+
+        allocator.perform_register_allocation();
+
+        // Late transforms
 
         const auto print_value = [&allocator](const llvm::Value& value)
         {
@@ -292,7 +312,7 @@ static void run(llvm::Module& module, const std::string& filename)
 
         std::cout << "---" << std::endl;
 
-        ar::function_translator translator{module, function, allocator};
+        ar::function_translator translator{allocator};
         output_file << translator.translate() << std::endl;
     }
 }
@@ -320,7 +340,13 @@ int main(int argc, char **argv)
     std::string filename{argv[1]};
     filename.erase(std::find(std::begin(filename), std::end(filename), '.'), filename.end());
 
+    using clock = std::chrono::steady_clock;
+    const auto tp1{clock::now()};
+
+    // Compile module!
     run(*module, filename);
+
+    std::cout << "Compilation done in " << std::chrono::duration_cast<std::chrono::milliseconds>(clock::now() - tp1).count() << "ms" << std::endl;
 
     // Write back the module with all modification done by the compiler
     std::string output{};

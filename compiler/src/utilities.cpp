@@ -119,14 +119,14 @@ std::size_t get_last_external_call(const llvm::BasicBlock& block)
         {
             if(is_external_call(*call))
             {
-                return true;
+                return output;
             }
 
             ++output;
         }
     }
 
-    return false;
+    return output;
 }
 
 std::vector<llvm::BasicBlock*> loop_predecessors(const llvm::Loop& loop)
