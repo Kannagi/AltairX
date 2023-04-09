@@ -96,10 +96,11 @@ Freeze, FreezeInst                 // Freeze instruction.
 namespace ar
 {
 
-function_translator::function_translator(const register_allocator& allocator)
+function_translator::function_translator(const register_allocator& allocator, const compiler_options& options)
 :m_module{allocator.module()}
 ,m_function{allocator.function()}
 ,m_allocator{allocator}
+,m_options{options}
 {
 
 }
@@ -220,19 +221,25 @@ void function_translator::translate_instruction(const register_allocator::value_
     {
         // this op is a no-op on our arch
         // zero-extending a register is simply changing the operand size on the user
-        m_asm_code << indent << "; "; // NOP (commented "debug information") !!
-        m_asm_code << translate_instruction(zext) << "." << get_int_size_name(zext) << " ";
-        m_asm_code << get_operand(zext) << ", ";
-        m_asm_code << get_operand(zext->getOperand(0)) << std::endl;
+        if(m_options.output_noop_instructions)
+        {
+            m_asm_code << indent << "; "; // comment line
+            m_asm_code << translate_instruction(zext) << "." << get_int_size_name(zext) << " ";
+            m_asm_code << get_operand(zext) << ", ";
+            m_asm_code << get_operand(zext->getOperand(0)) << std::endl;
+        }
     }
     else if(auto trunc{llvm::dyn_cast<llvm::TruncInst>(instruction.value)}; trunc)
     {
         // this op is a no-op on our arch
         // trunc-ing a register is simply changing the operand size on the user
-        m_asm_code << indent << "; "; // NOP (commented "debug information") !!
-        m_asm_code << translate_instruction(trunc) << "." << get_int_size_name(trunc) << " ";
-        m_asm_code << get_operand(trunc) << ", ";
-        m_asm_code << get_operand(trunc->getOperand(0)) << std::endl;
+        if(m_options.output_noop_instructions)
+        {
+            m_asm_code << indent << "; "; // NOP (commented "debug information") !!
+            m_asm_code << translate_instruction(trunc) << "." << get_int_size_name(trunc) << " ";
+            m_asm_code << get_operand(trunc) << ", ";
+            m_asm_code << get_operand(trunc->getOperand(0)) << std::endl;
+        }
     }
     else if(auto sext{llvm::dyn_cast<llvm::SExtInst>(instruction.value)}; sext)
     {

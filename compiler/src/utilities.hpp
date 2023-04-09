@@ -11,6 +11,13 @@
 namespace ar
 {
 
+struct compiler_options
+{
+    std::string file{};
+    bool verbose{};
+    bool output_noop_instructions{};
+};
+
 template<typename T>
 constexpr bool has_single_bit(T x) noexcept
 {

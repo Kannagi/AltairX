@@ -374,6 +374,9 @@ public:
     // Perform the actual register allocation
     void perform_register_allocation();
 
+    // Print allocator information about current function
+    void print() const;
+
 private:
     // walk_to_status::local is given once to callback when the target and start are in the same block
     // walk_to_status::begin is given once to callback when the target is not in the same block as the user, it contains the user block
@@ -542,8 +545,6 @@ private:
     std::vector<loop_info> m_loops{};
     std::vector<value_info> m_values{};
     std::vector<group_info> m_groups{};
-
-    std::size_t m_indent{}; // for display
 
     std::array<register_info, 65> m_registers{};
     std::vector<stack_entry_info> m_stack{};

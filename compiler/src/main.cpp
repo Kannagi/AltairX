@@ -22,113 +22,6 @@
 #include "register_allocator.hpp"
 #include "translator.hpp"
 
-/*
--Buffer user est divisé en 2 buffers (chaqu'un de 8kio) un qu'on lis/écrit , et le second qu'en précharge utilisé pour les tableaux uniquement
--temp user , c'est juste pour des variables temporaire ou global qui est utilisé tout le long du programme , par exemple  copier un int dans un float ,
-peut se faire dedans , ou toute opération qui copie dans la mémoire de façon très "éphémère"
--le Stack ,c'est la pile,  mais à utilisé uniquement sur des fonctions en fin du coup (pas d'appel de fonction ou très peu , ça doit rentrer sur 44 Kio) ,
-d'ailleurs on peut stocker les appel/return de fonction dedans
---Buffer A et Buffer B , sont en miroir avec le Buffer A et B en ROM ,
-cela stocke les DATA/BSS utilisé (techniquement j'aurais aimé pour les variables ),
-et l'autre buffer est préchargé pendant ce temps là
-
-0x00000 - 0x03FFF Buffer user (16 Kio)
-0x04000 - 0x04FFF temp user (4 Kio)
-0x05000 - 0x0FFFF Stack (44 Kio)
-0x10000 - 0x17FFF Buffer A (32 Kio) (prefetch)
-0x18000 - 0x1FFFF Buffer B (32 Kio) (prefetch)
-*/
-
-/*
-template<typename ForwardIt>
-static ForwardIt coalesce(ForwardIt begin, ForwardIt end)
-{
-    ForwardIt result{begin};
-    ForwardIt last  {begin};
-
-    while(++begin != end)
-    {
-        if(last->end >= begin->begin) //Overlaping or contiguous
-        {
-            last->end = begin->end;
-        }
-        else
-        {
-            *result++ = *last;
-            last = begin;
-        }
-    }
-
-    *result++ = *last;
-
-    return result;
-}
-*/
-
-
-static std::ostream& print(const std::vector<bool>& vec)
-{
-    for(auto value : vec)
-    {
-        std::cout << (value ? '1' : '0');
-    }
-
-    return std::cout;
-};
-
-static void print_scc(llvm::Function& function)
-{
-    std::cout << "SCCs for " << function.getName().str() << " in post-order:\n";
-
-    for(auto[it, end] = std::pair{llvm::scc_begin(&function), llvm::scc_end(&function)}; it != end; ++it)
-    {
-         std::cout << "  SCC: ";
-         for(llvm::BasicBlock* block : *it)
-         {
-             std::cout << ar::get_value_label(*block) << "  ";
-         }
-         std::cout << std::endl;
-    }
-}
-
-static void print_post_order(llvm::Function& function)
-{
-    std::cout << "Basic blocks of " << function.getName().str() << " in post-order:\n";
-
-    for(auto[it, end] = std::pair{llvm::po_begin(&function.getEntryBlock()), llvm::po_end(&function.getEntryBlock())}; it != end; ++it)
-    {
-         std::cout << ar::get_value_label(**it) << "  ";
-    }
-    std::cout << std::endl;
-}
-
-template<typename Range>
-static std::ostream& print_values(Range&& range)
-{
-    for(llvm::Value* value : range)
-    {
-        std::cout << ar::get_value_label(*value) << " ";
-    }
-
-    return std::cout;
-}
-
-
-static void print_predecessors(llvm::Function& function)
-{
-    for(llvm::BasicBlock& block : function)
-    {
-        std::cout << "Predecessors of " << ar::get_value_label(block) << ": ";
-
-        for(llvm::BasicBlock* pred : llvm::predecessors(&block))
-        {
-            std::cout << ar::get_value_label(*pred) << ", ";
-        }
-
-        std::cout << std::endl;
-    }
-}
-
 static std::string stringify(llvm::StringRef data)
 {
     std::string output{"\""};
@@ -204,29 +97,28 @@ static std::string generate_dot_data(llvm::Module& module)
     return output;
 }
 
-///Code generation steps:
-/// 1: Transformation of the IR for analysis:
-///    Transforms the IR by adding, removing, or rewriting part or it,
-///    in order to facilitate (or enable) further analysis and transformations
-///
-/// 2: Compliance pass:
-///    Transforms the IR to make it compliant to Altair ASM:
-///      - transforming impossible cmp
-///      - add movei/loads for constants
-///      - check immediate values
-///      - ...
-///
-/// 3: Optimization pass:
-///    Modifies the IR to increase performances of the future bytecode.
-///
-/// 4: Register allocation:
-///    Performs register allocation to get rid of the SSA form.
-///
-/// 5: Translation
-///    Translates the IR to Altair ASM
-///
-
-static void run(llvm::Module& module, const std::string& filename)
+//Code generation steps:
+// 1: Transformation of the IR for analysis:
+//    Transforms the IR by adding, removing, or rewriting part or it,
+//    in order to facilitate (or enable) further analysis and transformations
+//
+// 2: Compliance pass:
+//    Transforms the IR to make it compliant to Altair ASM:
+//      - transforming impossible cmp
+//      - add movei/loads for constants
+//      - check immediate values
+//      - ...
+//
+// 3: Optimization pass:
+//    Modifies the IR to increase performances of the future bytecode.
+//
+// 4: Register allocation:
+//    Performs register allocation to get rid of the SSA form.
+//
+// 5: Translation
+//    Translates the IR to Altair ASM
+//
+static void generate_asm(llvm::Module& module, const std::string& filename, const ar::compiler_options& options)
 {
     std::ofstream output_file{filename + ".asm"};
     output_file << "jump main ;This is the bootstrap\n";
@@ -242,8 +134,6 @@ static void run(llvm::Module& module, const std::string& filename)
         {
             return;
         }
-
-        std::cout << function.getName().str() << ":" << std::endl;
 
         // Early transforms
         ar::early_transforms::swap_add_sub(module, function);
@@ -262,89 +152,79 @@ static void run(llvm::Module& module, const std::string& filename)
         allocator.perform_register_allocation();
 
         // Late transforms
+        // ...
 
-        const auto print_value = [&allocator](const llvm::Value& value)
+        if(options.verbose)
         {
-            auto&& info{allocator.info_of(&value)};
-
-            std::cout << "    " << std::setw(4) << ar::get_value_label(*info.value) << " | ";
-            std::cout << std::setw(4) << allocator.index_of(info) << " | ";
-            std::cout << std::setw(8) << info.name << " | ";
-
-            if(info.register_index == std::numeric_limits<std::size_t>::max())
-            {
-                std::cout << "void | ";
-                std::cout << (info.leaf ? "    leaf" : "not leaf") << " | ";
-            }
-            else if(info.register_index == 64)
-            {
-                std::cout << "  BR | ";
-                std::cout << "    leaf | ";
-            }
-            else
-            {
-                std::cout << std::setw(4) << info.register_index << " | ";
-                std::cout << (info.leaf ? "    leaf" : "not leaf") << " | ";
-            }
-
-            for(auto&& range : info.lifetime)
-            {
-                std::cout << "[" <<  std::setw(3) << range.begin << "; " << std::setw(3) << range.end << "[ ";
-            }
-
-            std::cout << std::endl;
-        };
-
-        for(std::size_t i{}; i < function.arg_size(); ++i)
-        {
-            print_value(*allocator.values()[i].value);
+            allocator.print();
         }
 
-        for(auto&& block_info : allocator.blocks())
-        {
-            std::cout << "  " << block_info.name << std::endl;
-
-            for(auto&& value : *block_info.block)
-            {
-                print_value(value);
-            }
-        }
-
-        std::cout << "---" << std::endl;
-
-        ar::function_translator translator{allocator};
+        ar::function_translator translator{allocator, options};
         output_file << translator.translate() << std::endl;
     }
 }
 
-int main(int argc, char **argv)
+static void print_help()
 {
+    std::cout << "Usage:\n altair_compiler <IR file> [options]" << std::endl;
+}
+
+static ar::compiler_options parse_args(int argc, char* argv[])
+{
+    using namespace std::string_view_literals;
+
     if(argc < 2)
     {
-        std::cerr << "Usage: " << argv[0] << " <IR file>\n";
-        return 1;
+        print_help();
+        throw std::runtime_error{"Not enough arguments"};
     }
 
+    ar::compiler_options output{};
+
+    for(int i{1}; i < argc; ++i)
+    {
+        if(argv[i] == "--verbose"sv)
+        {
+            output.verbose = true;
+        }
+        else if(argv[i] == "--output-noop-instructions"sv)
+        {
+            output.output_noop_instructions = true;
+        }
+        else
+        {
+            if(!std::empty(output.file))
+            {
+                print_help();
+                throw std::runtime_error{"Multiple arguments not stating with \"-\""};
+            }
+
+            output.file = argv[i];
+        }
+    }
+
+    return output;
+}
+
+static void run(const ar::compiler_options& options)
+{
     llvm::LLVMContext context{};
     llvm::SMDiagnostic err{};
-    auto module{llvm::parseIRFile(argv[1], err, context)};
+    auto module{llvm::parseIRFile(options.file, err, context)};
 
     if(!module)
     {
-        std::cerr << err.getMessage().str() << std::endl;
-        return 1;
+        throw std::runtime_error{err.getMessage().str()};
     }
 
-    std::cout << std::setfill(' ');
-
-    std::string filename{argv[1]};
+    std::string filename{options.file};
     filename.erase(std::find(std::begin(filename), std::end(filename), '.'), filename.end());
 
     using clock = std::chrono::steady_clock;
     const auto tp1{clock::now()};
 
     // Compile module!
-    run(*module, filename);
+    generate_asm(*module, filename, options);
 
     std::cout << "Compilation done in " << std::chrono::duration_cast<std::chrono::milliseconds>(clock::now() - tp1).count() << "ms" << std::endl;
 
@@ -355,4 +235,23 @@ int main(int argc, char **argv)
     os.flush();
 
     std::ofstream{filename + ".comp.ll"} << output;
+}
+
+int main(int argc, char* argv[])
+{
+    try
+    {
+        const auto options{parse_args(argc, argv)};
+        run(options);
+    }
+    catch(const std::exception& e)
+    {
+        std::cerr << "Compilation error:\n" << e.what() << std::endl;
+        return 1;
+    }
+    catch(...)
+    {
+        std::cerr << "Compilation error: Undefined error." << std::endl;
+        return 1;
+    }
 }

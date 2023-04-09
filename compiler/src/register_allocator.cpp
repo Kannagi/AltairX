@@ -46,6 +46,152 @@ void register_allocator::perform_register_allocation()
     allocate_registers();
 }
 
+namespace print_helper
+{
+
+struct indent_t
+{
+    std::size_t level{};
+};
+
+static indent_t indent(std::size_t level)
+{
+    return indent_t{level};
+}
+
+static std::ostream& operator<<(std::ostream& os, indent_t level)
+{
+    os << "| ";
+    for(std::size_t i{}; i < level.level; ++i)
+    {
+        std::cout << "  ";
+    }
+
+    return os;
+};
+
+}
+
+void register_allocator::print() const
+{
+    using namespace print_helper;
+
+    std::cout << std::setfill(' ');
+    std::cout << m_function.getName().str() << ":" << '\n';
+
+    for(std::size_t i{}; i < std::size(m_sccs); ++i)
+    {
+        const auto& scc{m_sccs[i]};
+
+        std::cout << indent(0) << "SCC #" << i << " starting at " << get_value_label(*scc.blocks[0]) << ":" << '\n';
+        std::cout << indent(1) << "Predecessors: ";
+        for(llvm::BasicBlock* pred : scc.predecessors)
+        {
+            std::cout << get_value_label(*pred) << " ";
+        }
+        std::cout << '\n';
+
+        std::cout << indent(1) << "Successors:";
+        for(llvm::BasicBlock* succ : scc.successors)
+        {
+            std::cout << get_value_label(*succ) << " ";
+        }
+        std::cout << '\n';
+    }
+
+    for(std::size_t i{}; i < std::size(m_loops); ++i)
+    {
+        const auto& loop{m_loops[i]};
+
+        std::cout << indent(0) << "Loop " << ar::get_value_label(*loop.loop->getHeader()) << '\n';
+        std::cout << indent(1) << "Blocks: ";
+        for(auto block : loop.loop->blocks())
+        {
+            std::cout << ar::get_value_label(*block) << " ";
+        }
+        std::cout << '\n';
+
+        std::cout << indent(1) << "Predecessors: ";
+        for(llvm::BasicBlock* pred : loop.predecessors)
+        {
+            std::cout << get_value_label(*pred) << " ";
+        }
+        std::cout << '\n';
+
+        std::cout << indent(1) << "Successors  : ";
+        for(llvm::BasicBlock* succ : loop.successors)
+        {
+            std::cout << get_value_label(*succ) << " ";
+        }
+        std::cout << '\n';
+    }
+
+    for(std::size_t i{}; i < std::size(m_groups); ++i)
+    {
+        std::cout << indent(0) << "Group #" << i << ": ";
+
+        std::cout << (m_groups[i].leaf ? "    leaf" : "non leaf") << " | ";
+        std::cout << (m_groups[i].ret ? "    ret" : "non ret") << " | ";
+        std::cout << m_groups[i].lifetime << " | ";
+
+        for(llvm::Value* member : m_groups[i].members)
+        {
+            std::cout << get_value_label(*member) << " ";
+        }
+
+        std::cout << '\n';
+    }
+
+    const auto print_value = [this](const value_info& info)
+    {
+        std::cout << indent(1) << std::setw(4) << ar::get_value_label(*info.value) << " | ";
+        std::cout << std::setw(4) << index_of(info) << " | ";
+        std::cout << std::setw(8) << info.name << " | ";
+
+        if(info.register_index == std::numeric_limits<std::size_t>::max())
+        {
+            std::cout << "void | ";
+            std::cout << (info.leaf ? "    leaf" : "not leaf") << " | ";
+        }
+        else if(info.register_index == 64)
+        {
+            std::cout << "  BR | ";
+            std::cout << "    leaf | ";
+        }
+        else
+        {
+            std::cout << std::setw(4) << info.register_index << " | ";
+            std::cout << (info.leaf ? "    leaf" : "not leaf") << " | ";
+        }
+
+        for(auto&& range : info.lifetime)
+        {
+            std::cout << "[" <<  std::setw(3) << range.begin << "; " << std::setw(3) << range.end << "[ ";
+        }
+
+        std::cout << '\n';
+    };
+
+    for(std::size_t i{}; i < m_function.arg_size(); ++i)
+    {
+        std::cout << indent(0) << "Args: \n";
+        print_value(m_values[i]);
+    }
+
+    for(const auto& block_info : m_blocks)
+    {
+        std::cout << indent(0) << block_info.name << '\n';
+
+        for(std::size_t i{block_info.begin}; i < block_info.end; ++i)
+        {
+            print_value(m_values[i]);
+        }
+    }
+
+    std::cout << "-" << std::endl;
+
+}
+
 std::size_t register_allocator::get_scc(const llvm::BasicBlock* block)
 {
     for(std::size_t index{}; index < std::size(m_sccs); ++index)
@@ -118,26 +264,6 @@ void register_allocator::extract_scc_edges()
             }
         }
     }
-
-    for(const scc_info& scc : m_sccs)
-    {
-        std::cout << "Predecessors of SCC " << get_value_label(*scc.blocks[0]) << ": ";
-        for(llvm::BasicBlock* pred : scc.predecessors)
-        {
-            std::cout << get_value_label(*pred) << " ";
-        }
-        std::cout << std::endl;
-    }
-
-    for(const scc_info& scc : m_sccs)
-    {
-        std::cout << "Successors   of SCC " << get_value_label(*scc.blocks[0]) << ": ";
-        for(llvm::BasicBlock* succ : scc.successors)
-        {
-            std::cout << get_value_label(*succ) << " ";
-        }
-        std::cout << std::endl;
-    }
 }
 
 void register_allocator::extract_loops()
@@ -149,24 +275,9 @@ void register_allocator::extract_loops()
         store_loop(loop);
     }
 
-    for(const loop_info& loop : m_loops)
+    for(auto& scc : m_sccs)
     {
-        std::cout << "Predecessors of loop " << get_value_label(*loop.loop->getHeader()) << ": ";
-        for(llvm::BasicBlock* pred : loop.predecessors)
-        {
-            std::cout << get_value_label(*pred) << " ";
-        }
-        std::cout << std::endl;
-    }
-
-    for(const loop_info& loop : m_loops)
-    {
-        std::cout << "Successors   of loop " << get_value_label(*loop.loop->getHeader()) << ": ";
-        for(llvm::BasicBlock* succ : loop.successors)
-        {
-            std::cout << get_value_label(*succ) << " ";
-        }
-        std::cout << std::endl;
+        scc.loop = m_blocks[scc.begin].loop;
     }
 }
 
@@ -197,15 +308,6 @@ void register_allocator::store_loop(llvm::Loop* loop)
     info.loop = loop;
     info.predecessors = ar::loop_predecessors(*loop);
     info.successors = ar::loop_successors(*loop);
-
-    const std::string ident(loop->getLoopDepth() * 4, ' ');
-    std::cout << ident << "Loop " << ar::get_value_label(*loop->getHeader()) << std::endl;
-    std::cout << ident << "  Blocks: ";
-    for(auto block : loop->blocks())
-    {
-        std::cout << ar::get_value_label(*block) << " ";
-    }
-    std::cout << std::endl;
 
     llvm::SmallVector<llvm::Loop*, 32> inners{};
     loop->getInnerLoopsInPreorder(*loop, inners);
@@ -595,20 +697,6 @@ void register_allocator::sync_groups_members()
             group.lifetime.coalesce(info.lifetime);
         }
     }
-
-    for(std::size_t i{}; i < std::size(m_groups); ++i)
-    {
-        std::cout << "  Group #" << i << ": ";
-
-        for(llvm::Value* member : m_groups[i].members)
-        {
-            std::cout << get_value_label(*member) << " ";
-        }
-
-        std::cout << " | " << m_groups[i].lifetime << " | ";
-        std::cout << (m_groups[i].leaf ? "leaf" : "non leaf") << " | ";
-        std::cout << (m_groups[i].ret ? "ret" : "non ret") << std::endl;
-    }
 }
 
 void register_allocator::compute_spill_weight()
@@ -711,13 +799,6 @@ void register_allocator::generate_queue()
     {
         return allocation_priority_comparator(m_values[left], m_values[right]);
     });
-
-    std::cout << "Queue: ";
-    for(auto index : m_queue)
-    {
-        std::cout << get_value_label(*m_values[index].value) << ", ";
-    }
-    std::cout << std::endl;
 }
 
 void register_allocator::insert_queue(std::size_t value_index)

@@ -2,6 +2,7 @@
 #define ALTAIR_COMPILER_TRANSLATOR_HPP_INCLUDED
 
 #include "register_allocator.hpp"
+#include "utilities.hpp"
 
 #include <sstream>
 
@@ -13,7 +14,7 @@ class function_translator
     static constexpr std::string_view indent{"    "};
 
 public:
-    function_translator(const register_allocator& allocator);
+    function_translator(const register_allocator& allocator, const compiler_options& options);
 
     ~function_translator() = default;
     function_translator(const function_translator&) = delete;
@@ -47,6 +48,7 @@ private:
     llvm::Module& m_module;
     llvm::Function& m_function;
     const register_allocator& m_allocator;
+    const compiler_options& m_options;
     std::ostringstream m_asm_code;
 };
 
