@@ -183,26 +183,80 @@ void insert_move_for_constant(register_allocator& allocator)
 void insert_move_for_global_load(register_allocator& allocator)
 {
     auto& module{allocator.module()};
+    auto& function{allocator.function()};
 
-    std::unordered_map<llvm::Value*, llvm::SmallVector<llvm::Value*>> constantUsers;
+    std::unordered_map<llvm::Value*, llvm::SmallVector<llvm::Instruction*>> constant_users;
 
-    for(const auto& block : allocator.blocks())
+    for(llvm::GlobalVariable& global : module.globals())
     {
-        for(const auto& value : block.begin)
+        for(llvm::User* user : global.users())
         {
-            for(const llvm::Use& use : instruction.operands())
+            if(allocator.index_of(user) != register_allocator::invalid_index)
             {
-                llvm::Value* value{use.get()};
-
-                if(auto label{llvm::dyn_cast<llvm::GlobalVariable>(value)}; label)
+                auto it{constant_users.find(&global)};
+                if(it == std::end(constant_users))
                 {
-                    llvm::Instruction* low{insert_moveu_intrinsic(module, label, &instruction)};
-                    auto shift{llvm::ConstantInt::get(llvm::Type::getInt64Ty(module.getContext()), 1)};
-                    llvm::Instruction* high{insert_smove_intrinsic(module, low, label, shift, &instruction)};
-
-                    use.getUser()->setOperand(use.getOperandNo(), high);
+                    it = constant_users.emplace(&global, llvm::SmallVector<llvm::Instruction*>{}).first;
                 }
+
+                it->second.emplace_back(llvm::dyn_cast<llvm::Instruction>(user));
             }
+        }
+    }
+
+    // For now the algorithm just extract constant use out of loops
+    // IMPROVEMENT: composing a constant address take two ALU cycle which could be done on channel two
+    // or just pipelined enough to have no impact on performances. This will lesser register pressure.
+    for(auto& constant_user : constant_users)
+    {
+        std::size_t first_user_index{std::numeric_limits<std::size_t>::max()};
+
+        for(auto user : constant_user.second)
+        {
+            const auto user_index{allocator.index_of(user)};
+            assert(user_index != register_allocator::invalid_index && "Broken logic, all users must already have been checked as members of this function.");
+            first_user_index = std::min(first_user_index, user_index);
+        }
+
+        auto& first_user {allocator.values()[first_user_index]};
+        auto& first_block{allocator.blocks()[first_user.block]};
+        auto& first_scc  {allocator.sccs()[first_block.scc]};
+
+        const auto insert_address = [&module, &constant_user](llvm::Instruction* position)
+        {
+            llvm::Instruction* low{insert_moveu_intrinsic(module, constant_user.first, position)};
+            auto shift{llvm::ConstantInt::get(llvm::Type::getInt64Ty(module.getContext()), 1)};
+
+            return insert_smove_intrinsic(module, low, constant_user.first, shift, position);
+        };
+
+        llvm::Value* constant{};
+
+        if(first_scc.loop) // first use is in a loop, extract it out of it
+        {
+            auto& loop{allocator.info_of(first_scc.loop)};
+
+            if(loop.predecessors.size() == 1)
+            {
+                llvm::BasicBlock* pred{loop.predecessors.front()};
+                constant = insert_address(pred->getTerminator());
+            }
+            else
+            {
+                // IMPROVEMENT: for now constant is placed in first block to ensure that multiple entries loop
+                // will always have the right value.
+                // Assume entry block is never in a loop
+                constant = insert_address(function.getEntryBlock().getTerminator());
+            }
+        }
+        else // insert constant before first user
+        {
+            constant = insert_address(llvm::cast<llvm::Instruction>(first_user.value));
+        }
+
+        for(llvm::Instruction* user : constant_user.second)
+        {
+            user->replaceUsesOfWith(constant_user.first, constant);
         }
     }
 
