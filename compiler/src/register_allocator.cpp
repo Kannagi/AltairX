@@ -368,7 +368,7 @@ void register_allocator::fill_affinity()
         {
             if(llvm::Value* ret_value{ret->getReturnValue()}; ret_value)
             {
-                if(const auto ret_index{index_of(ret_value)}; ret_index != std::size(m_values))
+                if(const auto ret_index{index_of(ret_value)}; ret_index != invalid_index)
                 {
                     auto& ret_info{m_values[ret_index]};
                     ret_info.affinity = register_affinity::ret;
@@ -387,7 +387,7 @@ void register_allocator::fill_affinity()
             {
                 llvm::Value* arg{call->getArgOperand(i)};
 
-                if(const auto arg_index{index_of(arg)}; arg_index != std::size(m_values))
+                if(const auto arg_index{index_of(arg)}; arg_index != invalid_index)
                 {
                     value_info& arg_info{m_values[arg_index]};
 
@@ -585,7 +585,7 @@ void register_allocator::compute_phi_groups()
 
             for(llvm::Value* value : phi.incoming_values())
             {
-                if(const auto value_index{index_of(value)}; value_index != std::size(m_values))
+                if(const auto value_index{index_of(value)}; value_index != invalid_index)
                 {
                     m_values[value_index].group = group_index;
                     group.members.emplace_back(value);

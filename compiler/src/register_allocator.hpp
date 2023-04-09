@@ -83,6 +83,7 @@ Algorithm:
 class register_allocator
 {
 public:
+    static constexpr std::size_t invalid_index{std::numeric_limits<std::size_t>::max()};
     static constexpr std::size_t no_use{std::numeric_limits<std::size_t>::max()};
     static constexpr std::size_t no_group{std::numeric_limits<std::size_t>::max()};
     static constexpr std::size_t no_register{std::numeric_limits<std::size_t>::max()};
@@ -162,7 +163,7 @@ public:
         std::vector<llvm::BasicBlock*> successors{}; //LLVM does not provide easy function for multiple successors
         std::size_t begin{}; //Index of the first block
         std::size_t end{}; //Index of the last block
-        llvm::Loop* loop{}; //Not null if the blocks can be executed multiple times
+        llvm::Loop* loop{}; //Contains the outer most loop if any
     };
 
     struct loop_info
@@ -243,7 +244,7 @@ public:
             ++index;
         }
 
-        return index;
+        return invalid_index;
     }
 
     std::size_t index_of(const loop_info& loop) const noexcept
@@ -280,7 +281,7 @@ public:
             ++index;
         }
 
-        return index;
+        return invalid_index;
     }
 
     std::size_t index_of(const block_info& block) const noexcept
@@ -317,7 +318,7 @@ public:
             ++index;
         }
 
-        return index;
+        return invalid_index;
     }
 
     std::size_t index_of(const value_info& value) const noexcept

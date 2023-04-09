@@ -149,11 +149,6 @@ static llvm::BinaryOperator* insert_const_mul(llvm::Module& module, llvm::Value*
     return llvm::BinaryOperator::CreateMul(left, size, "", position);
 };
 
-//static void decompose_gelelementptr_array()
-//{
-//
-//}
-
 static void decompose_getelementptr_generic(llvm::Module& module, llvm::GetElementPtrInst* gep)
 {
     const llvm::DataLayout& data_layout{module.getDataLayout()}; //used for struct
