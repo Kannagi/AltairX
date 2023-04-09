@@ -218,10 +218,18 @@ static void decompose_getelementptr_generic(llvm::Module& module, llvm::GetEleme
             }
 
             // dynamic indices are always array-like access, so we simply use type size (padding included for structs)
-            auto offset{insert_const_mul(module, index.get(), data_layout.getTypeStoreSize(type), gep)};
-            auto ptradd{ar::insert_ptradd_intrinsic(module, ptr, offset, llvm::PointerType::getUnqual(module.getContext()), gep)};
-
-            ptr = ptradd;
+            // If type size is 1, we do not need to multiply index by type size
+            if(data_layout.getTypeStoreSize(type) > 1)
+            {
+                auto offset{insert_const_mul(module, index.get(), data_layout.getTypeStoreSize(type), gep)};
+                auto ptradd{ar::insert_ptradd_intrinsic(module, ptr, offset, llvm::PointerType::getUnqual(module.getContext()), gep)};
+                ptr = ptradd;
+            }
+            else
+            {
+                auto ptradd{ar::insert_ptradd_intrinsic(module, ptr, index.get(), llvm::PointerType::getUnqual(module.getContext()), gep)};
+                ptr = ptradd;
+            }
         }
 
         first_index = false;
