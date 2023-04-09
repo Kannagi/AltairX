@@ -16,6 +16,7 @@ struct compiler_options
     std::string file{};
     bool verbose{};
     bool output_noop_instructions{};
+    bool optimize{};
 };
 
 template<typename T>

@@ -1,6 +1,8 @@
 #include "mid_transforms.hpp"
 
 #include <iostream>
+#include <algorithm>
+#include <numeric>
 
 #include <llvm/IR/Constants.h>
 #include <llvm/ADT/PostOrderIterator.h>
@@ -257,6 +259,197 @@ void insert_move_for_global_load(register_allocator& allocator)
         for(llvm::Instruction* user : constant_user.second)
         {
             user->replaceUsesOfWith(constant_user.first, constant);
+        }
+    }
+
+    allocator.perform_analysis();
+}
+
+void optimize_pipeline(register_allocator& allocator)
+{
+    // Reorder instruction based on their latency to maximize instructions throughput
+    // Only leaf instructions can be moved anywhere between the previous and the following non leaf instruction
+    // Assign instruction to be executed on secondary instruction
+
+
+    std::vector<std::pair<std::size_t, std::size_t>> leaf_ranges{};
+    std::vector<std::size_t> new_indices{};
+
+    for(auto& block : allocator.blocks())
+    {
+        const auto block_begin{block.begin_no_phi};
+        const auto block_end{block.end};
+
+        leaf_ranges.clear();
+        leaf_ranges.reserve(block_end - block_begin);
+
+        std::size_t leaf_begin{block_begin};
+        for(std::size_t i{block_begin}; i < block_end; ++i)
+        {
+            if(!allocator.values()[i].leaf)
+            {
+                if(leaf_begin != i)
+                {
+                    leaf_ranges.emplace_back(leaf_begin, i);
+                }
+
+                leaf_begin = i + 1;
+            }
+        }
+
+        if(leaf_begin != block_end)
+        {
+            leaf_ranges.emplace_back(leaf_begin, block_end);
+        }
+
+        // generate initial indices map (identity)
+        new_indices.clear();
+        new_indices.resize(block_end - block_begin);
+        std::iota(std::begin(new_indices), std::end(new_indices), block_begin);
+
+        // old_index -> new_index
+        const auto index_of = [&new_indices, offset = block_begin](std::size_t old_index)
+        {
+            return new_indices[old_index - offset];
+        };
+
+        const auto old_index_of = [&new_indices, offset = block_begin](std::size_t new_index)
+        {
+            const auto it{std::find(std::begin(new_indices), std::end(new_indices), new_index)};
+            assert(it != std::end(new_indices));
+
+            return offset + std::distance(std::begin(new_indices), it);
+        };
+
+        for(const auto& range : leaf_ranges)
+        {
+            static constexpr std::size_t max_passes{16};
+            for(std::size_t pass{}; pass < max_passes; ++pass)
+            {
+                for(std::size_t i{range.first}; i < range.second; ++i)
+                {
+                    const auto value_index{index_of(i)};
+                    if(value_index == block_begin)
+                    {
+                        continue; // first instruction can not be moved before
+                    }
+
+                    auto& value{allocator.values()[value_index]};
+                    if (llvm::isa<llvm::PHINode>(value.value))
+                    {
+                        continue; // phi nodes can not be moved
+                    }
+
+                    std::size_t closest_user_distance{std::numeric_limits<std::size_t>::max()};
+                    for(std::size_t new_index{value_index + 1}; new_index < range.second; ++new_index)
+                    {
+                        const auto user_index{old_index_of(new_index)};
+                        if(value.usage[user_index])
+                        {
+                            closest_user_distance = std::min(closest_user_distance, user_index - value_index);
+                        }
+                    }
+
+                    if(closest_user_distance == std::numeric_limits<std::size_t>::max())
+                    {
+                        continue; // not used (forward) in this block, don't move ignore
+                    }
+
+                    auto instruction{llvm::cast<llvm::Instruction>(value.value)};
+                    // IMPROVEMENT: assume latency of 3 cycles for all instructions, change it to the real per instruction latency
+                    std::size_t latency{4};
+
+                    if(closest_user_distance < latency) // try to improve distance with closest user
+                    {
+                        std::size_t closest_dependency_distance{latency};
+
+                        // check if we can move it before (i.e. does not depends of something defined just before)
+                        // broken for groups (phi node for sure)
+                        // because phi nodes "return" is a distinc variable but the same register at the end which cases wrong optimization
+                        // propagate all group usage/user ?
+                        for(const llvm::Use& operand : instruction->operands())
+                        {
+                            // check for main value
+                            const auto operand_old_index{allocator.index_of(operand.get())};
+                            if(operand_old_index == register_allocator::invalid_index || operand_old_index < range.first || operand_old_index >= range.second)
+                            {
+                                continue;
+                            }
+
+                            const auto operand_index{index_of(operand_old_index)};
+                            if(range.first <= operand_index && operand_index < value_index)
+                            {
+                                closest_dependency_distance = std::min(closest_dependency_distance, value_index - operand_index);
+                            }
+                        }
+
+                        if(value.group != register_allocator::no_group)
+                        {
+                            const auto& group{allocator.groups()[value.group]};
+
+                            for(auto member : group.members)
+                            {
+                                if(!llvm::isa<llvm::PHINode>(member))
+                                {
+                                    continue; // ignore non phi node as they will never be placed before definition
+                                }
+
+                                const auto phi_index{allocator.index_of(member)};
+                                const auto phi_info{allocator.info_of(member)};
+                                if(phi_info.block != allocator.index_of(block))
+                                {
+                                    continue; // not a "loop" phi node
+                                }
+
+                                std::size_t furthest_phi_user_index{0};
+                                for(std::size_t j{block_begin}; j < value_index; ++j)
+                                {
+                                    const auto user_index{index_of(j)};
+                                    if(phi_info.usage[user_index])
+                                    {
+                                        furthest_phi_user_index = std::max(furthest_phi_user_index, user_index);
+                                    }
+                                }
+                            
+                                closest_dependency_distance = std::min(closest_dependency_distance, value_index - furthest_phi_user_index);
+                            }
+                        }
+
+                        if(closest_dependency_distance > value_index - block_begin)
+                        {
+                            closest_dependency_distance = value_index - block_begin; // can not go further than the block beginning
+                        }
+
+                        if(closest_dependency_distance > 1)
+                        {
+                            // move value `closest_dependency_distance` further from its closest user
+                            closest_dependency_distance -= 1; // don't move it to actual position of closest dependency
+                            const auto new_position{std::max(block_begin, value_index - closest_dependency_distance)};
+
+                            for(auto& index : new_indices)
+                            {
+                                if(index >= new_position && index < value_index)
+                                {
+                                    ++index;
+                                }
+                            }
+
+                            new_indices[i - block_begin] = new_position;
+                        }
+                    }
+                }
+            }
+        }
+
+        new_indices.pop_back();
+        llvm::Instruction* position{block.block->getTerminator()};
+        const auto index_offset{block_end - 1};
+        for(std::size_t i{1}; i < block_end - block_begin; ++i)
+        {
+            const auto old_index{old_index_of(index_offset - i)};
+            auto current{llvm::cast<llvm::Instruction>(allocator.values()[old_index].value)};
+            current->moveBefore(position);
+            position = current;
         }
     }
 

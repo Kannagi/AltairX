@@ -172,9 +172,9 @@ void register_allocator::print() const
         std::cout << '\n';
     };
 
+    std::cout << indent(0) << "Args: \n";
     for(std::size_t i{}; i < m_function.arg_size(); ++i)
     {
-        std::cout << indent(0) << "Args: \n";
         print_value(m_values[i]);
     }
 
@@ -422,12 +422,6 @@ void register_allocator::extract_lifetimes()
             write_usage(value, index_of(user));
         }
 
-        auto instruction{llvm::dyn_cast<llvm::Instruction>(value.value)};
-        if(index < m_function.arg_size() || (instruction && !instruction->getType()->isVoidTy()))
-        {
-            write_usage(value, index);
-        }
-
         fill_lifetime(index);
     }
 }
@@ -611,6 +605,7 @@ void register_allocator::compute_smove_groups()
                 if(group_info* value_group{group_of(call->getArgOperand(0))}; value_group)
                 {
                     value_group->members.emplace_back(call);
+                    value_group->noop = false;
                 }
                 else
                 {
@@ -644,6 +639,7 @@ void register_allocator::compute_zext_trunc_groups()
             group_info& group{m_groups.emplace_back()};
             group.members.emplace_back(inst->getOperand(0));
             group.members.emplace_back(inst);
+            group.noop = true;
 
             info_of(inst->getOperand(0)).group = group_index;
             info_of(inst).group = group_index;
@@ -940,7 +936,7 @@ void register_allocator::allocate_register(std::size_t value_index)
     }
     else
     {
-        if(auto reg = assing_register(value_index); reg != no_register)
+        if(auto reg{assing_register(value_index)}; reg != no_register)
         {
             value.register_index = reg;
         }

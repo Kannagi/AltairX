@@ -180,6 +180,7 @@ public:
         std::vector<llvm::Value*> members{};
         ar::lifetime lifetime{}; // members coalesced lifetimes
         bool leaf{true}; // if a member is non leaf, the whole group is non leaf
+        bool noop{}; // if a group is composed of a single instruction + any amount of zext or trunc
         bool ret{}; // if a member is the return value, the whole group will be in the ret register
     };
 
@@ -336,7 +337,7 @@ public:
         return m_values[index_of(value)];
     }
 
-    const std::vector<group_info> groups() const noexcept
+    const std::vector<group_info>& groups() const noexcept
     {
         return m_groups;
     }

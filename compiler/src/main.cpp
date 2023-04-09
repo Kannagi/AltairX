@@ -97,6 +97,17 @@ static std::string generate_dot_data(llvm::Module& module)
     return output;
 }
 
+static void write_module(llvm::Module& module, std::string filename)
+{
+    // Write back the module with all modification done by the compiler
+    std::string output{};
+    llvm::raw_string_ostream os{output};
+    os << module;
+    os.flush();
+
+    std::ofstream{filename + ".comp.ll"} << output;
+}
+
 //Code generation steps:
 // 1: Transformation of the IR for analysis:
 //    Transforms the IR by adding, removing, or rewriting part or it,
@@ -149,6 +160,12 @@ static void generate_asm(llvm::Module& module, const std::string& filename, cons
         ar::mid_transforms::insert_move_for_constant(allocator);
         ar::mid_transforms::insert_move_for_global_load(allocator);
 
+        if(options.optimize)
+        {
+            write_module(module, filename + ".noopt");
+            ar::mid_transforms::optimize_pipeline(allocator);
+        }
+
         allocator.perform_register_allocation();
 
         // Late transforms
@@ -183,7 +200,11 @@ static ar::compiler_options parse_args(int argc, char* argv[])
 
     for(int i{1}; i < argc; ++i)
     {
-        if(argv[i] == "--verbose"sv)
+        if(argv[i] == "-O" || argv[i] == "-optimize")
+        {
+            output.optimize = true;
+        }
+        else if(argv[i] == "--verbose"sv)
         {
             output.verbose = true;
         }
@@ -228,13 +249,7 @@ static void run(const ar::compiler_options& options)
 
     std::cout << "Compilation done in " << std::chrono::duration_cast<std::chrono::milliseconds>(clock::now() - tp1).count() << "ms" << std::endl;
 
-    // Write back the module with all modification done by the compiler
-    std::string output{};
-    llvm::raw_string_ostream os{output};
-    os << *module;
-    os.flush();
-
-    std::ofstream{filename + ".comp.ll"} << output;
+    write_module(*module, filename);
 }
 
 int main(int argc, char* argv[])
