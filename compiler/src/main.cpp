@@ -200,7 +200,7 @@ static ar::compiler_options parse_args(int argc, char* argv[])
 
     for(int i{1}; i < argc; ++i)
     {
-        if(argv[i] == "-O" || argv[i] == "-optimize")
+        if(argv[i] == "-O"sv || argv[i] == "-optimize"sv)
         {
             output.optimize = true;
         }

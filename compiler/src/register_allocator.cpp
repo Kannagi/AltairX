@@ -576,6 +576,8 @@ void register_allocator::compute_phi_groups()
         {
             const std::size_t group_index{std::size(m_groups)};
             group_info& group{m_groups.emplace_back()};
+            group.type = group_type::phi;
+            group.members.emplace_back(&phi);
 
             for(llvm::Value* value : phi.incoming_values())
             {
@@ -585,8 +587,6 @@ void register_allocator::compute_phi_groups()
                     group.members.emplace_back(value);
                 }
             }
-
-            group.members.emplace_back(&phi);
         }
     }
 }
@@ -605,13 +605,18 @@ void register_allocator::compute_smove_groups()
                 if(group_info* value_group{group_of(call->getArgOperand(0))}; value_group)
                 {
                     value_group->members.emplace_back(call);
-                    value_group->noop = false;
+
+                    if (value_group->type != group_type::smove)
+                    {
+                        value_group->type = group_type::generic;
+                    }
                 }
                 else
                 {
                     const std::size_t group_index{std::size(m_groups)};
 
                     group_info& group{m_groups.emplace_back()};
+                    group.type = group_type::smove;
                     group.members.emplace_back(call->getArgOperand(0));
                     group.members.emplace_back(call);
 
@@ -631,15 +636,20 @@ void register_allocator::compute_zext_trunc_groups()
         if(group_info* value_group{group_of(inst->getOperand(0))}; value_group)
         {
             value_group->members.emplace_back(inst);
+
+            if (value_group->type != group_type::zext_trunc)
+            {
+                value_group->type = group_type::generic;
+            }
         }
         else
         {
             const std::size_t group_index{std::size(m_groups)};
 
             group_info& group{m_groups.emplace_back()};
+            group.type = group_type::zext_trunc;
             group.members.emplace_back(inst->getOperand(0));
             group.members.emplace_back(inst);
-            group.noop = true;
 
             info_of(inst->getOperand(0)).group = group_index;
             info_of(inst).group = group_index;

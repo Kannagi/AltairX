@@ -87,6 +87,7 @@ public:
     static constexpr std::size_t no_use{std::numeric_limits<std::size_t>::max()};
     static constexpr std::size_t no_group{std::numeric_limits<std::size_t>::max()};
     static constexpr std::size_t no_register{std::numeric_limits<std::size_t>::max()};
+
     static constexpr std::size_t stack_register{0}; // stack pointer (lds/sts)
     static constexpr std::size_t pointer_register{1}; // long pointer (ldp/stp)
     static constexpr std::size_t args_registers_begin{2};
@@ -174,14 +175,22 @@ public:
         std::vector<llvm::BasicBlock*> successors{}; //LLVM does not provide easy function for multiple successors
     };
 
+    enum class group_type : std::uint32_t
+    {
+        generic, // group as multiple usages. If it falls under "generic", it is because not much can be done with a group that as multiple usage.
+        phi, // group is used to handle a phi node
+        smove, // group is composed of moveu, moven and smove
+        zext_trunc, // group is composed of a single instruction + zext or trunc
+    };
+
     struct group_info
     {
         // Analysis info, filled by perform_analysis()
         std::vector<llvm::Value*> members{};
         ar::lifetime lifetime{}; // members coalesced lifetimes
+        group_type type{}; // group type
         bool leaf{true}; // if a member is non leaf, the whole group is non leaf
-        bool noop{}; // if a group is composed of a single instruction + any amount of zext or trunc
-        bool ret{}; // if a member is the return value, the whole group will be in the ret register
+        bool ret{}; // if a value of the group is used in ret instruction, the whole group is a return value
     };
 
     struct register_info

@@ -12,15 +12,15 @@ target triple = "x86_64-pc-windows-msvc19.34.31935"
 @base64_table = internal unnamed_addr constant [128 x i8] c"\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00>\00\00\00?456789:;<=\00\00\00\00\00\00\00\00\01\02\03\04\05\06\07\08\09\0A\0B\0C\0D\0E\0F\10\11\12\13\14\15\16\17\18\19\00\00\00\00\00\00\1A\1B\1C\1D\1E\1F !\22#$%&'()*+,-./0123\00\00\00\00\00", align 16
 
 ; Function Attrs: mustprogress nofree norecurse nosync nounwind readnone willreturn uwtable
-define dso_local nonnull ptr @get_message() local_unnamed_addr #0 {
-  ret ptr @global_str
-}
-
-; Function Attrs: mustprogress nofree norecurse nosync nounwind willreturn writeonly uwtable
-define dso_local void @set_global(i32 noundef %0) local_unnamed_addr #1 {
-  store i32 %0, ptr @global_int, align 4, !tbaa !4
-  ret void
-}
+;define dso_local nonnull ptr @get_message() local_unnamed_addr #0 {
+;  ret ptr @global_str
+;}
+;
+;; Function Attrs: mustprogress nofree norecurse nosync nounwind willreturn writeonly uwtable
+;define dso_local void @set_global(i32 noundef %0) local_unnamed_addr #1 {
+;  store i32 %0, ptr @global_int, align 4, !tbaa !4
+;  ret void
+;}
 
 ; Function Attrs: nofree norecurse nosync nounwind uwtable
 define dso_local void @parse_base64(ptr nocapture noundef readonly %0, i64 noundef %1, ptr nocapture noundef writeonly %2) local_unnamed_addr #2 {

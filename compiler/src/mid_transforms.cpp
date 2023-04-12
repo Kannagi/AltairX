@@ -265,12 +265,18 @@ void insert_move_for_global_load(register_allocator& allocator)
     allocator.perform_analysis();
 }
 
+static void move_zext_trunc(register_allocator& allocator)
+{
+
+}
+
 void optimize_pipeline(register_allocator& allocator)
 {
     // Reorder instruction based on their latency to maximize instructions throughput
     // Only leaf instructions can be moved anywhere between the previous and the following non leaf instruction
     // Assign instruction to be executed on secondary instruction
 
+    move_zext_trunc(allocator);
 
     std::vector<std::pair<std::size_t, std::size_t>> leaf_ranges{};
     std::vector<std::size_t> new_indices{};
