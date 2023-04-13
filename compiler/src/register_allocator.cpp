@@ -578,6 +578,7 @@ void register_allocator::compute_phi_groups()
             group_info& group{m_groups.emplace_back()};
             group.type = group_type::phi;
             group.members.emplace_back(&phi);
+            info_of(&phi).group = group_index;
 
             for(llvm::Value* value : phi.incoming_values())
             {
