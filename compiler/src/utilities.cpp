@@ -28,12 +28,24 @@ std::string get_value_label(const llvm::Value& value)
 
 std::string get_int_size_name(llvm::Value* value)
 {
-    switch (value->getType()->getIntegerBitWidth())
+    auto type{value->getType()};
+
+    if(type->isPointerTy())
     {
-    case 8:  return "b";
-    case 16: return "w";
-    case 32: return "l";
-    case 64: return "q";
+        return "q";
+    }
+
+    return get_int_size_name(type->getIntegerBitWidth() / 8);
+}
+
+std::string get_int_size_name(std::size_t size)
+{
+    switch(size)
+    {
+    case 1: return "b";
+    case 2: return "w";
+    case 4: return "l";
+    case 8: return "q";
     default: throw std::runtime_error{"wrong integer size"};
     }
 }

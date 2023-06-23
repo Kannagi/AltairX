@@ -197,8 +197,10 @@ void function_translator::translate_instruction(const register_allocator::value_
     //      and signed (no instruction can go higher than 20ish bits)
     //  - otherwise both are registers
 
-    if(auto binary{llvm::dyn_cast<llvm::BinaryOperator>(instruction.value)}; binary)
+    if(llvm::isa<llvm::BinaryOperator>(instruction.value))
     {
+        auto binary{llvm::cast<llvm::BinaryOperator>(instruction.value)};
+
         if(llvm::ConstantInt* contant{llvm::dyn_cast<llvm::ConstantInt>(binary->getOperand(1))}; contant)
         {
             m_asm_code << indent;
@@ -217,8 +219,10 @@ void function_translator::translate_instruction(const register_allocator::value_
         }
 
     }
-    else if(auto zext{llvm::dyn_cast<llvm::ZExtInst>(instruction.value)}; zext)
+    else if(llvm::isa<llvm::ZExtInst>(instruction.value))
     {
+        auto zext{llvm::cast<llvm::ZExtInst>(instruction.value)};
+
         // this op is a no-op on our arch
         // zero-extending a register is simply changing the operand size on the user
         if(m_options.output_noop_instructions)
@@ -229,8 +233,10 @@ void function_translator::translate_instruction(const register_allocator::value_
             m_asm_code << get_operand(zext->getOperand(0)) << std::endl;
         }
     }
-    else if(auto trunc{llvm::dyn_cast<llvm::TruncInst>(instruction.value)}; trunc)
+    else if(llvm::isa<llvm::TruncInst>(instruction.value))
     {
+        auto trunc{llvm::cast<llvm::TruncInst>(instruction.value)};
+
         // this op is a no-op on our arch
         // trunc-ing a register is simply changing the operand size on the user
         if(m_options.output_noop_instructions)
@@ -241,29 +247,37 @@ void function_translator::translate_instruction(const register_allocator::value_
             m_asm_code << get_operand(trunc->getOperand(0)) << std::endl;
         }
     }
-    else if(auto sext{llvm::dyn_cast<llvm::SExtInst>(instruction.value)}; sext)
+    else if(llvm::isa<llvm::SExtInst>(instruction.value))
     {
+        auto sext{llvm::cast<llvm::SExtInst>(instruction.value)};
+
         m_asm_code << indent;
         m_asm_code << translate_instruction(sext) << "." << get_int_size_name(sext) << " ";
         m_asm_code << get_operand(sext) << ", ";
         m_asm_code << get_operand(sext->getOperand(0)) << std::endl;
     }
-    else if(auto load{llvm::dyn_cast<llvm::LoadInst>(instruction.value)}; load)
+    else if(llvm::isa<llvm::LoadInst>(instruction.value))
     {
+        auto load{llvm::cast<llvm::LoadInst>(instruction.value)};
+
         m_asm_code << indent;
         m_asm_code << translate_instruction(load) << "." << get_int_size_name(load) << " ";
         m_asm_code << get_operand(load) << ", ";
         m_asm_code << get_operand(load->getPointerOperand()) << "[0]" << std::endl;
     }
-    else if(auto store{llvm::dyn_cast<llvm::StoreInst>(instruction.value)}; store)
+    else if(llvm::isa<llvm::StoreInst>(instruction.value))
     {
+        auto store{llvm::cast<llvm::StoreInst>(instruction.value)};
+
         m_asm_code << indent;
         m_asm_code << translate_instruction(store) << "." << get_int_size_name(store->getValueOperand()) << " ";
         m_asm_code << get_operand(store->getValueOperand()) << ", ";
         m_asm_code << get_operand(store->getPointerOperand()) << "[0]"<< std::endl;
     }
-    else if(auto compare{llvm::dyn_cast<llvm::ICmpInst>(instruction.value)}; compare)
+    else if(llvm::isa<llvm::ICmpInst>(instruction.value))
     {
+        auto compare{llvm::dyn_cast<llvm::ICmpInst>(instruction.value)};
+
         if(llvm::ConstantInt* contant{llvm::dyn_cast<llvm::ConstantInt>(compare->getOperand(1))}; contant)
         {
             const std::int64_t value{contant->getSExtValue()};
@@ -289,10 +303,10 @@ void function_translator::translate_instruction(const register_allocator::value_
             m_asm_code << get_operand(compare->getOperand(0)) + ", ";
             m_asm_code << get_operand(compare->getOperand(1)) << std::endl;
         }
-
     }
-    else if(auto branch{llvm::dyn_cast<llvm::BranchInst>(instruction.value)}; branch)
+    else if(llvm::isa<llvm::BranchInst>(instruction.value))
     {
+        auto branch{llvm::cast<llvm::BranchInst>(instruction.value)};
         if(branch->isConditional())
         {
             m_asm_code << indent;
@@ -306,17 +320,55 @@ void function_translator::translate_instruction(const register_allocator::value_
             m_asm_code << get_block_label(m_allocator.info_of(branch->getSuccessor(0))) << std::endl;
         }
     }
-    else if(auto call{llvm::dyn_cast<llvm::CallInst>(instruction.value)}; call)
+    else if(llvm::isa<llvm::CallInst>(instruction.value))
     {
-        const auto intrinsic{get_intrinsic_id(*call)};
+        auto call{llvm::cast<llvm::CallInst>(instruction.value)};
+    
+        if(is_intrinsic(*call))
+        {
+            translate_intrinsic(call);
+        }
+        else
+        {
+            m_asm_code << indent;
+            m_asm_code << "call " << call->getCalledFunction()->getName().str() << std::endl;
+        }
+    }
+    else if(llvm::isa<llvm::ReturnInst>(instruction.value))
+    {
+        auto ret{llvm::cast<llvm::ReturnInst>(instruction.value)};
 
-        if(intrinsic == intrinsic_id::moven)
+        m_asm_code << indent;
+        m_asm_code << "ret" << std::endl;
+    }
+    else
+    {
+        m_asm_code << indent << "<unimplemented>" << std::endl;
+    }
+}
+
+void function_translator::translate_intrinsic(llvm::CallInst* call)
+{
+    switch(get_intrinsic_id(*call)) // use switch without default to get warning when adding new intrinsic
+    {
+        case intrinsic_id::copy:
+        {
+            m_asm_code << indent;
+            m_asm_code << "addi." << get_int_size_name(call) << " ";
+            m_asm_code << get_operand(call) << ", ";
+            m_asm_code << get_operand(call->getOperand(0)) << ", 0 ; copy" << std::endl;
+
+            break;
+        }
+        case intrinsic_id::moven:
         {
             m_asm_code << indent;
             m_asm_code << "moven " << get_operand(call) << ", ";
             m_asm_code << llvm::cast<llvm::ConstantInt>(call->getArgOperand(0))->getSExtValue() << std::endl;
+
+            break;
         }
-        else if(intrinsic == intrinsic_id::moveu)
+        case intrinsic_id::moveu:
         {
             m_asm_code << indent;
             m_asm_code << "moveu " << get_operand(call) << ", ";
@@ -329,8 +381,10 @@ void function_translator::translate_instruction(const register_allocator::value_
             {
                 m_asm_code << get_value_label(*global_value) << "&0xFFFF" << std::endl;
             }
+
+            break;
         }
-        else if(intrinsic == intrinsic_id::smove)
+        case intrinsic_id::smove:
         {
             constexpr std::array shift_name{"b", "w", "l", "q"};
 
@@ -354,8 +408,38 @@ void function_translator::translate_instruction(const register_allocator::value_
 
                 m_asm_code << "(" << get_value_label(*global_value) << "&0xFFFF0000)>>16" << std::endl;
             }
+
+            break;
         }
-        else if(intrinsic == intrinsic_id::load)
+        case intrinsic_id::getri:
+        {
+            constexpr std::array ri_names{"LR", "FR", "BR", "IR", "LC", "IC", "CC", "PC"};
+
+            llvm::ConstantInt* index{llvm::dyn_cast<llvm::ConstantInt>(call->getOperand(0))};
+            assert(index->getZExtValue() < std::size(ri_names));
+
+            m_asm_code << indent;
+            m_asm_code << "move ";
+            m_asm_code << get_operand(call) << ", ";
+            m_asm_code << ri_names[index->getZExtValue()] << std::endl;
+
+            break;
+        }
+        case intrinsic_id::setri:
+        {
+            constexpr std::array ri_names{"LR", "FR", "BR", "IR", "LC", "IC", "CC", "PC"};
+
+            llvm::ConstantInt* index{llvm::dyn_cast<llvm::ConstantInt>(call->getOperand(0))};
+            assert(index->getZExtValue() < std::size(ri_names));
+
+            m_asm_code << indent;
+            m_asm_code << "move ";
+            m_asm_code << ri_names[index->getZExtValue()] << ", ";
+            m_asm_code << get_operand(call->getOperand(1)) << std::endl;
+
+            break;
+        }
+        case intrinsic_id::load:
         {
             if(llvm::ConstantInt* contant{llvm::dyn_cast<llvm::ConstantInt>(call->getOperand(1))}; contant)
             {
@@ -373,8 +457,10 @@ void function_translator::translate_instruction(const register_allocator::value_
                 m_asm_code << get_operand(call->getArgOperand(0)) << "[";
                 m_asm_code << get_operand(call->getArgOperand(1)) << "]" << std::endl;
             }
+
+            break;
         }
-        else if(intrinsic == intrinsic_id::store)
+        case intrinsic_id::store:
         {
             if(llvm::ConstantInt* contant{llvm::dyn_cast<llvm::ConstantInt>(call->getOperand(1))}; contant)
             {
@@ -392,16 +478,10 @@ void function_translator::translate_instruction(const register_allocator::value_
                 m_asm_code << get_operand(call->getArgOperand(0)) << "[";
                 m_asm_code << get_operand(call->getArgOperand(1)) << "]" << std::endl;
             }
-        }
-        else if(intrinsic == intrinsic_id::spill)
-        {
 
+            break;
         }
-        else if(intrinsic == intrinsic_id::fill)
-        {
-
-        }
-        else if(intrinsic == intrinsic_id::ptradd)
+        case intrinsic_id::ptradd:
         {
             if(llvm::ConstantInt* contant{llvm::dyn_cast<llvm::ConstantInt>(call->getOperand(1))}; contant)
             {
@@ -419,21 +499,59 @@ void function_translator::translate_instruction(const register_allocator::value_
                 m_asm_code << get_operand(call->getArgOperand(0)) << ", ";
                 m_asm_code << get_operand(call->getArgOperand(1)) << std::endl;
             }
+
+            break;
         }
-        else
+        case intrinsic_id::spill:
         {
+            auto value{call->getArgOperand(0)};
+            auto entry{m_allocator.stack_entry_of(value)};
+            assert(entry && "Spill argument must have an associated stack entry.");
+
             m_asm_code << indent;
-            m_asm_code << "<unimplemented intrinsic>" << std::endl;
+            m_asm_code << "sps." << get_int_size_name(value) << " ";
+            m_asm_code << get_operand(value) << ", ";
+            m_asm_code << std::to_string(m_stack_offset + entry->position) << std::endl;
+
+            break;
         }
-    }
-    else if(auto ret{llvm::dyn_cast<llvm::ReturnInst>(instruction.value)}; ret)
-    {
-        m_asm_code << indent;
-        m_asm_code << "ret" << std::endl;
-    }
-    else
-    {
-        m_asm_code << indent << "<unimplemented>" << std::endl;
+        case intrinsic_id::fill:
+        {
+            auto value{call->getArgOperand(0)};
+            auto entry{m_allocator.stack_entry_of(value)};
+            assert(entry && "Fill argument must have an associated stack entry.");
+
+            m_asm_code << indent;
+            m_asm_code << "lds." << get_int_size_name(entry->size) << " "; // use entry size to handle both spill and other types of stack entries
+            m_asm_code << get_operand(call) << ", ";
+            m_asm_code << std::to_string(m_stack_offset + entry->position) << std::endl;
+
+            break;
+        }
+        case intrinsic_id::push:
+        {
+            llvm::ConstantInt* bytes{llvm::dyn_cast<llvm::ConstantInt>(call->getOperand(0))};
+
+            m_asm_code << indent;
+            m_asm_code << "subi.q sp, sp, ";
+            m_asm_code << std::to_string(bytes->getZExtValue()) << std::endl;
+
+            m_stack_offset += bytes->getZExtValue();
+
+            break;
+        }
+        case intrinsic_id::pop:
+        {
+            llvm::ConstantInt* bytes{llvm::dyn_cast<llvm::ConstantInt>(call->getOperand(0))};
+
+            m_asm_code << indent;
+            m_asm_code << "addi.q sp, sp, ";
+            m_asm_code << std::to_string(bytes->getZExtValue()) << std::endl;
+
+            m_stack_offset -= bytes->getZExtValue();
+
+            break;
+        }
     }
 }
 
@@ -534,7 +652,37 @@ std::string function_translator::get_operand(llvm::Value* value)
         return get_value_label(*global);
     }
 
-    return "r" + std::to_string(m_allocator.info_of(value).register_index);
+    const auto register_index{m_allocator.info_of(value).register_index};
+    
+    if(m_options.pretty_registers)
+    {
+        if(register_index == register_allocator::stack_register)
+        {
+            return "sp";
+        }
+        else if(register_index >= register_allocator::args_registers_begin && register_index < register_allocator::args_registers_end)
+        {
+            return "a" + std::to_string(register_index - register_allocator::args_registers_begin);
+        }
+        else if(register_index >= register_allocator::non_volatile_registers_begin && register_index < register_allocator::non_volatile_registers_end)
+        {
+            return "s" + std::to_string(register_index - register_allocator::non_volatile_registers_begin);
+        }
+        else if(register_index >= register_allocator::volatile_registers_begin && register_index < register_allocator::volatile_registers_end)
+        {
+            return "t" + std::to_string(register_index - register_allocator::volatile_registers_begin);
+        }
+        else if(register_index >= register_allocator::renamed_registers_begin && register_index < register_allocator::renamed_registers_end)
+        {
+            return "n" + std::to_string(register_index - register_allocator::volatile_registers_begin);
+        }
+        else if(register_index == register_allocator::accumulator_register)
+        {
+            return "acc";
+        }
+    }
+
+    return "r" + std::to_string(register_index);
 }
 
 }

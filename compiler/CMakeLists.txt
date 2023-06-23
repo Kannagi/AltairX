@@ -20,6 +20,7 @@ add_executable(altair_compiler
     src/late_transforms.hpp
     src/translator.hpp
     src/utilities.hpp
+    src/function_analyser.hpp
     src/register_allocator.hpp
     src/stack_allocator.hpp
 
@@ -30,7 +31,9 @@ add_executable(altair_compiler
     src/late_transforms.cpp
     src/translator.cpp
     src/utilities.cpp
+    src/function_analyser.cpp
     src/register_allocator.cpp
+    src/stack_allocator.cpp
     src/main.cpp)
 
 llvm_map_components_to_libnames(llvm_libs support core irreader analysis)

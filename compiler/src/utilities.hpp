@@ -16,6 +16,7 @@ struct compiler_options
     std::string file{};
     bool verbose{};
     bool output_noop_instructions{};
+    bool pretty_registers{};
     bool optimize{};
 };
 
@@ -54,6 +55,7 @@ constexpr std::size_t int_size(std::uint64_t value) noexcept
 std::string get_value_label(const llvm::Value& value);
 
 std::string get_int_size_name(llvm::Value* value);
+std::string get_int_size_name(std::size_t size);
 
 /*
 * For vectors of X components: returns "vector_<scalable_>X_<type_name(innertype)>"

@@ -2,6 +2,7 @@
 
 #include <iostream>
 #include <algorithm>
+#include <fstream>
 #include <numeric>
 
 #include <llvm/IR/Constants.h>
@@ -80,11 +81,11 @@ static llvm::Value* insert_constant_int(llvm::Module& module, llvm::ConstantInt*
     }
 }
 
-void insert_move_for_constant(register_allocator& allocator)
+void insert_move_for_constant(function_analyser& analyser)
 {
-    auto& module{allocator.module()};
+    auto& module{analyser.module()};
 
-    for(llvm::BasicBlock& block : allocator.function())
+    for(llvm::BasicBlock& block : analyser.function())
     {
         for(llvm::Instruction& instruction : block)
         {
@@ -104,7 +105,7 @@ void insert_move_for_constant(register_allocator& allocator)
                     //add float, bool and pointer support
                 }
             }
-            else if(llvm::CallInst* call{llvm::dyn_cast<llvm::CallInst>(&instruction)}; call)
+            else if(auto call{llvm::dyn_cast<llvm::CallInst>(&instruction)}; call)
             {
                 switch(get_intrinsic_id(*call))
                 {
@@ -140,14 +141,14 @@ void insert_move_for_constant(register_allocator& allocator)
                     break;
                 }
             }
-            else if(llvm::BinaryOperator* binary{llvm::dyn_cast<llvm::BinaryOperator>(&instruction)}; binary)
+            else if(auto binary{llvm::dyn_cast<llvm::BinaryOperator>(&instruction)}; binary)
             {
-                if(llvm::ConstantInt* value{llvm::dyn_cast<llvm::ConstantInt>(binary->getOperand(0))}; value)
+                if(auto value{llvm::dyn_cast<llvm::ConstantInt>(binary->getOperand(0))}; value)
                 {
                     binary->setOperand(0, insert_constant_int(module, value, 0, false, binary));
                 }
 
-                if(llvm::ConstantInt* value{llvm::dyn_cast<llvm::ConstantInt>(binary->getOperand(1))}; value)
+                if(auto value{llvm::dyn_cast<llvm::ConstantInt>(binary->getOperand(1))}; value)
                 {
                     switch(binary->getOpcode())
                     {
@@ -161,14 +162,14 @@ void insert_move_for_constant(register_allocator& allocator)
                     }
                 }
             }
-            else if(llvm::StoreInst* store{llvm::dyn_cast<llvm::StoreInst>(&instruction)}; store)
+            else if(auto store{llvm::dyn_cast<llvm::StoreInst>(&instruction)}; store)
             {
                 if(llvm::ConstantInt* value{llvm::dyn_cast<llvm::ConstantInt>(store->getOperand(0))}; value)
                 {
                     store->setOperand(0, insert_constant_int(module, value, 0, false, store));
                 }
             }
-            else if(llvm::ReturnInst* ret{llvm::dyn_cast<llvm::ReturnInst>(&instruction)}; ret)
+            else if(auto ret{llvm::dyn_cast<llvm::ReturnInst>(&instruction)}; ret)
             {
                 if(ret->getReturnValue())
                 {
@@ -181,13 +182,13 @@ void insert_move_for_constant(register_allocator& allocator)
        }
     }
 
-    allocator.perform_analysis();
+    analyser.perform_analysis();
 }
 
-void insert_move_for_global_load(register_allocator& allocator)
+void insert_move_for_global_load(function_analyser& analyser)
 {
-    auto& module{allocator.module()};
-    auto& function{allocator.function()};
+    auto& module{analyser.module()};
+    auto& function{analyser.function()};
 
     std::unordered_map<llvm::Value*, llvm::SmallVector<llvm::Instruction*>> constant_users;
 
@@ -195,7 +196,7 @@ void insert_move_for_global_load(register_allocator& allocator)
     {
         for(llvm::User* user : global.users())
         {
-            if(allocator.index_of(user) != register_allocator::invalid_index)
+            if(analyser.index_of(user) != invalid_index)
             {
                 auto it{constant_users.find(&global)};
                 if(it == std::end(constant_users))
@@ -217,14 +218,14 @@ void insert_move_for_global_load(register_allocator& allocator)
 
         for(auto user : constant_user.second)
         {
-            const auto user_index{allocator.index_of(user)};
-            assert(user_index != register_allocator::invalid_index && "Broken logic, all users must already have been checked as members of this function.");
+            const auto user_index{analyser.index_of(user)};
+            assert(user_index != invalid_index && "Broken logic, all users must already have been checked as members of this function.");
             first_user_index = std::min(first_user_index, user_index);
         }
 
-        auto& first_user {allocator.values()[first_user_index]};
-        auto& first_block{allocator.blocks()[first_user.block]};
-        auto& first_scc  {allocator.sccs()[first_block.scc]};
+        auto& first_user {analyser.values()[first_user_index]};
+        auto& first_block{analyser.blocks()[first_user.block]};
+        auto& first_scc  {analyser.sccs()[first_block.scc]};
 
         const auto insert_address = [&module, &constant_user](llvm::Instruction* position)
         {
@@ -238,7 +239,7 @@ void insert_move_for_global_load(register_allocator& allocator)
 
         if(first_scc.loop) // first use is in a loop, extract it out of it
         {
-            auto& loop{allocator.info_of(first_scc.loop)};
+            auto& loop{analyser.info_of(first_scc.loop)};
 
             if(loop.predecessors.size() == 1)
             {
@@ -264,105 +265,166 @@ void insert_move_for_global_load(register_allocator& allocator)
         }
     }
 
-    allocator.perform_analysis();
+    analyser.perform_analysis();
+}
+
+void fix_conflicting_phi_nodes(function_analyser& analyser)
+{
+    auto& module{analyser.module()};
+    auto& function{analyser.function()};
+
+    bool changed{};
+
+    for(auto& group : analyser.groups())
+    {
+        if(group.type != group_type::phi)
+        {
+            continue;
+        }
+
+        for(std::size_t i{1}; i < group.members.size(); ++i)
+        {
+            for(std::size_t j{i + 1}; j < group.members.size(); ++j)
+            {
+                const auto& left {analyser.info_of(group.members[i])};
+                const auto& right{analyser.info_of(group.members[j])};
+
+                if(!left.lifetime.overlap(right.lifetime))
+                {
+                    continue; // ok
+                }
+
+                // if there is an overlap one value must be stored elsewhere and restored later
+                // foreach phi nodes in group
+                //     if phi uses right
+                //         
+
+                auto* phi{llvm::cast<llvm::PHINode>(group.members[0])};
+
+                const auto& phi_info {analyser.info_of(phi)};
+                const auto& phi_block{analyser.blocks()[phi_info.block]};
+
+                // insert block before phi_block
+                auto* copy_block{llvm::BasicBlock::Create(module.getContext(), "", &function, phi_block.block)};
+                // br to phi_block
+                auto* copy_branch{llvm::BranchInst::Create(phi_block.block, copy_block)};
+                // make a copy of right
+                auto* copy{insert_copy_intrinsic(module, right.value, copy_branch)};
+
+                // change phi incomming [right, right_block] to [copy, copy_block]
+                llvm::SmallVector<llvm::BasicBlock*> incoming_blocks{};
+                for(std::uint32_t inc{}; inc < phi->getNumIncomingValues(); ++inc)
+                {
+                    if(phi->getIncomingValue(inc) == right.value)
+                    {
+                        incoming_blocks.emplace_back(phi->getIncomingBlock(static_cast<std::uint32_t>(i)));
+                    }
+                }
+
+                for(auto* incoming_block : incoming_blocks)
+                {
+                    phi->removeIncomingValue(incoming_block);
+                    // change right_block br to phi_block to copy_block
+                    incoming_block->getTerminator()->replaceSuccessorWith(phi_block.block, copy_block);
+                }
+
+                phi->addIncoming(copy, copy_block);
+                changed = true;
+            }
+        }
+    }
+
+    if(changed)
+    {
+        analyser.perform_analysis();
+    }
+}
+
+void resolve_conflicting_affinities(function_analyser& analyser)
+{
+    auto& module{analyser.module()};
+
+    for(auto& value : analyser.values())
+    {
+        const auto& first{value.affinities[0]};
+        
+        for(std::size_t i{}; i < value.affinities.size(); ++i)
+        {
+            const auto& second{value.affinities[i]};
+
+            if(first.affinity == register_affinity::argument)
+            {
+                if(second.affinity == register_affinity::ret && first.default_register != 0)
+                {
+                    for(llvm::User* user : value.value->users())
+                    {
+                        if(auto* ret{llvm::dyn_cast<llvm::ReturnInst>(user)}; ret)
+                        {
+                            ret->setOperand(0, insert_copy_intrinsic(module, value.value, ret));
+                        }
+                    }
+                }
+                else if(second.affinity == register_affinity::callee_argument && first.default_register != second.default_register)
+                {
+                    for(llvm::User* user : value.value->users())
+                    {
+                        if(auto* call{llvm::dyn_cast<llvm::CallInst>(user)}; call)
+                        {
+                            if(call->getNumOperands() > second.default_register && call->getOperand(second.default_register) == value.value)
+                            {
+                                call->setOperand(second.default_register, ar::insert_copy_intrinsic(module, value.value, call));
+                            }
+                        }
+                    }
+                }
+            }
+            else if(first.affinity == register_affinity::callee_ret)
+            {
+                if(second.affinity == register_affinity::callee_argument && second.default_register != 0)
+                {
+                    for(llvm::User* user : value.value->users())
+                    {
+                        if(auto* call{llvm::dyn_cast<llvm::CallInst>(user)}; call)
+                        {
+                            if(call->getNumOperands() > second.default_register && call->getOperand(second.default_register) == value.value)
+                            {
+                                call->setOperand(second.default_register, ar::insert_copy_intrinsic(module, value.value, call));
+                            }
+                        }
+                    }
+                }
+            }
+            else if(first.affinity == register_affinity::flags)
+            {
+                // TODO, generate code to convert flags to bools
+            }
+        }
+    }
+
+    analyser.perform_analysis();
+}
+
+static std::size_t cycles_of(llvm::Instruction* inst)
+{
+    if(llvm::isa<llvm::TruncInst>(inst) || llvm::isa<llvm::ZExtInst>(inst))
+    {
+        return 0;
+    }
+
+    return 1;
 }
 
 static std::size_t latency_of(llvm::Instruction* inst)
 {
     if(llvm::isa<llvm::TruncInst>(inst) || llvm::isa<llvm::ZExtInst>(inst))
     {
-        return 1;
+        return 0;
     }
 
     return 3;
 }
-/*
-    const auto print_dag = [&]()
-    {
-        const auto n{range_size};
 
-        std::vector<std::size_t> roots;
-        for(std::size_t i = 0; i < n; i++) {
-            if(vertices[i].in_degree == 0) {
-                roots.push_back(i);
-            }
-        }
-
-        // iterate over the graph
-        for(int i = 0; i < roots.size(); i++) {
-            std::size_t root = roots[i];
-            std::cout << "Starting from root " << from_dag(root) << ":" << std::endl;
-            std::vector<bool> visited(n, false);
-            std::vector<std::size_t> queue;
-            queue.push_back(root);
-            visited[root] = true;
-            while(!queue.empty()) {
-                std::size_t curr_vertex = queue.front();
-                queue.erase(queue.begin());
-                std::cout << "Visiting vertex " << from_dag(curr_vertex) << std::endl;
-                for(std::size_t j = 0; j < dag[curr_vertex].size(); j++) {
-                    std::size_t adj_vertex = dag[curr_vertex][j];
-                    if(!visited[adj_vertex]) {
-                        visited[adj_vertex] = true;
-                        queue.push_back(adj_vertex);
-                    }
-                }
-            }
-        }
-    };
-
-    const auto print_dag2 = [&]()
-    {
-        using namespace std;
-
-        int n = dag.size();
-        vector<int> in_degrees(n, 0);
-        vector<vector<int>> levels;
-        queue<int> q;
-
-        // calculate in-degrees of each vertex and add root nodes to queue
-        for(int i = 0; i < n; i++) {
-            for(int j = 0; j < dag[i].size(); j++) {
-                int adj_vertex = dag[i][j];
-                in_degrees[adj_vertex]++;
-            }
-        }
-        for(int i = 0; i < n; i++) {
-            if(in_degrees[i] == 0) {
-                q.push(i);
-            }
-        }
-
-        // perform breadth-first search and print each level of the graph
-        while(!q.empty()) {
-            int size = q.size();
-            vector<int> level;
-            for(int i = 0; i < size; i++) {
-                int curr_vertex = q.front();
-                q.pop();
-                level.push_back(curr_vertex);
-                for(int j = 0; j < dag[curr_vertex].size(); j++) {
-                    int adj_vertex = dag[curr_vertex][j];
-                    if(--in_degrees[adj_vertex] == 0) {
-                        q.push(adj_vertex);
-                    }
-                }
-            }
-            levels.push_back(level);
-        }
-
-        // print the graph in the intuitive layout
-        for(int i = 0; i < levels.size(); i++) {
-            cout << "Level " << i << ":";
-            for(int j = 0; j < levels[i].size(); j++) {
-                int vertex = levels[i][j];
-                cout << " " << from_dag(vertex);
-            }
-            cout << endl;
-        }
-    };*/
-
-static std::vector<std::size_t> optimize_range(register_allocator& allocator, const register_allocator::block_info& block, std::size_t begin, std::size_t end)
+static std::vector<std::size_t> optimize_range(function_analyser& analyser, const block_info& block, std::size_t begin, std::size_t end)
 {
     /*
     look for instruction that depends on "external values"
@@ -375,7 +437,8 @@ static std::vector<std::size_t> optimize_range(register_allocator& allocator, co
 
     struct vertex_info
     {
-        std::size_t latency{3}; // latency of this instruction, decremented when assigning an instruction to output
+        std::size_t latency{}; // latency of this instruction, decremented when assigning an instruction to output
+        std::size_t cycles{}; // number of cycle consumed by this instruction
         std::size_t in_degree{};
         bool visited{};
     };
@@ -409,14 +472,15 @@ static std::vector<std::size_t> optimize_range(register_allocator& allocator, co
     // In this example, a dependency "FROM %23 to %24" will be defined
     for(std::size_t value_index{begin}; value_index < end; ++value_index)
     {
-        const auto& value_info{allocator.values()[value_index]};
+        const auto& value_info{analyser.values()[value_index]};
         auto* inst{llvm::cast<llvm::Instruction>(value_info.value)};
         vertices[to_dag(value_index)].latency = latency_of(inst);
+        vertices[to_dag(value_index)].cycles = cycles_of(inst);
 
         for(const llvm::Use& op : inst->operands())
         {
-            const auto op_index{allocator.index_of(op.get())};
-            if(op_index == register_allocator::invalid_index) // constants...
+            const auto op_index{analyser.index_of(op.get())};
+            if(op_index == invalid_index) // constants...
             {
                 // IMPROVEMENT: still store useful informations if any ?
                 continue;
@@ -433,16 +497,16 @@ static std::vector<std::size_t> optimize_range(register_allocator& allocator, co
             // before the getelementptr
             if(llvm::isa<llvm::PHINode>(op))
             {
-                auto& op_info{allocator.values()[op_index]};
+                auto& op_info{analyser.values()[op_index]};
                 if(op_info.group != value_info.group)
                 {
-                    auto& group{allocator.groups()[op_info.group]};
-                    if(group.type == register_allocator::group_type::phi)
+                    auto& group{analyser.groups()[op_info.group]};
+                    if(group.type == group_type::phi)
                     {
                         for(llvm::Value* member : group.members)
                         {
-                            const auto member_index{allocator.index_of(member)};
-                            if(member_index == register_allocator::invalid_index)
+                            const auto member_index{analyser.index_of(member)};
+                            if(member_index == invalid_index)
                             {
                                 continue;
                             }
@@ -468,7 +532,7 @@ static std::vector<std::size_t> optimize_range(register_allocator& allocator, co
         }
     }
 
-    // new_order[i] = allocator.values() index
+    // new_order[i] = analyser.values() index
     std::vector<std::size_t> new_order{};
     new_order.reserve(range_size);
     // this is the queue with all the candite that can be place to the list
@@ -491,7 +555,12 @@ static std::vector<std::size_t> optimize_range(register_allocator& allocator, co
     {
         const auto it = std::min_element(std::begin(queue), std::end(queue), [&vertices](std::size_t vertex, std::size_t smallest)
         {
-            return vertices[vertex].latency < vertices[smallest].latency;
+            if(vertices[vertex].latency < vertices[smallest].latency)
+            {
+                return true;
+            }
+
+            return vertices[vertex].cycles < vertices[smallest].cycles;
         });
 
         // more advanced checks ?
@@ -507,6 +576,7 @@ static std::vector<std::size_t> optimize_range(register_allocator& allocator, co
         const auto best_candidate{find_best_candidate()};
         new_order.emplace_back(begin + best_candidate);
         vertices[best_candidate].visited = true;
+        const auto cycles{vertices[best_candidate].cycles};
 
         for(auto dependee : dag[best_candidate])
         {
@@ -521,7 +591,7 @@ static std::vector<std::size_t> optimize_range(register_allocator& allocator, co
         {
             if(!vertex.visited && vertex.latency > 0)
             {
-                vertex.latency -= 1;
+                vertex.latency -= std::min(cycles, vertex.latency);
             }
         }
     }
@@ -529,11 +599,11 @@ static std::vector<std::size_t> optimize_range(register_allocator& allocator, co
     return new_order;
 }
 
-void optimize_pipeline(register_allocator& allocator)
+void optimize_pipeline(function_analyser& analyser)
 {
     std::vector<std::size_t> new_order{};
 
-    for(auto& block : allocator.blocks())
+    for(auto& block : analyser.blocks())
     {
         new_order.clear();
         new_order.reserve(block.end - block.begin_no_phi);
@@ -541,11 +611,11 @@ void optimize_pipeline(register_allocator& allocator)
         std::size_t leaf_begin{block.begin_no_phi};
         for(std::size_t i{block.begin_no_phi}; i < block.end; ++i)
         {
-            if(!allocator.values()[i].leaf)
+            if(!analyser.values()[i].leaf)
             {
                 if(i - leaf_begin > 1)
                 {
-                    auto range_new_order{optimize_range(allocator, block, leaf_begin, i)};
+                    auto range_new_order{optimize_range(analyser, block, leaf_begin, i)};
                     new_order.insert(std::end(new_order), std::begin(range_new_order), std::end(range_new_order));
                 }
 
@@ -558,7 +628,7 @@ void optimize_pipeline(register_allocator& allocator)
         if(block.end - 1 - leaf_begin > 1)
         {
             // exclude terminator
-            auto range_new_order{optimize_range(allocator, block, leaf_begin, block.end - 1)};
+            auto range_new_order{optimize_range(analyser, block, leaf_begin, block.end - 1)};
             new_order.insert(std::end(new_order), std::begin(range_new_order), std::end(range_new_order));
         }
         else
@@ -579,193 +649,13 @@ void optimize_pipeline(register_allocator& allocator)
         for(std::size_t i{1}; i < std::size(new_order); ++i)
         {
             const auto old_index{new_order[index_offset - block.begin_no_phi - i]};
-            auto current{llvm::cast<llvm::Instruction>(allocator.values()[old_index].value)};
+            auto current{llvm::cast<llvm::Instruction>(analyser.values()[old_index].value)};
             current->moveBefore(position);
             position = current;
         }
     }
 
-    allocator.perform_analysis();
-}
-
-void optimize_pipeline2(register_allocator& allocator)
-{
-    // Reorder instruction based on their latency to maximize instructions throughput
-    // Only leaf instructions can be moved anywhere between the previous and the following non leaf instruction
-    // Assign instruction to be executed on secondary instruction
-
-    std::vector<std::pair<std::size_t, std::size_t>> leaf_ranges{};
-    std::vector<std::size_t> new_indices{};
-
-    for(auto& block : allocator.blocks())
-    {
-        const auto block_begin{block.begin_no_phi};
-        const auto block_end{block.end};
-
-        leaf_ranges.clear();
-        leaf_ranges.reserve(block_end - block_begin);
-
-        std::size_t leaf_begin{block_begin};
-        for(std::size_t i{block_begin}; i < block_end; ++i)
-        {
-            if(!allocator.values()[i].leaf)
-            {
-                if(leaf_begin != i)
-                {
-                    leaf_ranges.emplace_back(leaf_begin, i);
-                }
-
-                leaf_begin = i + 1;
-            }
-        }
-
-        if(leaf_begin != block_end)
-        {
-            leaf_ranges.emplace_back(leaf_begin, block_end);
-        }
-
-        // generate initial indices map (identity)
-        new_indices.clear();
-        new_indices.resize(block_end - block_begin);
-        std::iota(std::begin(new_indices), std::end(new_indices), block_begin);
-
-        // old_index -> new_index
-        const auto index_of = [&new_indices, offset = block_begin](std::size_t old_index)
-        {
-            return new_indices[old_index - offset];
-        };
-
-        const auto old_index_of = [&new_indices, offset = block_begin](std::size_t new_index)
-        {
-            const auto it{std::find(std::begin(new_indices), std::end(new_indices), new_index)};
-            assert(it != std::end(new_indices));
-
-            return offset + std::distance(std::begin(new_indices), it);
-        };
-
-        for(const auto& range : leaf_ranges)
-        {
-            static constexpr std::size_t max_passes{16};
-            for(std::size_t pass{}; pass < max_passes; ++pass)
-            {
-                for(std::size_t i{range.first}; i < range.second; ++i)
-                {
-                    const auto value_index{index_of(i)};
-                    if(value_index == block_begin)
-                    {
-                        continue; // first instruction can not be moved before
-                    }
-
-                    auto& value{allocator.values()[value_index]};
-                    if (llvm::isa<llvm::PHINode>(value.value))
-                    {
-                        continue; // phi nodes can not be moved
-                    }
-
-                    std::size_t closest_user_distance{std::numeric_limits<std::size_t>::max()};
-                    for(std::size_t new_index{value_index + 1}; new_index < range.second; ++new_index)
-                    {
-                        const auto user_index{old_index_of(new_index)};
-                        if(value.usage[user_index])
-                        {
-                            closest_user_distance = std::min(closest_user_distance, new_index - value_index);
-                        }
-                    }
-
-                    if(closest_user_distance == std::numeric_limits<std::size_t>::max())
-                    {
-                        continue; // not used (forward) in this block, don't move ignore
-                    }
-
-                    auto instruction{llvm::cast<llvm::Instruction>(value.value)};
-                    // IMPROVEMENT: assume latency of 3 cycles for all instructions, change it to the real per instruction latency
-                    std::size_t latency{4};
-
-                    if(closest_user_distance < latency) // try to improve distance with closest user
-                    {
-                        std::size_t closest_dependency_distance{latency};
-
-                        // check if we can move it before (i.e. does not depends of something defined just before)
-                        // broken for groups (phi node for sure)
-                        // because phi nodes "return" is a distinc variable but the same register at the end which cases wrong optimization
-                        // propagate all group usage/user ?
-                        for(const llvm::Use& operand : instruction->operands())
-                        {
-                            // check for main value
-                            const auto operand_old_index{allocator.index_of(operand.get())};
-                            if(operand_old_index == register_allocator::invalid_index || operand_old_index < range.first || operand_old_index >= range.second)
-                            {
-                                continue;
-                            }
-
-                            const auto operand_index{index_of(operand_old_index)};
-                            if(range.first <= operand_index && operand_index < value_index)
-                            {
-                                closest_dependency_distance = std::min(closest_dependency_distance, value_index - operand_index);
-                            }
-                        }
-
-                        if(value.group != register_allocator::no_group)
-                        {
-                            const auto& group{allocator.groups()[value.group]};
-
-                            for(auto member : group.members)
-                            {
-                                if(!llvm::isa<llvm::PHINode>(member))
-                                {
-                                    continue; // ignore non phi node as they will never be placed before definition
-                                }
-
-                                const auto phi_index{allocator.index_of(member)};
-                                const auto phi_info{allocator.info_of(member)};
-                                if(phi_info.block != allocator.index_of(block))
-                                {
-                                    continue; // not a "loop" phi node
-                                }
-
-                                std::size_t furthest_phi_user_index{0};
-                                for(std::size_t j{block_begin}; j < value_index; ++j)
-                                {
-                                    const auto user_index{index_of(j)};
-                                    if(phi_info.usage[user_index])
-                                    {
-                                        furthest_phi_user_index = std::max(furthest_phi_user_index, user_index);
-                                    }
-                                }
-                            
-                                closest_dependency_distance = std::min(closest_dependency_distance, value_index - furthest_phi_user_index);
-                            }
-                        }
-
-                        if(closest_dependency_distance > value_index - block_begin)
-                        {
-                            closest_dependency_distance = value_index - block_begin; // can not go further than the block beginning
-                        }
-
-                        if(closest_dependency_distance > 1)
-                        {
-                            // move value `closest_dependency_distance` further from its closest user
-                            closest_dependency_distance -= 1; // don't move it to actual position of closest dependency
-                            const auto new_position{std::max(block_begin, value_index - closest_dependency_distance)};
-
-                            for(auto& index : new_indices)
-                            {
-                                if(index >= new_position && index < value_index)
-                                {
-                                    ++index;
-                                }
-                            }
-
-                            new_indices[i - block_begin] = new_position;
-                        }
-                    }
-                }
-            }
-        }
-
-    }
-
-    allocator.perform_analysis();
+    analyser.perform_analysis();
 }
 
 }

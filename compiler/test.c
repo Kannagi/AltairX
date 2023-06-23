@@ -67,6 +67,11 @@ uint64_t testmove(uint64_t i)
     return i + 184467447091478ull;
 }
 
+int32_t cmove(int32_t left, int32_t right)
+{
+    return left < right ? left : right;
+}
+
 int32_t bar(int32_t a, int32_t b, int32_t c, int32_t d);
 int32_t bar(int32_t a, int32_t b, int32_t c, int32_t d)
 {
@@ -214,14 +219,59 @@ int* external_func_user(int* array, int* end)
 {
     while(array != end)
     {
-        int temp = external_func(array[0]);
-        array[0] = array[0] * temp;
-        array[0] = external_func(array[0] * 2);
+        int temp = external_func(*array);
+        *array = *array * temp;
+        *array = external_func(*array * 2);
 
         array++;
     }
 
     return array;
+}
+
+int use_arg_at_other_pos(int first, int second)
+{
+    return external_func(second);
+}
+
+uint32_t lots_of_args(uint32_t* restrict array, size_t size, uint32_t a, uint32_t b, uint32_t c, uint32_t d, uint32_t e, uint32_t f, uint32_t g, uint32_t h);
+uint32_t lots_of_args(uint32_t* restrict array, size_t size, uint32_t a, uint32_t b, uint32_t c, uint32_t d, uint32_t e, uint32_t f, uint32_t g, uint32_t h)
+{
+    uint32_t output = 0;
+
+    for(size_t i = 0; i < size; ++i)
+    {
+        output += array[i] + a + b;
+        output -= array[i] - c + d;
+        output -= external_func(output);
+        output -= array[i] + e - f; 
+        output += array[i] - g + h;
+    }
+
+    return output;
+}
+
+void loading(int* ptr, size_t size);
+void loading(int* ptr, size_t size)
+{
+    for(size_t i = 0; i < size; ++i)
+    {
+        ptr[i] += 5;
+    }
+}
+
+int return_non_first_arg(int first, int second);
+int return_non_first_arg(int first, int second)
+{
+    return second;
+}
+
+int callee(int i);
+
+int caller(int i);
+int caller(int i)
+{
+    return callee(i) + 5;
 }
 
 int main()

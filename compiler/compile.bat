@@ -1,0 +1,1 @@
+clang -O3 --target=x86_64-pc-windows-msvc -fno-vectorize -fno-unroll-loops -fno-optimize-sibling-calls -S -emit-llvm test.c 

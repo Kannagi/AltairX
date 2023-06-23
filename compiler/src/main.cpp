@@ -17,6 +17,7 @@
 
 #include "utilities.hpp"
 #include "early_transforms.hpp"
+#include "function_analyser.hpp"
 #include "mid_transforms.hpp"
 #include "late_transforms.hpp"
 #include "register_allocator.hpp"
@@ -143,7 +144,7 @@ static void generate_asm(llvm::Module& module, const std::string& filename, cons
     {
         if(function.isDeclaration())
         {
-            return;
+            continue;
         }
 
         // Early transforms
@@ -153,19 +154,22 @@ static void generate_asm(llvm::Module& module, const std::string& filename, cons
         ar::early_transforms::reorder_blocks(module, function);
         ar::early_transforms::invert_branch_condition(module, function);
 
-        ar::register_allocator allocator{module, function};
-        allocator.perform_analysis(); // initial analysis
+        ar::function_analyser analyser{module, function};
+        analyser.perform_analysis(); // initial analysis
 
         // Mid transforms
-        ar::mid_transforms::insert_move_for_constant(allocator);
-        ar::mid_transforms::insert_move_for_global_load(allocator);
+        ar::mid_transforms::insert_move_for_constant(analyser);
+        ar::mid_transforms::insert_move_for_global_load(analyser);
+        ar::mid_transforms::fix_conflicting_phi_nodes(analyser);
+        ar::mid_transforms::resolve_conflicting_affinities(analyser);
 
         if(options.optimize)
         {
             write_module(module, filename + ".noopt");
-            ar::mid_transforms::optimize_pipeline(allocator);
+            ar::mid_transforms::optimize_pipeline(analyser);
         }
 
+        ar::register_allocator allocator{analyser};
         allocator.perform_register_allocation();
 
         // Late transforms
@@ -211,6 +215,10 @@ static ar::compiler_options parse_args(int argc, char* argv[])
         else if(argv[i] == "--output-noop-instructions"sv)
         {
             output.output_noop_instructions = true;
+        }
+        else if(argv[i] == "--pretty-registers"sv)
+        {
+            output.pretty_registers = true;
         }
         else
         {
@@ -266,7 +274,7 @@ int main(int argc, char* argv[])
     }
     catch(...)
     {
-        std::cerr << "Compilation error: Undefined error." << std::endl;
+        std::cerr << "Compilation error: Unknown error." << std::endl;
         return 1;
     }
 }
