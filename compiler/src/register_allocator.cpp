@@ -11,6 +11,8 @@
 #include "intrinsic.hpp"
 #include "utilities.hpp"
 
+#include <fstream>
+
 namespace ar
 {
 
@@ -24,7 +26,6 @@ register_allocator::register_allocator(function_analyser& analyser)
 
 void register_allocator::perform_register_allocation()
 {
-    setup_allocations();
     compute_spill_weight();
     allocate_registers();
 }
@@ -155,6 +156,8 @@ void register_allocator::insert_queue(std::size_t value_index)
 
 void register_allocator::assign_group_register(const group_info& group)
 {
+    // If a member is an ret, all group members must share its register
+    // TODO: increase checks
     if(group.ret && group.leaf)
     {
         for(llvm::Value* member : group.members)
@@ -177,12 +180,13 @@ void register_allocator::assign_group_register(const group_info& group)
             auto& affinity{value.affinities[0]};
 
             // If a member is an argument, all group members must share its register
-            if(affinity.affinity == register_affinity::argument && affinity.default_register < args_registers_end)
+            // TODO: increase checks
+            if(affinity.affinity == register_affinity::argument && affinity.default_register < stack_args_count)
             {
                 for(llvm::Value* member2 : group.members)
                 {
                     auto& value2{m_analyser.info_of(member2)};
-                    value.alloc.register_index = affinity.default_register;
+                    value.alloc.register_index = args_registers_begin + affinity.default_register;
                     value.alloc.spill_weight = unspillable;
 
                     m_registers[affinity.default_register].lifetime.coalesce(value2.lifetime);
@@ -193,6 +197,7 @@ void register_allocator::assign_group_register(const group_info& group)
         }
     }
 
+    // Generic group (= not special register)
     const std::size_t begin{group.leaf ? volatile_registers_begin : non_volatile_registers_begin};
     const std::size_t end{group.leaf ? volatile_registers_end : non_volatile_registers_end};
 
@@ -293,7 +298,7 @@ void register_allocator::allocate_registers()
                 //if the number of call is == 1 (call in loops count as 8 calls) spill around the call ?
                 
                 //Current: copy it in a non volatile register
-                auto stable{insert_copy_intrinsic(m_module, info.value, nullptr)};
+                auto stable{insert_copy_intrinsic(m_module, info.value, m_analyser.blocks()[0].block->getFirstNonPHI())};
                 info.value->replaceAllUsesWith(stable);
 
                 // replace all uses will also affect stable, so we force it back to the right value
@@ -326,96 +331,81 @@ void register_allocator::allocate_registers()
 
     const llvm::DataLayout& data_layout{m_module.getDataLayout()};
     
-    // Put the right register for arguments this function argument
-    for(std::size_t i{}; i < std::min(m_function.arg_size(), std::size_t{8}); ++i)
-    {
-        auto& value{m_analyser.values()[i]};
-
-        if(value.leaf)
-        {
-            value.alloc.register_index = args_registers_begin + i;
-            m_registers[value.alloc.register_index].lifetime.coalesce(value.lifetime);
-        }
-    }
-
-    //Other args are on the stack
     std::uint64_t arg_position{};
-    for(std::size_t i{8}; i < m_function.arg_size(); ++i)
-    {
-        auto& value{m_analyser.values()[i]};
-
-        //register stack entries, insert load later, where needed
-        auto arg_type{value.value->getType()};
-        auto arg_align{data_layout.getABITypeAlign(arg_type)};
-
-        stack_entry entry{};
-        entry.type = entry_type::argument;
-        entry.size = data_layout.getTypeAllocSize(arg_type);
-        entry.alignment = arg_align.value();
-        entry.position = arg_position + llvm::offsetToAlignment(arg_position, arg_align);
-        entry.value = value.value;
-        m_stack.emplace_back(entry);
-
-        arg_position = entry.position;
-    }
-
-    // assign the ret value to the ret register
-    for(std::size_t i{}; i < std::size(m_analyser.values()); ++i)
-    {
-        auto& value{m_analyser.values()[i]};
-
-        if(value.affinities[0].affinity == register_affinity::ret)
-        {
-            value.alloc.register_index = ret_register;
-            value.alloc.spill_weight = unspillable;
-            m_registers[value.alloc.register_index].lifetime.coalesce(value.lifetime);
-        }
-    }
-
     // assign callees arguments register
     for(std::size_t i{}; i < std::size(m_analyser.values()); ++i)
     {
         auto& value{m_analyser.values()[i]};
         auto& affinity{value.affinities[0]};
 
-        if(affinity.affinity == register_affinity::callee_argument)
+        /*
+        generic,        
+        none,           
+        argument,       
+        spill,          
+        flags,          
+        ret,            
+        callee_argument,
+        callee_ret,     
+        accumulator,    
+        bypass,         
+        */
+
+        switch(affinity.affinity)
         {
-            if(affinity.default_register < stack_args_count)
+            case register_affinity::argument: [[fallthrough]];
+            case register_affinity::callee_argument:
             {
-                value.alloc.register_index = args_registers_begin + affinity.default_register;
+                if(affinity.default_register < stack_args_count)
+                {
+                    value.alloc.register_index = args_registers_begin + affinity.default_register;
+                    value.alloc.spill_weight = unspillable;
+                    m_registers[value.alloc.register_index].lifetime.coalesce(value.lifetime);
+                }
+                else
+                {
+                    //register stack entries, insert load later, where needed
+                    //auto arg_type{value.value->getType()};
+                    //auto arg_align{data_layout.getABITypeAlign(arg_type)};
+                    //
+                    //stack_entry entry{};
+                    //entry.type = entry_type::argument;
+                    //entry.size = data_layout.getTypeAllocSize(arg_type);
+                    //entry.alignment = arg_align.value();
+                    //entry.position = arg_position + llvm::offsetToAlignment(arg_position, arg_align);
+                    //entry.value = value.value;
+                    //m_stack.emplace_back(entry);
+                    //
+                    //arg_position = entry.position;
+                }
+
+                break;
+            }
+
+            case register_affinity::flags:
+            {
+                value.alloc.register_index = flags_register;
+                value.alloc.spill_weight = unspillable;
+                assert(!m_registers[value.alloc.register_index].lifetime.overlap(value.lifetime) && "Flags register uses must not overlap");
+                m_registers[value.alloc.register_index].lifetime.coalesce(value.lifetime);
+                break;
+            }
+
+            case register_affinity::ret: [[fallthrough]];
+            case register_affinity::callee_ret:
+            {
+                value.alloc.register_index = ret_register;
                 value.alloc.spill_weight = unspillable;
                 m_registers[value.alloc.register_index].lifetime.coalesce(value.lifetime);
+                break;
             }
-            else // place on stack
-            {
-                ////register stack entries, insert load later, where needed
-                //auto arg_type{m_values[i].value->getType()};
-                //auto arg_align{data_layout.getABITypeAlign(arg_type)};
-                //
-                //stack_entry entry{};
-                //entry.type = entry_type::argument;
-                //entry.size = data_layout.getTypeAllocSize(arg_type);
-                //entry.alignment = arg_align.value();
-                //entry.position = arg_position + llvm::offsetToAlignment(arg_position, arg_align);
-                //entry.value = m_values[i].value;
-                //m_stack.emplace_back(entry);
-                //
-                //arg_position = entry.position;
-            }
-        }
-        else if(affinity.affinity == register_affinity::callee_ret)
-        {
-            if(affinity.default_register < stack_args_count)
-            {
-                value.alloc.register_index = ret_register + affinity.default_register;
-                value.alloc.spill_weight = unspillable;
-                m_registers[value.alloc.register_index].lifetime.coalesce(value.lifetime);
-            }
-            else
-            {
-                // gather from stack ?
-                // Depends if we enable multiple return values
-            }
+
+            case register_affinity::accumulator: [[fallthrough]];
+            case register_affinity::bypass:
+                break;
+
+            default:
+                break;
         }
     }
 

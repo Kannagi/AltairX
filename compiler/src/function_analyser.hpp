@@ -41,7 +41,7 @@ enum class register_affinity : std::uint32_t
 {
     generic,         // This value is a variable with no special purpose
     none,            // This is a void returning value
-    argument,        // This value is a function argument (for this function)
+    argument,        // This value is a function argument (of this function)
     spill,           // This value is spilled, must not be assigned to any register
     flags,           // This value is related to branching, and uses a special and unique register: FR
     ret,             // This value is part of the returned values (for this function)

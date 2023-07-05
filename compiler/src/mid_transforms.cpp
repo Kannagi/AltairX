@@ -348,7 +348,7 @@ void resolve_conflicting_affinities(function_analyser& analyser)
     {
         const auto& first{value.affinities[0]};
         
-        for(std::size_t i{}; i < value.affinities.size(); ++i)
+        for(std::size_t i{1}; i < value.affinities.size(); ++i)
         {
             const auto& second{value.affinities[i]};
 

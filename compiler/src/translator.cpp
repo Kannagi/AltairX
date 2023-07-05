@@ -97,8 +97,9 @@ namespace ar
 {
 
 function_translator::function_translator(const register_allocator& allocator, const compiler_options& options)
-:m_module{allocator.module()}
-,m_function{allocator.function()}
+:m_module{allocator.analyser().module()}
+,m_function{allocator.analyser().function()}
+,m_analyser{allocator.analyser()}
 ,m_allocator{allocator}
 ,m_options{options}
 {
@@ -113,7 +114,7 @@ std::string function_translator::translate()
     const auto end{m_function.end()};
     for(auto it{m_function.begin()}; it != end; ++it)
     {
-        const auto& block{m_allocator.info_of(&(*it))};
+        const auto& block{m_analyser.info_of(&(*it))};
 
         const llvm::BasicBlock* next_block{};
         if(auto next{it}; ++next != end)
@@ -128,10 +129,10 @@ std::string function_translator::translate()
 
         if(block_size == 1) // only a terminator
         {
-            auto branch{llvm::dyn_cast<llvm::BranchInst>(m_allocator.values()[block.begin_no_phi].value)};
+            auto branch{llvm::dyn_cast<llvm::BranchInst>(m_analyser.values()[block.begin_no_phi].value)};
             if(!branch || branch->isConditional() || branch->getSuccessor(0) != next_block)
             {
-                translate_instruction(m_allocator.values()[block.begin_no_phi]);
+                translate_instruction(m_analyser.values()[block.begin_no_phi]);
                 delay_slot();
             }
         }
@@ -141,26 +142,26 @@ std::string function_translator::translate()
             {
                 for(std::size_t i{block.begin_no_phi}; i < block.end - 2; ++i)
                 {
-                    translate_instruction(m_allocator.values()[i]);
+                    translate_instruction(m_analyser.values()[i]);
                 }
             }
 
             // Swap instruction to make the last instruction run during delay slot only if it is not a cmp
-            if(!llvm::isa<llvm::CmpInst>(m_allocator.values()[block.end - 2].value))
+            if(!llvm::isa<llvm::CmpInst>(m_analyser.values()[block.end - 2].value))
             {
                 // Only branch is necessary
-                auto branch{llvm::dyn_cast<llvm::BranchInst>(m_allocator.values()[block.end - 1].value)};
+                auto branch{llvm::dyn_cast<llvm::BranchInst>(m_analyser.values()[block.end - 1].value)};
                 if(!branch || branch->isConditional() || branch->getSuccessor(0) != next_block)
                 {
-                    translate_instruction(m_allocator.values()[block.end - 1]);
+                    translate_instruction(m_analyser.values()[block.end - 1]);
                 }
 
-                translate_instruction(m_allocator.values()[block.end - 2]);
+                translate_instruction(m_analyser.values()[block.end - 2]);
             }
             else
             {
-                translate_instruction(m_allocator.values()[block.end - 2]);
-                translate_instruction(m_allocator.values()[block.end - 1]);
+                translate_instruction(m_analyser.values()[block.end - 2]);
+                translate_instruction(m_analyser.values()[block.end - 1]);
                 delay_slot();
             }
 
@@ -186,10 +187,10 @@ void function_translator::delay_slot()
 
 void function_translator::branch_to(const llvm::BasicBlock* block)
 {
-    m_asm_code << indent << "bra " << get_block_label(m_allocator.info_of(block)) << std::endl;
+    m_asm_code << indent << "bra " << get_block_label(m_analyser.info_of(block)) << std::endl;
 }
 
-void function_translator::translate_instruction(const register_allocator::value_info& instruction)
+void function_translator::translate_instruction(const value_info& instruction)
 {
     //Assumed for most op:
     //  - only the second operator may be a constant
@@ -311,13 +312,13 @@ void function_translator::translate_instruction(const register_allocator::value_
         {
             m_asm_code << indent;
             m_asm_code << translate_instruction(branch, llvm::dyn_cast<llvm::CmpInst>(branch->getCondition())) << " ";
-            m_asm_code << get_block_label(m_allocator.info_of(branch->getSuccessor(0))) << std::endl;
+            m_asm_code << get_block_label(m_analyser.info_of(branch->getSuccessor(0))) << std::endl;
         }
         else
         {
             m_asm_code << indent;
             m_asm_code << translate_instruction(branch, nullptr) << " ";
-            m_asm_code << get_block_label(m_allocator.info_of(branch->getSuccessor(0))) << std::endl;
+            m_asm_code << get_block_label(m_analyser.info_of(branch->getSuccessor(0))) << std::endl;
         }
     }
     else if(llvm::isa<llvm::CallInst>(instruction.value))
@@ -388,7 +389,7 @@ void function_translator::translate_intrinsic(llvm::CallInst* call)
         {
             constexpr std::array shift_name{"b", "w", "l", "q"};
 
-            assert(m_allocator.info_of(call).register_index == m_allocator.info_of(call->getArgOperand(0)).register_index);
+            assert(m_analyser.info_of(call).alloc.register_index == m_analyser.info_of(call->getArgOperand(0)).alloc.register_index);
 
             const auto shift_value{llvm::cast<llvm::ConstantInt>(call->getArgOperand(2))->getZExtValue()};
             m_asm_code << indent;
@@ -640,7 +641,7 @@ std::string function_translator::translate_instruction(const llvm::BranchInst* b
     }
 }
 
-std::string function_translator::get_block_label(const register_allocator::block_info& block)
+std::string function_translator::get_block_label(const block_info& block)
 {
     return m_function.getName().str() + "_" + get_value_label(*block.block);
 }
@@ -652,7 +653,7 @@ std::string function_translator::get_operand(llvm::Value* value)
         return get_value_label(*global);
     }
 
-    const auto register_index{m_allocator.info_of(value).register_index};
+    const auto register_index{m_analyser.info_of(value).alloc.register_index};
     
     if(m_options.pretty_registers)
     {

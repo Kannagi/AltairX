@@ -161,6 +161,7 @@ static void generate_asm(llvm::Module& module, const std::string& filename, cons
         ar::mid_transforms::insert_move_for_constant(analyser);
         ar::mid_transforms::insert_move_for_global_load(analyser);
         ar::mid_transforms::fix_conflicting_phi_nodes(analyser);
+
         ar::mid_transforms::resolve_conflicting_affinities(analyser);
 
         if(options.optimize)
@@ -175,9 +176,9 @@ static void generate_asm(llvm::Module& module, const std::string& filename, cons
         // Late transforms
         // ...
 
-        if(options.verbose)
+        if(options.verbose) // print right before translation
         {
-            allocator.print();
+            analyser.print();
         }
 
         ar::function_translator translator{allocator, options};

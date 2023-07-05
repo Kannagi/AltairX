@@ -80,6 +80,16 @@ public:
     register_allocator& operator=(const register_allocator&) = delete;
     register_allocator& operator=(register_allocator&&) = delete;
 
+    function_analyser& analyser() noexcept
+    {
+        return m_analyser;
+    }
+
+    const function_analyser& analyser() const noexcept
+    {
+        return m_analyser;
+    }
+
     const std::vector<stack_entry>& stack_entries() const noexcept
     {
         return m_stack;
@@ -115,7 +125,6 @@ public:
     void perform_register_allocation();
 
 private:
-    void setup_allocations();
     // Give each value (if applicable) a spill weight
     void compute_spill_weight(std::size_t index);
     void compute_spill_weight();

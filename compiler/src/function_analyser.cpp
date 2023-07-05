@@ -141,27 +141,36 @@ void function_analyser::print() const
         std::cout << indent(1) << std::setw(4) << ar::get_value_label(*info.value) << " | ";
         std::cout << std::setw(4) << index_of(info) << " | ";
         std::cout << std::setw(8) << info.name << " | ";
-        std::cout << std::setw(16) << to_string(info.affinities[0].affinity) << " | ";
 
-        //if(info.register_index == std::numeric_limits<std::size_t>::max())
-        //{
-        //    std::cout << "void | ";
-        //    std::cout << (info.leaf ? "    leaf" : "not leaf") << " | ";
-        //}
-        //else if(info.register_index == flags_register)
-        //{
-        //    std::cout << "  BR | ";
-        //    std::cout << "    leaf | ";
-        //}
-        //else
-        //{
-        //    std::cout << std::setw(4) << info.register_index << " | ";
-        //    std::cout << (info.leaf ? "    leaf" : "not leaf") << " | ";
-        //}
-
-        for(auto&& range : info.lifetime)
+        if(info.alloc.register_index != no_register)
         {
-            std::cout << "[" << std::setw(3) << range.begin << "; " << std::setw(3) << range.end << "[ ";
+            if(info.alloc.register_index == 64)
+            {
+                std::cout << "BR | ";
+                std::cout << "    leaf | ";
+            }
+            else
+            {
+                std::cout << std::setw(2) << info.alloc.register_index << " | ";
+                std::cout << (info.leaf ? "    leaf" : "not leaf") << " | ";
+            }
+
+            for(auto&& range : info.lifetime)
+            {
+                std::cout << "[" << std::setw(3) << range.begin << "; " << std::setw(3) << range.end << "[ ";
+            }
+
+            if(std::empty(info.lifetime))
+            {
+                std::cout << std::setw(10) << ' ';
+            }
+
+            std::cout << "| ";
+
+            for(auto&& affinity : info.affinities)
+            {
+                std::cout << "(" << to_string(affinity.affinity) << ": " << affinity.default_register << ") ";
+            }
         }
 
         std::cout << '\n';
@@ -376,7 +385,7 @@ void function_analyser::fill_affinity(std::size_t index)
 
     const auto push_affinity = [&info](register_affinity affinity, std::uint32_t index = 0)
     {
-        info.affinities.push_back(value_register_affinity{register_affinity::argument, index});
+        info.affinities.push_back(value_register_affinity{affinity, index});
     };
 
     if(auto cmp{llvm::dyn_cast<llvm::CmpInst>(info.value)}; cmp)
@@ -417,7 +426,7 @@ void function_analyser::fill_affinity(std::size_t index)
         {
             push_affinity(register_affinity::ret);
         }
-        else if(auto call{llvm::dyn_cast<llvm::CallInst>(user)}; user)
+        else if(auto call{llvm::dyn_cast<llvm::CallInst>(user)}; call && !is_intrinsic(*call))
         {
             for(std::uint32_t i{}; i < call->arg_size(); ++i) // find usage indices
             {
