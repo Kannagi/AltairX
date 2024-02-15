@@ -1,0 +1,7 @@
+{
+  "files.exclude": {
+    "old/": true,
+    "obj/": true,
+    "bin/": true,
+  }
+}

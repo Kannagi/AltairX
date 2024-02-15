@@ -1,0 +1,23 @@
+{
+
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "Compile",
+            "type": "shell",
+            "command": "rmake && bash .vscode/compile.sh",
+            "windows": {
+                "command": ""
+              },
+        },
+
+        {
+            "label": "Execute",
+            "type": "shell",
+            "command": "cd bin && bash .vscode/execute.sh",
+            "windows": {
+                "command": ""
+              },
+        }
+    ]
+}
