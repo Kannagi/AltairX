@@ -1,0 +1,9 @@
+
+
+options:-asm -AltairX 
+
+
+add_file:main.egl;
+
+compiler_run:prg.bin
+

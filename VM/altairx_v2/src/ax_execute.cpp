@@ -2,6 +2,8 @@
 #include <string.h>
 #include <math.h>
 #include <stdint.h>
+#include <vector>
+#include "altairx.hpp"
 
 static uint16_t FloattoHalf(float fval)
 {
@@ -86,39 +88,39 @@ static uint64_t value_immediate9(uint32_t opcode,uint64_t reg,uint32_t imm24)
 }
 
 //-----------------------
-static void __attribute__((optimize("-O2"), noinline)) AltairX::executeStore(void *reg,uint64_t offset,uint32_t size)
-{
+ __attribute__((optimize("-O2"), noinline)) void AltairX::executeStore(void *reg,uint64_t offset,uint32_t size)
+ {
     void *address = this->memorymap.wram.data();
     uint64_t mask = this->wram_mask;
 
     if(offset&MEMORY_MAP_SPM2_BEGIN)
 	{
 		address = this->memorymap.spm2.data();
-		max = this->spm2_mask; //Max 16 Mio
+		mask = this->spm2_mask; //Max 16 Mio
 	}
 	else if(offset&MEMORY_MAP_SPMT_BEGIN)
 	{
 		address = this->memorymap.spmt.data();
-		max = this->spmt_mask; //Max 16 Mio
+		mask = this->spmt_mask; //Max 16 Mio
 	}
 	else if(offset&MEMORY_MAP_ROM_BEGIN)
 	{
 		address = this->memorymap.rom.data();
-		max = this->rom_mask; //Max 16 Mio
+		mask = this->rom_mask; //Max 16 Mio
 	}
 	else if(offset&MEMORY_MAP_IO_BEGIN)
 	{
 		address = this->memorymap.io.data();
-		max = 0x7FFFF; //Max 512 Kio
-		AX_IO_Read(core,offset,reg);
+		mask = 0x7FFFF; //Max 512 Kio
+		altairx_io_read(core,offset,reg);
 	}
 	else //SPM
 	{
 		address = this->core->spm;
-		max = 0x3FFF; //Max 16 Kio
+		mask = 0x3FFF; //Max 16 Kio
 	}
 
-	offset &= max;
+	offset &= mask;
 
 	memcpy(address+offset, reg, size);
 }
@@ -132,31 +134,31 @@ __attribute__((optimize("-O2"), noinline))  void AltairX::executeLoad(void *reg,
     if(offset&MEMORY_MAP_SPM2_BEGIN)
 	{
 		address = this->memorymap.spm2.data();
-		max = this->spm2_mask; //Max 16 Mio
+		mask = this->spm2_mask; //Max 16 Mio
 	}
 	else if(offset&MEMORY_MAP_SPMT_BEGIN)
 	{
 		address = this->memorymap.spmt.data();
-		max = this->spmt_mask; //Max 16 Mio
+		mask = this->spmt_mask; //Max 16 Mio
 	}
 	else if(offset&MEMORY_MAP_ROM_BEGIN)
 	{
 		address = this->memorymap.rom.data();
-		max = this->rom_mask; //Max 16 Mio
+		mask = this->rom_mask; //Max 16 Mio
 	}
 	else if(offset&MEMORY_MAP_IO_BEGIN)
 	{
 		address = this->memorymap.io.data();
-		max = 0x7FFFF; //Max 512 Kio
-		AX_IO_Read(core,offset,reg);
+		mask = 0x7FFFF; //Max 512 Kio
+		altairx_io_write(core,offset,reg);
 	}
 	else //SPM
 	{
 		address = this->core->spm;
-		max = 0x3FFF; //Max 16 Kio
+		mask = 0x3FFF; //Max 16 Kio
 	}
 
-	offset &= max;
+	offset &= mask;
 
 	memcpy(reg, address+offset, size);
 
@@ -237,10 +239,10 @@ void AltairX::execute_unit_float(uint32_t rega,uint32_t regb,uint32_t regc,uint3
             core->freg[rega<<1] = -core->freg[regb<<1] * core->freg[regc<<1];
             break;
         case AX_EX_FPU_HTOF:
-            core->freg[rega<<1] =  = HalftoFloat(core->hreg[regb<<2]);
+            core->freg[rega<<1] = HalftoFloat(core->hreg[regb<<2]);
             break;
         case AX_EX_FPU_FTOH:
-            core->hreg[rega<<2] =  = FloattoHalf(core->freg[regb<<1]);
+            core->hreg[rega<<2] = FloattoHalf(core->freg[regb<<1]);
             break;
         case AX_EX_FPU_ITOF:
             core->freg[rega<<1] = core->fireg[regb<<1];
@@ -288,13 +290,13 @@ void AltairX::execute_unit_float(uint32_t rega,uint32_t regb,uint32_t regc,uint3
         break;
 
         case AX_EX_FPU_FMOVEI:
-            tmp = ( (opcode>>10)&0xFFFF) | (imm24<<16) ;
+            tmp = ( (this->topcode>>10)&0xFFFF) | (imm24<<16) ;
 
             memcpy(&core->freg[rega<<1], &tmp, 4);
 
             break;
         case AX_EX_FPU_FCMPI:
-            tmp = ( (opcode>>10)&0xFFFF) | (imm24<<16) ;
+            tmp = ( (this->topcode>>10)&0xFFFF) | (imm24<<16) ;
 
             memcpy(&ftmp, &tmp, 4);
 
@@ -428,10 +430,10 @@ void AltairX::execute_unit0(uint32_t rega,uint32_t regb,uint32_t regc,uint32_t u
             core->efuQd = exp(core->dreg[regb]);
             break;
         case AX_EXE_EFU_FPOW:
-            core->efuQ  = pow(core->freg[regb<<1]);
+            //core->efuQ  = powf(core->freg[regb<<1]);
             break;
         case AX_EXE_EFU_DPOW:
-            core->efuQd = pow(core->dreg[regb]);
+            //core->efuQd = pow(core->dreg[regb]);
             break;
         case AX_EXE_EFU_EMOVETO:
             core->efuQd = core->dreg[regb];
@@ -467,7 +469,7 @@ void AltairX::execute_unit0(uint32_t rega,uint32_t regb,uint32_t regc,uint32_t u
         case AX_EXE_BRU_BNE:
             tmp = (opcode>>8) | (imm24<<24);
 
-            tmp2 = core->pc&Z_MASK;
+            tmp2 = core->fr&Z_MASK;
 
             if(tmp2 != 0)
                 core->pc += tmp;
@@ -475,7 +477,7 @@ void AltairX::execute_unit0(uint32_t rega,uint32_t regb,uint32_t regc,uint32_t u
         case AX_EXE_BRU_BEQ:
             tmp = (opcode>>8) | (imm24<<24);
 
-            tmp2 = core->pc&Z_MASK;
+            tmp2 = core->fr&Z_MASK;
 
             if(tmp2 == 0)
                 core->pc += tmp;
@@ -483,7 +485,7 @@ void AltairX::execute_unit0(uint32_t rega,uint32_t regb,uint32_t regc,uint32_t u
         case AX_EXE_BRU_BL:
             tmp = (opcode>>8) | (imm24<<24);
 
-            tmp2 = core->pc&Z_MASK;
+            tmp2 = core->fr&N_MASK;
 
             if(tmp2 != 0)
                 core->pc += tmp;
@@ -491,7 +493,7 @@ void AltairX::execute_unit0(uint32_t rega,uint32_t regb,uint32_t regc,uint32_t u
         case AX_EXE_BRU_BLE:
             tmp = (opcode>>8) | (imm24<<24);
 
-            tmp2 = core->pc&Z_MASK;
+            tmp2 = core->fr&(Z_MASK|N_MASK);
 
             if(tmp2 != 0)
                 core->pc += tmp;
@@ -499,23 +501,23 @@ void AltairX::execute_unit0(uint32_t rega,uint32_t regb,uint32_t regc,uint32_t u
         case AX_EXE_BRU_BG:
             tmp = (opcode>>8) | (imm24<<24);
 
-            tmp2 = core->pc&Z_MASK;
+            tmp2 = core->fr&N_MASK;
 
-            if(tmp2 != 0)
+            if(tmp2 == 0)
                 core->pc += tmp;
             break;
         case AX_EXE_BRU_BGE:
             tmp = (opcode>>8) | (imm24<<24);
 
-            tmp2 = core->pc&Z_MASK;
+            tmp2 = core->fr&(Z_MASK|N_MASK);
 
-            if(tmp2 != 0)
+            if(tmp2 == 0)
                 core->pc += tmp;
             break;
         case AX_EXE_BRU_BLS:
             tmp = (opcode>>8) | (imm24<<24);
 
-            tmp2 = core->pc&Z_MASK;
+            tmp2 = core->fr&Z_MASK;
 
             if(tmp2 != 0)
                 core->pc += tmp;
@@ -523,7 +525,7 @@ void AltairX::execute_unit0(uint32_t rega,uint32_t regb,uint32_t regc,uint32_t u
         case AX_EXE_BRU_BLES:
             tmp = (opcode>>8) | (imm24<<24);
 
-            tmp2 = core->pc&Z_MASK;
+            tmp2 = core->fr&Z_MASK;
 
             if(tmp2 != 0)
                 core->pc += tmp;
@@ -531,7 +533,7 @@ void AltairX::execute_unit0(uint32_t rega,uint32_t regb,uint32_t regc,uint32_t u
         case AX_EXE_BRU_BGS:
             tmp = (opcode>>8) | (imm24<<24);
 
-            tmp2 = core->pc&Z_MASK;
+            tmp2 = core->fr&Z_MASK;
 
             if(tmp2 != 0)
                 core->pc += tmp;
@@ -539,7 +541,7 @@ void AltairX::execute_unit0(uint32_t rega,uint32_t regb,uint32_t regc,uint32_t u
         case AX_EXE_BRU_BGES:
             tmp = (opcode>>8) | (imm24<<24);
 
-            tmp2 = core->pc&Z_MASK;
+            tmp2 = core->fr&Z_MASK;
 
             if(tmp2 != 0)
                 core->pc += tmp;
@@ -551,10 +553,10 @@ void AltairX::execute_unit0(uint32_t rega,uint32_t regb,uint32_t regc,uint32_t u
         case AX_EXE_BRU_LOOP:
             tmp = (opcode>>8) | (imm24<<24);
 
-            core->lc--;
-
             if(core->lc == 0)
                 core->pc += tmp;
+            else
+                core->lc--;
             break;
         case AX_EXE_BRU_JUMP:
             tmp = opcode>>8;
@@ -565,7 +567,10 @@ void AltairX::execute_unit0(uint32_t rega,uint32_t regb,uint32_t regc,uint32_t u
             core->lr = core->pc;
             core->pc = tmp | (imm24<<24);
             break;
-        case AX_EXE_BRU_JSWT:
+        case AX_EXE_BRU_CALLR:
+            tmp = opcode>>8;
+            core->lr = core->pc;
+            core->pc += tmp | (imm24<<24);
             break;
         case AX_EXE_BRU_OTHER:
             tmp = opcode>>8;
@@ -591,11 +596,13 @@ void AltairX::execute_unit0(uint32_t rega,uint32_t regb,uint32_t regc,uint32_t u
                 case 4:
                     core->ir = core->pc;
                     core->pc = 0x80000000;
+                    core->syscall = 1;
                 break;
 
                 case 5:
                     core->ir = core->pc;
-                    core->pc = 0x80000010;
+                    core->pc = 0x80000002;
+                    core->syscall = 2;
                 break;
 
             }
@@ -649,7 +656,7 @@ void AltairX::execute_unit(uint32_t rega,uint32_t regb,uint32_t regc,uint32_t un
 
         case AX_EXE_ALU_MOVEUP:
 			tmp = (opcode>>8)&0x3FFFF;
-			core->ireg[rega] = (tmp<<32) | (imm24<<42);
+			core->ireg[rega] = (tmp<<32) | ((uint64_t)imm24<<42);
 		break;
 
         case AX_EXE_ALU_SEXT:
@@ -676,7 +683,19 @@ void AltairX::execute_unit(uint32_t rega,uint32_t regb,uint32_t regc,uint32_t un
 
 
         case AX_EXE_ALU_CMP:
-            // Code pour AX_EXE_ALU_CMP
+            tmp = core->ireg[regb] - core->ireg[regc];
+
+            if(tmp == 0)
+                core->fr |= Z_MASK;
+            else
+                core->fr &= 0xFFFFFFFF-Z_MASK;
+
+            if(tmp & 0x8000'0000'0000'0000)
+                core->fr |= N_MASK;
+            else
+                core->fr &= 0xFFFFFFFF-N_MASK;
+
+
             break;
         case AX_EXE_ALU_TEST:
             // Code pour AX_EXE_ALU_TEST
@@ -685,7 +704,7 @@ void AltairX::execute_unit(uint32_t rega,uint32_t regb,uint32_t regc,uint32_t un
             // Code pour AX_EXE_ALU_TESTFR
             break;
 
-        case CMPSWT:
+        case AX_EXE_ALU_CMPBIT:
             break;
 		
 
@@ -727,42 +746,63 @@ void AltairX::execute_unit(uint32_t rega,uint32_t regb,uint32_t regc,uint32_t un
         case AX_EXE_ALU_SE:
             tmp = value_immediate9(opcode,core->ireg[regc],imm24);
             if(core->ireg[regb] == tmp)
+            {
                 core->ireg[rega] = 1;
+            }
             else
+            {
                 core->ireg[rega] = 0;
+            }
         break;
 
         case AX_EXE_ALU_SEN:
             tmp = value_immediate9(opcode,core->ireg[regc],imm24);
             if(core->ireg[regb] != tmp)
+            {
                 core->ireg[rega] = 1;
+            }
             else
+            {
                 core->ireg[rega] = 0;
+            }
         break;
 
         case AX_EXE_ALU_SLTS:
 			tmp = value_immediate9(opcode,core->ireg[regc],imm24);
             if((int64_t)core->ireg[regb] < (int64_t)tmp)
+            {
                 core->ireg[rega] = 1;
+            }
             else
+            {
                 core->ireg[rega] = 0;
+            }
+                
 		break;
 
 		case AX_EXE_ALU_SLTU:
 			tmp = value_immediate9(opcode,core->ireg[regc],imm24);
             if(core->ireg[regb] < tmp)
+            {
                 core->ireg[rega] = 1;
+            }
             else
+            {
                 core->ireg[rega] = 0;
+            }
 		break;
 
 
         case AX_EXE_ALU_SAND:
             tmp = value_immediate9(opcode,core->ireg[regc],imm24);
             if(core->ireg[regb] & tmp)
+            {
                 core->ireg[rega] = 1;
+            }
             else
+            {
                 core->ireg[rega] = 0;
+            }
         break;
 
         case AX_EXE_ALU_CMOVE:
@@ -782,22 +822,22 @@ void AltairX::execute_unit(uint32_t rega,uint32_t regb,uint32_t regc,uint32_t un
         case AX_EXE_LSU_LD:
             tmp2 = ((opcode2>>11)&7);
             tmp = core->ireg[regb] + (core->ireg[regc]<< tmp2);
-            executeLoad(core->ireg[rega],tmp,1<<size);
+            executeLoad((void *)&core->ireg[rega],tmp,1<<size);
             break;
         case AX_EXE_LSU_ST:
             tmp2 = ((opcode2>>11)&7);
             tmp = core->ireg[regb] + (core->ireg[regc]<< tmp2);
-            executeStore(core->ireg[rega],tmp,1<<size);
+            executeStore((void *)&core->ireg[rega],tmp,1<<size);
             break;
         case AX_EXE_LSU_FLD:
             tmp2 = ((opcode2>>11)&7);
             tmp = core->ireg[regb] + (core->ireg[regc]<< tmp2);
-            executeLoad(core->dreg[rega],tmp,1<<size);
+            executeLoad((void *)&core->dreg[rega],tmp,1<<size);
             break;
         case AX_EXE_LSU_FST:
             tmp2 = ((opcode2>>11)&7);
             tmp = core->ireg[regb] + (core->ireg[regc]<< tmp2);
-            executeStore(core->dreg[rega],tmp,1<<size);
+            executeStore((void *)&core->dreg[rega],tmp,1<<size);
             break;
 
         case AX_EXE_LSU_LDI:
@@ -805,49 +845,49 @@ void AltairX::execute_unit(uint32_t rega,uint32_t regb,uint32_t regc,uint32_t un
             if(tmp2&0x200)
                 tmp2 |= 0xFFFFFFFFFFFFFC00ull;
             tmp = core->ireg[regb] + (tmp2 ^ (imm24<<9));
-            executeLoad(core->ireg[rega],tmp,1<<size);
+            executeLoad((void *)&core->ireg[rega],tmp,1<<size);
             break;
         case AX_EXE_LSU_STI:
             tmp2 = ((opcode2>>10)&0x3FF);
             if(tmp2&0x200)
                 tmp2 |= 0xFFFFFFFFFFFFFC00ull;
             tmp = core->ireg[regb] + (tmp2 ^ (imm24<<9));
-            executeStore(core->ireg[rega],tmp,1<<size);
+            executeStore((void *)&core->ireg[rega],tmp,1<<size);
             break;
         case AX_EXE_LSU_FLDI:
             tmp2 = ((opcode2>>10)&0x3FF);
             if(tmp2&0x200)
                 tmp2 |= 0xFFFFFFFFFFFFFC00ull;
             tmp = core->ireg[regb] + (tmp2 ^ (imm24<<9));
-            executeLoad(core->dreg[rega],tmp,1<<size);
+            executeLoad((void *)&core->dreg[rega],tmp,1<<size);
             break;
         case AX_EXE_LSU_FSTI:
             tmp2 = ((opcode2>>10)&0x3FF);
             if(tmp2&0x200)
                 tmp2 |= 0xFFFFFFFFFFFFFC00ull;
             tmp = core->ireg[regb] + (tmp2 ^ (imm24<<9));
-            executeStore(core->dreg[rega],tmp,1<<size);
+            executeStore((void *)&(core->dreg[rega]),tmp,1<<size);
             break;
 
         case AX_EXE_LSU_LDSP:
             tmp2 = ((opcode2>>10)&0xFFFF);
             tmp = core->ireg[0] + (tmp2 ^ (imm24<<16));
-            executeLoad(core->ireg[rega],tmp,1<<size);
+            executeLoad((void *)&(core->ireg[rega]),tmp,1<<size);
             break;
         case AX_EXE_LSU_STSP:
             tmp2 = ((opcode2>>10)&0xFFFF);
             tmp = core->ireg[0] + (tmp2 ^ (imm24<<16));
-            executeStore(core->ireg[rega],tmp,1<<size);
+            executeStore((void *)&(core->ireg[rega]),tmp,1<<size);
             break;
         case AX_EXE_LSU_FLDSP:
             tmp2 = ((opcode2>>10)&0xFFFF);
             tmp = core->ireg[0] + (tmp2 ^ (imm24<<16));
-            executeLoad(core->dreg[rega],tmp,1<<size);
+            executeLoad((void *)&(core->dreg[rega]),tmp,1<<size);
             break;
         case AX_EXE_LSU_FSTSP:
             tmp2 = ((opcode2>>10)&0xFFFF);
             tmp = core->ireg[0] + (tmp2 ^ (imm24<<16));
-            executeStore(core->dreg[rega],tmp,1<<size);
+            executeStore((void *)&(core->dreg[rega]),tmp,1<<size);
         break;
 
         case AX_EXE_FPU_FADD:
@@ -890,7 +930,10 @@ void AltairX::execute_unit(uint32_t rega,uint32_t regb,uint32_t regc,uint32_t un
         break;
 
         default:
-
+            if(tunit == 0)
+                execute_unit0(rega,regb,regc,unit,size,opcode,imm24);
+            else
+                execute_unit1(rega,regb,regc,unit,size,opcode);
         break;
 
     }
@@ -905,16 +948,21 @@ void AltairX::execute()
 	this->core->cc++;
 	this->core->ic++;
 
-	opcode1 = this->core->wram[this->core->pc+0];
-    opcode2 = this->core->wram[this->core->pc+1];
+    uint32_t pc = this->core->pc&0x7FFFFFFF;
+
+	opcode1 = this->wram[pc+0];
+    opcode2 = this->wram[pc+1];
 	this->opcode1 = opcode1;
 	this->core->pc++;
 
     this->core->ireg[REG_ZERO]  = 0;
-    this->core->vireg[REG_ZERO] = 0;
+    this->core->fireg[REG_ZERO] = 0;
 
     if( (opcode1&1) && ( (opcode2&0xFE) == 0) )
+    {
         imm24 = opcode2>>8;
+    }
+        
 
 	unit = (opcode1>>1)&0x7F;
 	size = (opcode1>>8)&0x3;

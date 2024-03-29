@@ -79,6 +79,20 @@ int main(int argc, char** argv)
         return 0;
     }
 
+	altairx.wram = altairx.memorymap.wram.data();
+	altairx.spm2 = altairx.memorymap.spm2.data();
+	altairx.spmt = altairx.memorymap.spmt.data();
+	altairx.io = altairx.memorymap.io.data();
+
+	altairx.init_mask();
+	altairx.load_prog(address);
+
+	Core core;
+	core_init(core);
+
+	//altairx.array_core.push_back(core);
+
+	altairx.core = &core;
 
 	switch(altairx.mode)
 	{
@@ -87,6 +101,7 @@ int main(int argc, char** argv)
 		break;
 
 		case 1:
+			std::cout<<"mode1\n";
 			altairx.mode1();
 		break;
 
@@ -105,7 +120,7 @@ int main(int argc, char** argv)
 
 
 	if(altairx.error != 1)
-		std::cerr << "Error core : " << error << std::endl;
+		std::cout << "Error core : " << altairx.error << std::endl;
 
     return 0;
 }

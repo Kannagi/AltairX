@@ -114,7 +114,7 @@ enum {
     AX_EXE_ALU_CMP,
     AX_EXE_ALU_TEST,
     AX_EXE_ALU_TESTFR,
-    AX_EXE_ALU_CMPSWT,
+    AX_EXE_ALU_CMPBIT,
 
     //------------- ALU(1) -----
 
@@ -134,7 +134,7 @@ enum {
     AX_EXE_ALU_SLTU,
 
     AX_EXE_ALU_SAND,
-    AX_EXE_ALU_UNK3,
+    AX_EXE_ALU_SBIT,
     AX_EXE_ALU_CMOVEN,
     AX_EXE_ALU_CMOVE,
     
@@ -265,7 +265,7 @@ enum {
 
     AX_EXE_BRU_JUMP,
     AX_EXE_BRU_CALL,
-    AX_EXE_BRU_JSWT,
+    AX_EXE_BRU_CALLR,
     AX_EXE_BRU_OTHER  = 0x7F,
     AX_EXE_BRU_JUMPBR = 0x7F,
     AX_EXE_BRU_CALLBR = 0x7F,

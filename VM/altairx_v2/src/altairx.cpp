@@ -81,7 +81,7 @@ void AltairX::mode0()
 
 	while(core->error == 0)
 	{
-		AX_decode_execute(core);
+		execute();
 
 		//if(core->cycle > 20) exit(0);
 
@@ -108,7 +108,46 @@ void AltairX::mode0()
 
 void AltairX::mode1()
 {
-    
+    clock_t tbegin;
+
+
+
+	tbegin = clock();
+
+	int t = 0;
+
+	core->error = 0;
+
+	while(core->error == 0)
+	{
+        
+		execute();
+
+        altairx_debug(this->opcode1,0);
+
+        altairx_syscall_emul(this->core,(char *)this->wram);
+
+		if(core->cc > 20) exit(0);
+
+		t++;
+		if(t > 0x10000)
+		{
+			if(clock() > (tbegin+CLOCKS_PER_SEC) )
+			{
+				//printf("Cycle/Second : %ld\n",core->cycle);
+				float frq = (float)core->cycle / 1000000.0f;
+				printf("Frequence : %.2f MHz\n",frq);
+
+				core->cycle = 0;
+				tbegin = clock();
+			}
+			t = 0;
+		}
+
+		//printf("%d\n",core->pc);
+	}
+
+    this->error = core->error;
 }
 
 void AltairX::mode2()
