@@ -1,40 +1,19 @@
-#include <stdio.h>
-#include <string.h>
-#include <stdint.h>
-#include <stdlib.h>
-
+#include <chrono>
 #include <iostream>
 #include <fstream>
 #include <vector>
 
 #include "altairx.hpp"
 
-AltairX::AltairX(int nwram,int nspmt,int nspm2)
+AltairX::AltairX(size_t nwram, size_t nspmt, size_t nspm2)
+: m_memory{nwram, nspmt, nspm2}
+, m_core{m_memory}
 {
-    this->icore = 0;
-    this->ncore = 1;
-    this->mode = 0;
-
-    this->memorymap.rom.resize(0x100000*0x10,0);
-	this->memorymap.wram.resize(0x100000*nwram,0);
-	this->memorymap.spmt.resize(0x400*nspmt,0);
-	this->memorymap.spm2.resize(0x400*nspm2,0);
-    this->memorymap.io.resize(0x80000,0);
 }
 
-
-void AltairX::init_mask()
+void AltairX::load_kernel(const std::filesystem::path& path)
 {
-    this->rom_mask  = 0xFFFFFF;
-    this->spmt_mask = this->memorymap.spmt.size()-1;
-    this->spm2_mask = this->memorymap.spm2.size()-1;
-    this->wram_mask = this->memorymap.wram.size()-1;
-}
-
-void AltairX::load_kernel(char *path)
-{
-    std::ifstream file(path, std::ios::binary);
-
+    std::ifstream file{path, std::ios::binary};
     if(!file.is_open())
     {
         std::cerr << "Error : Impossible open kernel" << std::endl;
@@ -45,15 +24,13 @@ void AltairX::load_kernel(char *path)
     std::streampos filesize = file.tellg();
     file.seekg(0, std::ios::beg);
 
-    file.read((char *)this->memorymap.rom.data(), filesize);
-
-    file.close();
+    void* rom = m_memory.map(m_core, AxMemory::ROM_BEGIN);
+    file.read(reinterpret_cast<char*>(rom), filesize);
 }
 
-void AltairX::load_prog(char *path)
+void AltairX::load_prog(const std::filesystem::path& path)
 {
-    std::ifstream file(path, std::ios::binary);
-
+    std::ifstream file{path, std::ios::binary};
     if(!file.is_open())
     {
         std::cerr << "Error : Impossible open binary" << std::endl;
@@ -64,103 +41,55 @@ void AltairX::load_prog(char *path)
     std::streampos filesize = file.tellg();
     file.seekg(0, std::ios::beg);
 
-    file.read((char *)this->memorymap.wram.data(), filesize);
-
-    file.close();
+    void* wram = m_memory.map(m_core, AxMemory::WRAM_BEGIN);
+    file.read(reinterpret_cast<char*>(wram), filesize);
 }
 
-void AltairX::mode0()
+int AltairX::run(AxExecutionMode mode)
 {
-    clock_t tbegin;
+  using clock = std::chrono::steady_clock;
+  using seconds = std::chrono::duration<double>;
 
-	tbegin = clock();
+  static constexpr std::size_t threshold = 8192;
 
-	int t = 0;
+  auto tp1 = clock::now();
+  std::size_t counter = 0;
+  while(m_core.error() == 0)
+  {
+    execute();
+    m_core.syscall_emul();
 
-	core->error = 0;
+    // if(mode == AxExecutionMode::DEBUG)
+    //     altairx_debug(m_opcodes[0], 0);
+    // if(core->cycle > 20) exit(0);
 
-	while(core->error == 0)
-	{
-		execute();
+    counter += 1;
+    if(counter > threshold) // only check each few cycles...
+    {
+      const auto tp2 = clock::now();
+      const auto delta = std::chrono::duration_cast<seconds>(tp2 - tp1).count();
+      if(delta > 1.0) // ...and display if more than one second elapsed...
+      {
+        double frequency = (static_cast<double>(counter) / delta) / (1000 * 1000);
+        std::cout << "Frequence : " << frequency << "MHz\n"; // no flush
 
-		//if(core->cycle > 20) exit(0);
+        tp1 = clock::now();
+        counter = 0;
+      }
+    }
+  }
 
-		t++;
-		if(t > 0x10000)
-		{
-			if(clock() > (tbegin+CLOCKS_PER_SEC) )
-			{
-				//printf("Cycle/Second : %ld\n",core->cycle);
-				float frq = (float)core->cycle / 1000000.0f;
-				printf("Frequence : %.2f MHz\n",frq);
-
-				core->cycle = 0;
-				tbegin = clock();
-			}
-			t = 0;
-		}
-
-		//printf("%d\n",core->pc);
-	}
-
-    this->error = core->error;
+  return m_core.error();
 }
 
-void AltairX::mode1()
+void AltairX::execute()
 {
-    clock_t tbegin;
+  const auto real_pc = m_core.registers().pc & 0x7FFFFFFF;
+  const auto opcode1 = m_memory.load<uint32_t>(m_core, AxMemory::WRAM_BEGIN + real_pc);
+  const auto opcode2 = m_memory.load<uint32_t>(m_core, AxMemory::WRAM_BEGIN + real_pc + 4);
+  const auto count = m_core.execute(opcode1, opcode2);
 
-
-
-	tbegin = clock();
-
-	int t = 0;
-
-	core->error = 0;
-
-	while(core->error == 0)
-	{
-        
-		execute();
-
-        altairx_debug(this->opcode1,0);
-
-        altairx_syscall_emul(this->core,(char *)this->wram);
-
-		if(core->cc > 20) exit(0);
-
-		t++;
-		if(t > 0x10000)
-		{
-			if(clock() > (tbegin+CLOCKS_PER_SEC) )
-			{
-				//printf("Cycle/Second : %ld\n",core->cycle);
-				float frq = (float)core->cycle / 1000000.0f;
-				printf("Frequence : %.2f MHz\n",frq);
-
-				core->cycle = 0;
-				tbegin = clock();
-			}
-			t = 0;
-		}
-
-		//printf("%d\n",core->pc);
-	}
-
-    this->error = core->error;
-}
-
-void AltairX::mode2()
-{
-    
-}
-
-void AltairX::mode3()
-{
-    
-}
-
-void AltairX::mode4()
-{
-    
+  m_core.registers().cc += 1;
+  m_core.registers().ic += count;
+  m_core.registers().pc += count;
 }

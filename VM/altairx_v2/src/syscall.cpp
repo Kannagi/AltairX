@@ -1,111 +1,101 @@
 #include <cstdio>
 #include <cstdlib>
 #include <vector>
-#include "altairx.hpp"
 
+#include <altairx.hpp>
+#include <core.hpp>
 
-void altairx_syscall_emul(Core *core,char *wram)
+void AxCore::syscall_emul()
 {
-	if(core->syscall != 1)
-		return;
+    if(m_syscall != 1)
+    {
+        return;
+    }
 
-	uint64_t regA = core->ireg[1]&0xF0;
-	uint64_t regB = core->ireg[1]&0x0F;
-	uint64_t reg1 = core->ireg[2];
-	uint64_t reg2 = core->ireg[3];
-	uint64_t reg3 = core->ireg[4];
+    const auto regA = m_regs.gpi[1] & 0xF0;
+    const auto regB = m_regs.gpi[1] & 0x0F;
+    const auto reg1 = m_regs.gpi[2];
 
-	char *adr;
-	char *adr2;
+    // printf("syscall : %.2lx %.2lx\n",core->ireg[4],reg1);
+    // printf("syscall : %f\n",core->vreg[3*4]);
 
-	//printf("syscall : %.2lx %.2lx\n",core->ireg[4],reg1);
-	//printf("syscall : %f\n",core->vreg[3*4]);
+    if(regA == 0x00) // Kernel 1
+    {
+        switch(regB)
+        {
+        case 0:
+            printf("AltairX K1 , VM Machine \n");
+            break;
 
-	if(regA == 0x00) //Kernel 1
-	{
+        case 1:
+            puts(reinterpret_cast<const char*>(m_memory->map(*this, reg1)));
+            break;
 
-		switch(regB)
-		{
-			case 0:
-				printf("AltairX K1 , VM Machine \n");
-			break;
+        case 2:
+            m_regs.gpi[1] = 0; // X
+            m_regs.gpi[2] = 0; // Y
+            break;
 
-			case 1:
-			    adr = (char *)&wram[reg1];
-				printf(adr);
-			break;
+        case 3:
+            exit(reg1);
+            break;
 
-			case 2:
-				core->ireg[1] = 0; //X
-				core->ireg[2] = 0; //Y
-			break;
+        case 4:
 
-			case 3:
-				exit(reg1);
-			break;
+            break;
 
-			case 4:
+        case 5:
+            break;
 
-			break;
+        case 6:
 
-			case 5:
-			break;
+            break;
 
-			case 6:
+        case 7:
 
-			break;
+            break;
 
-			case 7:
+        case 8:
+            break;
 
-			break;
+        case 9:
 
-			case 8:
-			break;
+            break;
 
-			case 9:
+        case 0xA:
 
-			break;
+            break;
 
-			case 0xA:
+        case 0xB:
+            break;
 
-			break;
+        case 0xC:
+            break;
 
-			case 0xB:
-			break;
+        case 0xD:
+            break;
 
-			case 0xC:
-			break;
+        case 0xE: // getchar
+            m_regs.gpi[1] = getchar();
+            break;
 
-			case 0xD:
-			break;
+        case 0xF: // GIF
 
-			case 0xE: // getchar
-				core->ireg[1] = getchar();
-			break;
+            break;
+        }
+    }
+    else if(regA == 0x10) // Kernel 2
+    {
+    }
+    else if(regA == 0x20) // Sound
+    {
+    }
+    else if(regA == 0x30) // GUI
+    {
+    }
+    else if(regA == 0x40) // Net
+    {
+    }
 
-			case 0xF: //GIF
-
-			break;
-		}
-
-	}
-	else if (regA == 0x10) //Kernel 2
-	{
-
-	}
-	else if (regA == 0x20) //Sound
-	{
-
-	}
-	else if (regA == 0x30) //GUI
-	{
-
-	}
-	else if (regA == 0x40) //Net
-	{
-
-	}
-
-	core->syscall = 0;
-
+    m_syscall = 0;
 }

@@ -4,123 +4,130 @@
 
 #include <iostream>
 #include <vector>
+#include <charconv>
+#include <string_view>
+#include <optional>
 
 #include "altairx.hpp"
 
-int main(int argc, char** argv)
+namespace
 {
-    char address[256];
-    address[0] = 0;
-    int arg = 0;
 
-    // 16 MiB WRAM , 256 KiB SPMT , 512 kiB SPM2
-    AltairX altairx(16,256,512);
-
-    for(int i = 1; i < argc;i++)
+std::vector<std::string_view> get_args(int argc, char* argv[])
+{
+    std::vector<std::string_view> output;
+    output.reserve(static_cast<std::size_t>(argc));
+    for(int i = 0; i < argc; ++i)
     {
-        if(argv[i][0] == '-')
-        {
-        	if(strcmp(argv[i],"-ncore")  == 0) arg = 1;
-
-        	if(strcmp(argv[i],"-wram")   == 0) arg = 2;
-        	if(strcmp(argv[i],"-spmt")   == 0) arg = 3;
-        	if(strcmp(argv[i],"-spm2")   == 0) arg = 4;
-
-        	if(strcmp(argv[i],"-mode")   == 0) arg = 7;
-        }else
-        {
-        	if(arg == 0)
-			{
-				strcpy(address,argv[i]);
-			}else
-			{
-				switch(arg)
-				{
-					case 1:
-						altairx.ncore = atoi(argv[i]);
-					break;
-
-					case 2:
-						altairx.memorymap.wram.resize(atoi(argv[i]));
-					break;
-
-					case 3:
-						altairx.memorymap.spmt.resize(atoi(argv[i]));
-					break;
-
-					case 4:
-						altairx.memorymap.spm2.resize(atoi(argv[i]));
-					break;
-
-					case 7:
-						altairx.mode = atoi(argv[i]);
-					break;
-
-				}
-				arg = 0;
-			}
-
-        }
+        output.emplace_back(argv[i]);
     }
 
-    if(address[0] == 0)
+    return output;
+}
+
+std::int64_t get_value_for_arg(const std::vector<std::string_view>& args, std::size_t i, std::size_t size)
+{
+  if(i + 1 >= size)
+  {
+    throw std::runtime_error{"Expected value for " + std::string{args[i]}};
+  }
+
+  auto& value = args[i + 1];
+  std::int64_t output{};
+  auto [ptr, error] = std::from_chars(value.data(), value.data() + value.size(), output);
+  if(error != std::errc{})
+  {
+    throw std::runtime_error{"Failed to parse value " + std::string{value} + " for argument " + std::string{args[i]}};
+  }
+
+  return output;
+}
+
+AxParameters parse_args(int argc, char* argv[])
+{
+  const auto args = get_args(argc, argv);
+
+  AxParameters output;
+  // skip first arg
+  for(std::size_t i{1}; i < args.size(); ++i)
+  {
+    if(args[i] == "-ncore")
     {
-        std::cout<<"Enter a program\n";
-        std::cout<<"option numbre core  : -ncore \n";
-        std::cout<<"option size memory : -wram (1MiB) -spmt (1KiB) -spm2 (1KiB)\n";
-        std::cout<<"option mode  : -mode\n";
-        std::cout<<"mode 0 console,syscall emulate ,1 core only\n";
-        std::cout<<"mode 1 same mode 0 and debug\n";
-        std::cout<<"mode 2 same mode 0 and cycle accurate\n";
-        std::cout<<"mode 3 complete hardware\n";
-        std::cout<<"mode 4 XSTAR OS\n";
-
-        std::cout<<"\nExemple :\nvm_altairx prog.bin -wram 32\n";
-        return 0;
+      output.core_count = static_cast<std::size_t>(get_value_for_arg(args, i, args.size()));
+      ++i;
     }
+    else if(args[i] == "-wram")
+    {
+      output.wram_size = static_cast<std::size_t>(get_value_for_arg(args, i, args.size()));
+      ++i;
+    }
+    else if(args[i] == "-spmt")
+    {
+      output.spmt_size = static_cast<std::size_t>(get_value_for_arg(args, i, args.size()));
+      ++i;
+    }
+    else if(args[i] == "-spm2")
+    {
+      output.spm2_size = static_cast<std::size_t>(get_value_for_arg(args, i, args.size()));
+      ++i;
+    }
+    else if(args[i] == "-mode")
+    {
+      output.mode = static_cast<AxExecutionMode>(get_value_for_arg(args, i, args.size()));
+      ++i;
+    }
+    else if(i == args.size() - 1)
+    {
+      output.executable = args[i];
+    }
+    else
+    {
+      std::cerr << "Warning: unknown argument " << args[i] << std::endl;
+    }
+  }
 
-	altairx.wram = altairx.memorymap.wram.data();
-	altairx.spm2 = altairx.memorymap.spm2.data();
-	altairx.spmt = altairx.memorymap.spmt.data();
-	altairx.io = altairx.memorymap.io.data();
+  if(output.executable.empty())
+  {
+    throw std::runtime_error{"Missing executable file"};
+  }
 
-	altairx.init_mask();
-	altairx.load_prog(address);
+  return output;
+}
 
-	Core core;
-	core_init(core);
+void print_usage()
+{
+  std::cout << "Usage: vm_altairx [options] executable_file\n";
+  std::cout << "Options:\n";
+  std::cout << "    Core count: -ncore N\n";
+  std::cout << "    WRAM size (MiB): -wram N\n";
+  std::cout << "    SPMT size (KiB): -spmt N\n";
+  std::cout << "    SPM2 size (KiB): -spm2 N\n";
+  std::cout << "    Executaion mode: -mode N\n";
+  std::cout << "        Mode 0: console, syscall emulate, 1 core only\n";
+  std::cout << "        Mode 1: same mode 0 and debug\n";
+  // std::cout << "        Mode 2: same mode 0 and cycle accurate\n";
+  // std::cout << "        Mode 3: complete hardware\n";
+  // std::cout << "        Mode 4: XSTAR OS\n";
+}
 
-	//altairx.array_core.push_back(core);
+}
 
-	altairx.core = &core;
-
-	switch(altairx.mode)
-	{
-		case 0:
-			altairx.mode0();
-		break;
-
-		case 1:
-			std::cout<<"mode1\n";
-			altairx.mode1();
-		break;
-
-		case 2:
-			altairx.mode2();
-		break;
-
-		case 3:
-			altairx.mode3();
-		break;
-
-		case 4:
-			altairx.mode4();
-		break;
-	}
-
-
-	if(altairx.error != 1)
-		std::cout << "Error core : " << altairx.error << std::endl;
-
+int main(int argc, char* argv[])
+{
+  AxParameters parameters;
+  try
+  {
+    parameters = parse_args(argc, argv);
+  }
+  catch(const std::exception& e)
+  {
+    std::cerr << e.what() << std::endl;
+    print_usage();
     return 0;
+  }
+
+  AltairX altairx{parameters.wram_size, parameters.spmt_size, parameters.spm2_size};
+  altairx.load_prog(parameters.executable);
+  
+  return altairx.run(parameters.mode);
 }

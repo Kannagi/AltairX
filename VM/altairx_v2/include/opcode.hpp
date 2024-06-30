@@ -1,95 +1,144 @@
+#ifndef AXOPCODE_HPP_INCLUDED
+#define AXOPCODE_HPP_INCLUDED
 
-#define MEMORY_MAP_SPM1_BEGIN   (0x00000000)
-#define MEMORY_MAP_IO_BEGIN     (0x08000000)
-#define MEMORY_MAP_ROM_BEGIN    (0x10000000)
-#define MEMORY_MAP_SPMT_BEGIN   (0x20000000)
-#define MEMORY_MAP_SPM2_BEGIN   (0x40000000)
-#define MEMORY_MAP_WRAM_BEGIN   (0x80000000)
+#include <cstdint>
 
-//IO
-#define IO_CCIF (0x00000)
-#define IO_GIF  (0x10000)
-#define IO_SIF  (0x20000)
-#define IO_US   (0x30000)
-#define IO_SN   (0x40000)
-#define IO_EW   (0x50000)
-#define IO_EXT  (0x60000)
-#define IO_DMA  (0x70000)
-
-#define Z_MASK (0x01u)
-#define S_MASK (0x02u)
-#define U_MASK (0x04u)
-
-#define AX_core_MAX 64
-#define AX_core_IREG_COUNT 64
-#define AX_core_VREG_COUNT 64
-#define AX_core_SPM_SIZE 0x4000 //(16 KiB)
-
-
-#define AR_core_ICACHE_SIZE (0x10000/1024) //(64 KiB , 4-way)
-#define AR_core_DCACHE_SIZE (0x8000/128)  //(32 KiB , 4-way)
-
-#define AX_IO_VOID  0
-#define AX_IO_READ  1
-#define AX_IO_WRITE 2
-
-typedef struct core
+struct AxOpcode
 {
-	uint32_t *wram;
+    std::uint32_t value{};
 
-    uint64_t instruction;
-    uint64_t cycle;
-    uint64_t bandwidth;
+    // implicit conversion
+    AxOpcode(std::uint32_t val)
+    : value{val}
+    {
+    }
 
-	uint64_t icachemiss,dcachemiss;
-    uint64_t icachemiss_cycle,dcachemiss_cycle;
+    operator std::uint32_t() const noexcept
+    {
+        return value;
+    }
 
-    //uint32_t opcodes[AX_core_MAX_OPERATIONS];
+    std::uint32_t opcode() const noexcept
+    {
+        return (value >> 1) & 0x0Fu;
+    }
 
-    uint32_t pc; //program-counter
-    uint32_t br; //buffer-register
-    uint32_t lr; //link-register
-    uint32_t ir; //interrupt-register
+    std::uint32_t unit() const noexcept
+    {
+        return (value >> 5) & 0x07u;
+    }
 
-    uint32_t imm,error,iorw;
-	uint32_t opcode1,opcode2;
-	uint32_t io;
+    // opcode + unit
+    std::uint32_t operation() const noexcept
+    {
+        return (value >> 1) & 0x7Fu;
+    }
 
-    /// \brief CPU Flags register
-    ///
-    /// Bit 0:
-    /// Bit 1: Z flag, 1 if not equal, 0 if equal
-    /// Bit 2: S flag, 1 if lesser, 0 if greater (signed comparison)
-    /// Bit 3: U flag, 1 if lesser, 0 if greater (unsigned comparison)
-    uint16_t flags;
-    uint8_t delay,delayop,syscall;
+    std::uint32_t size() const noexcept
+    {
+        return (value >> 8) & 0x03u;
+    }
 
-	uint8_t busy_reg[AX_core_IREG_COUNT];
-	uint8_t busy_vreg[AX_core_VREG_COUNT];
-	uint8_t busy_flag;
+    std::uint32_t sext_insize() const noexcept
+    {
+        return (value >> 11) & 0x03u;
+    }
 
-    uint8_t spm[AX_core_SPM_SIZE];
-    uint32_t icache[AR_core_ICACHE_SIZE];
-    uint32_t dcache[AR_core_DCACHE_SIZE*2];
-    uint32_t dcacher[AR_core_DCACHE_SIZE];
-    uint32_t dcacherw[AR_core_DCACHE_SIZE];
+    std::uint32_t bru_other_index() const noexcept
+    {
+        return (value >> 8) & 0x0Fu;
+    }
 
-    uint64_t ireg[AX_core_IREG_COUNT];
+    std::uint32_t reg_c() const noexcept
+    {
+        return (value >> 14) & 0x3Fu;
+    }
 
-    union
-	{
-        uint16_t hreg[AX_core_VREG_COUNT * 4];
-		float freg[AX_core_VREG_COUNT * 2];
-		double dreg[AX_core_VREG_COUNT];
+    std::uint32_t reg_b() const noexcept
+    {
+        return (value >> 20) & 0x3Fu;
+    }
 
-		int64_t direg[AX_core_VREG_COUNT];
-		int32_t fireg[AX_core_VREG_COUNT * 2];
-	};
+    std::uint32_t reg_a() const noexcept
+    {
+        return (value >> 26) & 0x3Fu;
+    }
 
-}Core;
+    bool alu_has_imm() const noexcept
+    {
+        return (value & 0x0400u) != 0;
+    }
+
+    std::uint64_t alu_shift() const noexcept
+    {
+        return (value >> 11) & 0x07u;
+    }
+
+    std::uint64_t alu_imm9() const noexcept
+    {
+        return (value >> 11) & 0x01FFu;
+    }
+
+    std::uint64_t ext_ins_imm1() const noexcept
+    {
+        return (value >> 8) & 0x3Fu;
+    }
+
+    std::uint64_t ext_ins_imm2() const noexcept
+    {
+        return (value >> 14) & 0x3Fu;
+    }
+
+    std::uint64_t alu_move_imm() const noexcept
+    {
+        return (value >> 8) & 0x0003FFFFu;
+    }
+
+    std::uint32_t mdu_pq() const noexcept
+    {
+        return (value >> 11) & 0x03U;
+    }
+
+    std::uint64_t lsu_shift() const noexcept
+    {
+      return (value >> 11) & 0x07u;
+    }
+
+    std::uint64_t lsu_imm10() const noexcept
+    {
+        return (value >> 10) & 0x03FFu;
+    }
+
+    std::uint64_t lsu_imm16() const noexcept
+    {
+      return (value >> 10) & 0x0FFFFu;
+    }
+
+    std::uint64_t moveix_imm24() const noexcept
+    {
+        return (value >> 8) & 0x00FFFFFFu;
+    }
+
+    std::uint64_t bru_imm24() const noexcept
+    {
+        return (value >> 8) & 0x00FFFFFFu;
+    }
+
+    // return true if next opcode is packaged with this one.
+    bool is_package() const noexcept
+    {
+        return (value & 1) != 0;
+    }
+
+    bool is_moveix() const noexcept
+    {
+        return (value & 0xFE) == 0;
+    }
+};
 
 //-------------------------------
-enum {
+enum AxOpcodes : std::uint32_t
+{
     //------------- ALU(0) -----
 
     AX_EXE_ALU_MOVEIX,
@@ -101,7 +150,6 @@ enum {
     AX_EXE_ALU_MOVEN,
     AX_EXE_ALU_UNK0,
     AX_EXE_ALU_MOVEUP,
-
 
     AX_EXE_ALU_UNK1,
     AX_EXE_ALU_SEXT,
@@ -137,8 +185,6 @@ enum {
     AX_EXE_ALU_SBIT,
     AX_EXE_ALU_CMOVEN,
     AX_EXE_ALU_CMOVE,
-    
-
 
     //------------- LSU(2) -------
     AX_EXE_LSU_LD,
@@ -150,7 +196,6 @@ enum {
     AX_EXE_LSU_STI,
     AX_EXE_LSU_FLDI,
     AX_EXE_LSU_FSTI,
-
 
     AX_EXE_LSU_LDSP,
     AX_EXE_LSU_STSP,
@@ -246,7 +291,6 @@ enum {
     AX_EXE_MDU_UNK8,
     AX_EXE_MDU_UNK9,
 
-
     //------------- BRU(7) -----
     AX_EXE_BRU_BNE,
     AX_EXE_BRU_BEQ,
@@ -266,24 +310,22 @@ enum {
     AX_EXE_BRU_JUMP,
     AX_EXE_BRU_CALL,
     AX_EXE_BRU_CALLR,
-    AX_EXE_BRU_OTHER  = 0x7F,
+    AX_EXE_BRU_OTHER = 0x7F,
     AX_EXE_BRU_JUMPBR = 0x7F,
     AX_EXE_BRU_CALLBR = 0x7F,
-    AX_EXE_BRU_RETI   = 0x7F,
-    AX_EXE_BRU_RET    = 0x7F,
-    AX_EXE_BRU_SYSCALL= 0x7F,
-    AX_EXE_BRU_INT    = 0x7F,
-
+    AX_EXE_BRU_RETI = 0x7F,
+    AX_EXE_BRU_RET = 0x7F,
+    AX_EXE_BRU_SYSCALL = 0x7F,
+    AX_EXE_BRU_INT = 0x7F,
 
     //------------- CU(5) -----
-    AX_EXE_CU_MOVETO  = 0x50,
+    AX_EXE_CU_MOVETO = 0x50,
     AX_EXE_CU_MOVEFROM,
     AX_EXE_CU_SYNC,
     AX_EXE_CU_MMU,
 
-
     //------------- VU(5) -----
-    AX_EXE_VU_VECTOR2  = 0x60,
+    AX_EXE_VU_VECTOR2 = 0x60,
     AX_EXE_VU_VECTOR4,
     AX_EXE_VU_VECTOR8,
     AX_EXE_VU_INV,
@@ -293,9 +335,7 @@ enum {
     AX_EXE_VU_VECTOR8X2,
     AX_EXE_VU_INVX2,
 
-
-
-    AX_EX_FPU_FADD  = 0x00,
+    AX_EX_FPU_FADD = 0x00,
     AX_EX_FPU_FSUB,
     AX_EX_FPU_FMUL,
     AX_EX_FPU_FNMUL,
@@ -314,5 +354,7 @@ enum {
     AX_EX_FPU_FCMP,
     AX_EX_FPU_FMOVEI,
     AX_EX_FPU_FCMPI,
-
 };
+//-------------
+
+#endif // !AXOPCODE_HPP_INCLUDED
