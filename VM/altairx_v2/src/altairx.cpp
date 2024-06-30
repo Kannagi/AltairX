@@ -3,6 +3,10 @@
 #include <fstream>
 #include <vector>
 
+#ifdef HAS_LLVM
+#include <elf.hpp>
+#endif
+
 #include "altairx.hpp"
 
 AltairX::AltairX(size_t nwram, size_t nspmt, size_t nspm2)
@@ -30,6 +34,20 @@ void AltairX::load_kernel(const std::filesystem::path& path)
 
 void AltairX::load_prog(const std::filesystem::path& path)
 {
+#ifdef HAS_LLVM
+    if(auto elf{AxELFFile::from_file(path)}; elf)
+    {
+      for(auto&& section : elf->sections)
+      {
+        std::cout << section.has_flag(AX_SHF_ALLOC) << std::endl;
+        std::cout << section.addr << std::endl;
+        std::cout << section.content.size() << std::endl;
+      }
+
+      return;
+    }
+#endif
+
     std::ifstream file{path, std::ios::binary};
     if(!file.is_open())
     {
@@ -85,8 +103,8 @@ int AltairX::run(AxExecutionMode mode)
 void AltairX::execute()
 {
   const auto real_pc = m_core.registers().pc & 0x7FFFFFFF;
-  const auto opcode1 = m_memory.load<uint32_t>(m_core, AxMemory::WRAM_BEGIN + real_pc);
-  const auto opcode2 = m_memory.load<uint32_t>(m_core, AxMemory::WRAM_BEGIN + real_pc + 4);
+  const auto opcode1 = m_memory.load<uint32_t>(m_core, AxMemory::WRAM_BEGIN + (real_pc * 4ull));
+  const auto opcode2 = m_memory.load<uint32_t>(m_core, AxMemory::WRAM_BEGIN + (real_pc * 4ull) + 4ull);
   const auto count = m_core.execute(opcode1, opcode2);
 
   m_core.registers().cc += 1;
