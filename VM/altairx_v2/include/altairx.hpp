@@ -14,16 +14,6 @@ enum class AxExecutionMode
   DEBUG = 1
 };
 
-struct AxParameters
-{
-  std::size_t core_count{1};
-  std::size_t wram_size{16};
-  std::size_t spmt_size{256};
-  std::size_t spm2_size{512};
-  AxExecutionMode mode{};
-  std::filesystem::path executable{};
-};
-
 class AltairX
 {
 public:
@@ -39,6 +29,7 @@ private:
 
     AxMemory m_memory;
     AxCore m_core;
+    const uint32_t* m_wram_begin{};
 };
 
 //----------------------------

@@ -12,6 +12,7 @@
 AltairX::AltairX(size_t nwram, size_t nspmt, size_t nspm2)
 : m_memory{nwram, nspmt, nspm2}
 , m_core{m_memory}
+, m_wram_begin{static_cast<const uint32_t*>(m_memory.map(m_core, AxMemory::WRAM_BEGIN))}
 {
 }
 
@@ -68,10 +69,11 @@ int AltairX::run(AxExecutionMode mode)
   using clock = std::chrono::steady_clock;
   using seconds = std::chrono::duration<double>;
 
-  static constexpr std::size_t threshold = 8192;
+  static constexpr std::size_t threshold = 512 * 1024;
 
   auto tp1 = clock::now();
   std::size_t counter = 0;
+  std::size_t cycles = 0;
   while(m_core.error() == 0)
   {
     execute();
@@ -82,18 +84,21 @@ int AltairX::run(AxExecutionMode mode)
     // if(core->cycle > 20) exit(0);
 
     counter += 1;
+    cycles += 1;
     if(counter > threshold) // only check each few cycles...
     {
       const auto tp2 = clock::now();
       const auto delta = std::chrono::duration_cast<seconds>(tp2 - tp1).count();
       if(delta > 1.0) // ...and display if more than one second elapsed...
       {
-        double frequency = (static_cast<double>(counter) / delta) / (1000 * 1000);
-        std::cout << "Frequence : " << frequency << "MHz\n"; // no flush
+        double frequency = static_cast<double>(cycles) / delta;
+        std::cout << "Frequence : " << frequency / 1'000'000.0 << "MHz\n"; // no flush
 
         tp1 = clock::now();
-        counter = 0;
+        cycles = 0;
       }
+
+      counter = 0;
     }
   }
 
@@ -102,12 +107,13 @@ int AltairX::run(AxExecutionMode mode)
 
 void AltairX::execute()
 {
-  const auto real_pc = m_core.registers().pc & 0x7FFFFFFF;
-  const auto opcode1 = m_memory.load<uint32_t>(m_core, AxMemory::WRAM_BEGIN + (real_pc * 4ull));
-  const auto opcode2 = m_memory.load<uint32_t>(m_core, AxMemory::WRAM_BEGIN + (real_pc * 4ull) + 4ull);
+  auto& regs = m_core.registers();
+  const auto real_pc = regs.pc & 0x7FFFFFFE;
+  const auto opcode1 = m_wram_begin[real_pc];
+  const auto opcode2 = m_wram_begin[real_pc + 1u];
   const auto count = m_core.execute(opcode1, opcode2);
 
-  m_core.registers().cc += 1;
-  m_core.registers().ic += count;
-  m_core.registers().pc += count;
+  regs.cc += 1;
+  regs.ic += count;
+  regs.pc += count;
 }

@@ -5,13 +5,8 @@
 #include <altairx.hpp>
 #include <core.hpp>
 
-void AxCore::syscall_emul()
+void AxCore::execute_syscall()
 {
-    if(m_syscall != 1)
-    {
-        return;
-    }
-
     const auto regA = m_regs.gpi[1] & 0xF0;
     const auto regB = m_regs.gpi[1] & 0x0F;
     const auto reg1 = m_regs.gpi[2];

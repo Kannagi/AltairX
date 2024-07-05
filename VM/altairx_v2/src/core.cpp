@@ -15,22 +15,11 @@
 namespace
 {
 
-uint64_t sext(uint64_t val, uint32_t from)
+uint64_t sext(uint64_t val, uint64_t from) noexcept
 {
-    if(from == 0 && val & 0x80)
-    {
-        return val | signmask[0];
-    }
-    else if(from == 1 && val & 0x8000)
-    {
-        return val | signmask[1];
-    }
-    else if(from == 2 && val & 0x80000000)
-    {
-        return val | signmask[2];
-    }
-
-    return val;
+  const auto bitsize = (8ull << from);
+  int const mask = 1ull << (bitsize - 1ull);
+  return (val ^ mask) - mask;
 }
 
 }
@@ -79,14 +68,13 @@ UNIT ID |    UNIT NAME    |     Issue ID
    6    |  MDU   |   VU   |   6    |   14
    7    |  BRU   |   /    |   7    |   /
 */
-void AxCore::execute_unit(AxOpcode opcode, uint32_t unit, uint64_t imm24)
+void AxCore::execute_unit(AxOpcode opcode, uint32_t slot, uint64_t imm24)
 {
   // reset regs before doing anything
   m_regs.gpi[REG_ZERO] = 0;
   m_regs.gpf[REG_ZERO] = 0.0;
 
-  auto issue = (unit << 3) | opcode.unit();
-
+  const auto issue = (slot << 3) | opcode.unit();
   switch(issue)
   {
   case 0: [[fallthrough]];
@@ -143,7 +131,8 @@ uint64_t AxCore::alu_src2_value(AxOpcode op, Register reg, uint64_t imm24) const
 
 namespace
 {
-// same but for lsu, call this only with the imm opcode!
+
+// same as alu_src2_value but for lsu, call this only with the imm opcode!
 uint64_t lsu_imm_value(AxOpcode op, uint64_t imm24) noexcept
 {
   auto base = op.lsu_imm10();

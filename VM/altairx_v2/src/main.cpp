@@ -13,6 +13,16 @@
 namespace
 {
 
+struct AxParameters
+{
+  std::size_t core_count{1};
+  std::size_t wram_size{16};
+  std::size_t spmt_size{256};
+  std::size_t spm2_size{512};
+  AxExecutionMode mode{};
+  std::filesystem::path executable{};
+};
+
 std::vector<std::string_view> get_args(int argc, char* argv[])
 {
     std::vector<std::string_view> output;

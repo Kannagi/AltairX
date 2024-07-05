@@ -64,7 +64,16 @@ public:
 
     // Execute opcode1 and, if possible, opcode2. Returns the number of opcodes run (1 or 2)
     uint32_t execute(AxOpcode first, AxOpcode second);
-    void syscall_emul();
+
+    void syscall_emul()
+    {
+        if(m_syscall == 0)
+        {
+            return;
+        }
+
+        execute_syscall();
+    }
 
     RegisterSet& registers() noexcept
     {
@@ -98,7 +107,7 @@ private:
     void io_read(uint64_t offset, void* reg);
     void io_write(uint64_t offset, void* reg);
 
-    void execute_unit(AxOpcode opcode, uint32_t unit, uint64_t imm24);
+    void execute_unit(AxOpcode opcode, uint32_t slot, uint64_t imm24);
 
     // if imm version, return imm with extended imm24
     // otherwise dereference reg and apply shift (must be 0 if not sub or add)
@@ -126,6 +135,8 @@ private:
     void execute_efu(AxOpcode op, uint64_t imm24);
     void execute_cu(AxOpcode op, uint64_t imm24);
     void execute_vu(AxOpcode op, uint64_t imm24);
+
+    void execute_syscall();
 
     std::array<uint8_t, SPM_SIZE> m_spm{};
     RegisterSet m_regs;

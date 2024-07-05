@@ -10,32 +10,6 @@ using ELFFileType = llvm::object::ELFFile<llvm::object::ELF64LE>;
 namespace
 {
 
-  /*
-  0
-0
-0
-
-6
-69920
-0
-
-48
-0
-1
-
-0
-0
-24
-
-0
-0
-0
-
-0
-0
-0
-*/
-
 std::optional<AxELFFile> convert_elf(const ELFFileType& elf)
 {
   //auto&& header = elf.getHeader();
@@ -102,8 +76,7 @@ std::optional<AxELFFile> AxELFFile::from_file(const std::filesystem::path& path)
   auto elf = ELFFileType::create(llvm::StringRef{data.data(), data.size()});
   if(auto error = elf.takeError(); error)
   {
-    std::cout << "Warning: Failed to parse ELF file from \"" << path.generic_string() << "\":\n" 
-      << "  " << llvm::toString(std::move(error)).c_str() << std::endl;
+    llvm::consumeError(std::move(error));
     return std::nullopt;
   }
 

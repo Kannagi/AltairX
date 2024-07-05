@@ -2,6 +2,8 @@ cmake_minimum_required(VERSION 3.21)
 
 project(AltairXVM VERSION 1.0)
 
+    set(CMAKE_INTERPROCEDURAL_OPTIMIZATION ON CACHE BOOL "" FORCE)
+
 find_package(LLVM REQUIRED COMPONENTS LLVMObject)
 
 if(LLVM_FOUND)
@@ -32,6 +34,13 @@ set(srcs
 add_executable(AltairXVM ${srcs} ${headers})
 target_include_directories(AltairXVM PRIVATE $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>)
 target_compile_features(AltairXVM PRIVATE cxx_std_17)
+
+include(CheckIPOSupported)
+check_ipo_supported(RESULT LTO_SUPPORT OUTPUT LTO_OUTPUT)
+if(LTO_SUPPORT)
+    set_target_properties(AltairXVM PROPERTIES INTERPROCEDURAL_OPTIMIZATION ON)
+    message("LTO is enabled.")
+endif()
 
 if(LLVM_FOUND)
 	target_sources(AltairXVM PRIVATE src/elf.cpp include/elf.hpp)

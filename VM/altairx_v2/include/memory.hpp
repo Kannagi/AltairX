@@ -16,6 +16,9 @@ public:
     static constexpr uint64_t SPM2_BEGIN = 0x4000'0000ull;
     static constexpr uint64_t WRAM_BEGIN = 0x8000'0000ull;
 
+    // nwram: wram size in Mio
+    // nspmt: spm thread size in kio
+    // nspm2: spm L2 size in kio
     AxMemory(size_t nwram, size_t nspmt, size_t nspm2);
     ~AxMemory() = default;
     AxMemory(const AxMemory&) = delete;
@@ -49,12 +52,18 @@ public:
         store(core, &val, offset, sizeof(T));
     }
 
+    std::uint64_t wram_size() const noexcept
+    {
+      return m_wram.size();
+    }
+
 private:
-    std::vector<uint8_t> m_io;
-    std::vector<uint8_t> m_rom;
-    std::vector<uint8_t> m_spmt;
-    std::vector<uint8_t> m_spm2;
-    std::vector<uint8_t> m_wram;
+    // stored as uint64_t to enforce alignment!
+    std::vector<uint64_t> m_io;
+    std::vector<uint64_t> m_rom;
+    std::vector<uint64_t> m_spmt;
+    std::vector<uint64_t> m_spm2;
+    std::vector<uint64_t> m_wram;
 
     uint64_t m_spmt_mask = 0;
     uint64_t m_spm2_mask = 0;
