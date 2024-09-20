@@ -18,7 +18,7 @@ void altairx_debug(uint32_t opcode)
     uint32_t imm18 = (opcode >> 8) & 0x3FFFF;
     uint32_t imm12 = (opcode >> 8) & 0xFFF;
 
-    //uint32_t imm9 = (opcode >> 10) & 0x1FF;
+    // uint32_t imm9 = (opcode >> 10) & 0x1FF;
     uint32_t imm10 = (opcode >> 10) & 0x3FF;
     uint32_t imm16 = (opcode >> 10) & 0xFFFF;
 

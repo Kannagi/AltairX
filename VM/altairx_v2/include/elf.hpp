@@ -55,12 +55,12 @@ struct AxELFSection
 
     bool has_flag(uint64_t flag) const noexcept
     {
-      return (flags & flag) != 0;
+        return (flags & flag) != 0;
     }
 
     bool has_flags(uint64_t other) const noexcept
     {
-      return (flags & other) == other;
+        return (flags & other) == other;
     }
 };
 

@@ -38,7 +38,7 @@ public:
         uint32_t br = 0; // branch-register
         uint32_t lc = 0; // loop counter
         uint32_t fr = 0; // flag register
-        uint32_t pc = 4; // program-counter
+        uint32_t pc = 0; // program-counter
         uint32_t ir = 0; // interrupt-register
         uint32_t cc = 0; // cycle counter
         uint32_t ic = 0; // instruction counter

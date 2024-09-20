@@ -4,11 +4,11 @@
 
 AxMemory::AxMemory(size_t nwram, size_t nspmt, size_t nspm2)
 {
-    m_io.resize(512ull * 1024ull / 8ull); // 512 Kio
+    m_io.resize(512ull * 1024ull / 8ull);           // 512 Kio
     m_rom.resize(16ull * 1024ull * 1024ull / 8ull); // 16 Mio
-    m_wram.resize(0x100000ull * nwram / 8ull); // 1Mio pages
-    m_spmt.resize(0x400ull * nspmt / 8ull); // 1Kio pages
-    m_spm2.resize(0x400ull * nspm2 / 8ull); // 1Kio pages
+    m_wram.resize(0x100000ull * nwram / 8ull);      // 1Mio pages
+    m_spmt.resize(0x400ull * nspmt / 8ull);         // 1Kio pages
+    m_spm2.resize(0x400ull * nspm2 / 8ull);         // 1Kio pages
 
     m_spmt_mask = (m_spmt.size() * 8ull) - 1;
     m_spm2_mask = (m_spm2.size() * 8ull) - 1;

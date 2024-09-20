@@ -54,7 +54,7 @@ public:
 
     std::uint64_t wram_size() const noexcept
     {
-      return m_wram.size();
+        return m_wram.size();
     }
 
 private:

@@ -10,8 +10,8 @@
 
 enum class AxExecutionMode
 {
-  DEFAULT = 0,
-  DEBUG = 1
+    DEFAULT = 0,
+    DEBUG = 1
 };
 
 class AltairX

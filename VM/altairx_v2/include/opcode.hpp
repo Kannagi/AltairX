@@ -101,7 +101,7 @@ struct AxOpcode
 
     std::uint64_t lsu_shift() const noexcept
     {
-      return (value >> 11) & 0x07u;
+        return (value >> 11) & 0x07u;
     }
 
     std::uint64_t lsu_imm10() const noexcept
@@ -111,7 +111,7 @@ struct AxOpcode
 
     std::uint64_t lsu_imm16() const noexcept
     {
-      return (value >> 10) & 0x0FFFFu;
+        return (value >> 10) & 0x0FFFFu;
     }
 
     std::uint64_t moveix_imm24() const noexcept
