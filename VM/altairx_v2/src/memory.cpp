@@ -15,7 +15,7 @@ AxMemory::AxMemory(size_t nwram, size_t nspmt, size_t nspm2)
     m_wram_mask = (m_wram.size() * 8ull) - 1;
 }
 
-void* AxMemory::map(AxCore& core, uint64_t addr)
+void* AxMemory::map(AxCore& core, uint64_t addr) noexcept
 {
     uint8_t* base{};
     uint64_t mask{};

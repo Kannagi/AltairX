@@ -26,20 +26,20 @@ public:
     AxMemory(AxMemory&&) noexcept = delete;
     AxMemory& operator=(AxMemory&&) noexcept = delete;
 
-    void* map(AxCore& core, uint64_t offset);
+    void* map(AxCore& core, uint64_t offset) noexcept;
 
-    void store(AxCore& core, const void* src, uint64_t addr, uint32_t size)
+    void store(AxCore& core, const void* src, uint64_t addr, uint32_t size) noexcept
     {
         std::memcpy(map(core, addr), src, size);
     }
 
-    void load(AxCore& core, void* dest, uint64_t offset, uint32_t size)
+    void load(AxCore& core, void* dest, uint64_t offset, uint32_t size) noexcept
     {
         std::memcpy(dest, map(core, offset), size);
     }
 
     template<typename T>
-    T load(AxCore& core, uint64_t offset)
+    T load(AxCore& core, uint64_t offset) noexcept
     {
         T output{};
         load(core, &output, offset, sizeof(T));
@@ -47,7 +47,7 @@ public:
     }
 
     template<typename T>
-    void store(AxCore& core, T val, uint64_t offset)
+    void store(AxCore& core, T val, uint64_t offset) noexcept
     {
         store(core, &val, offset, sizeof(T));
     }
@@ -55,6 +55,11 @@ public:
     std::uint64_t wram_size() const noexcept
     {
         return m_wram.size();
+    }
+
+    std::uint64_t wram_bytesize() const noexcept
+    {
+        return m_wram.size() * 8;
     }
 
 private:
