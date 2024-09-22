@@ -313,10 +313,15 @@ enum AxOpcodes : std::uint32_t
     AX_EXE_BRU_OTHER = 0x7F,
     AX_EXE_BRU_JUMPBR = 0x7F,
     AX_EXE_BRU_CALLBR = 0x7F,
-    AX_EXE_BRU_RETI = 0x7F,
     AX_EXE_BRU_RET = 0x7F,
+    AX_EXE_BRU_RETI = 0x7F,
     AX_EXE_BRU_SYSCALL = 0x7F,
-    AX_EXE_BRU_INT = 0x7F,
+
+    AX_EXE_BRU_OTHER_JUMPBR_ID = 0x01,
+    AX_EXE_BRU_OTHER_CALLBR_ID = 0x09,
+    AX_EXE_BRU_OTHER_RET_ID = 0x02,
+    AX_EXE_BRU_OTHER_RETI_ID = 0x03,
+    AX_EXE_BRU_OTHER_SYSCALL_ID = 0x04,
 
     //------------- CU(5) -----
     AX_EXE_CU_MOVETO = 0x50,

@@ -39,20 +39,26 @@ void AxCore::do_load(void* dest, uint64_t addr, uint32_t size)
     m_memory->load(*this, dest, addr, size);
 }
 
-std::uint32_t AxCore::execute(AxOpcode first, AxOpcode second)
+uint32_t AxCore::execute(AxOpcode first, AxOpcode second)
 {
     // get moveix imm24 value if present
+    const auto old_pc = m_regs.pc;
+
     const uint64_t imm24 = first.is_package() && second.is_moveix() ? second.moveix_imm24() : 0ull;
     execute_unit(first, 0, imm24);
-
-    // execute second instruction not
-    if(first.is_package() && !second.is_moveix())
+    // execute second instruction
+    if(first.is_package() && !second.is_moveix()) // don't call execute unit for a nop
     {
         execute_unit(second, 1, imm24);
-        return 2;
     }
 
-    return 1;
+    if(old_pc != m_regs.pc)
+    {
+        // if we jumped somewhere returns 0 so the next instruction is where we jumped!
+        return 0;
+    }
+
+    return first.is_package() ? 2 : 1;
 }
 
 /*
@@ -456,11 +462,11 @@ void AxCore::execute_bru(AxOpcode op, uint64_t imm24)
         m_regs.pc = (op.bru_imm24() | (imm24 << 24));
         break;
     case AX_EXE_BRU_CALL:
-        m_regs.lr = m_regs.pc;
+        m_regs.lr = m_regs.pc + 1 + static_cast<uint32_t>(op.is_package());
         m_regs.pc = (op.bru_imm24() | (imm24 << 24));
         break;
     case AX_EXE_BRU_CALLR:
-        m_regs.lr = m_regs.pc;
+        m_regs.lr = m_regs.pc + 1 + static_cast<uint32_t>(op.is_package());
         m_regs.pc += (op.bru_imm24() | (imm24 << 24));
         break;
     case AX_EXE_BRU_OTHER:
@@ -476,26 +482,21 @@ void AxCore::execute_bru_other(uint32_t op)
 {
     switch(op)
     {
-    case 1:
+    case AX_EXE_BRU_OTHER_JUMPBR_ID:
         m_regs.pc = m_regs.br;
         break;
-    case 2:
+    case AX_EXE_BRU_OTHER_RET_ID:
         m_regs.pc = m_regs.lr;
         break;
-    case 3:
+    case AX_EXE_BRU_OTHER_RETI_ID:
         m_regs.pc = m_regs.ir;
         break;
-    case 4:
+    case AX_EXE_BRU_OTHER_SYSCALL_ID:
         m_regs.ir = m_regs.pc;
         m_regs.pc = 0x80000000u;
         m_syscall = 1;
         break;
-    case 5:
-        m_regs.ir = m_regs.pc;
-        m_regs.pc = 0x80000002u;
-        m_syscall = 2;
-        break;
-    case 9:
+    case AX_EXE_BRU_OTHER_CALLBR_ID:
         m_regs.pc = m_regs.br;
         m_regs.lr = m_regs.pc;
     default:
