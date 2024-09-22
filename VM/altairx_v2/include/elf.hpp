@@ -64,12 +64,59 @@ struct AxELFSection
     }
 };
 
+enum : uint32_t
+{
+    AX_STB_LOCAL = 0,   // Local symbol, not visible outside obj file containing def
+    AX_STB_GLOBAL = 1,  // Global symbol, visible to all object files being combined
+    AX_STB_WEAK = 2,    // Weak symbol, like global but lower-precedence
+    AX_STB_LOOS = 10,   // Lowest operating system-specific binding type
+    AX_STB_HIOS = 12,   // Highest operating system-specific binding type
+    AX_STB_LOPROC = 13, // Lowest processor-specific binding type
+    AX_STB_HIPROC = 15  // Highest processor-specific binding type
+};
+
+enum : uint32_t
+{
+    AX_STT_NOTYPE = 0,  // Symbol's type is not specified
+    AX_STT_OBJECT = 1,  // Symbol is a data object (variable, array, etc.)
+    AX_STT_FUNC = 2,    // Symbol is executable code (function, etc.)
+    AX_STT_SECTION = 3, // Symbol refers to a section
+    AX_STT_FILE = 4,    // Local, absolute symbol that refers to a file
+    AX_STT_COMMON = 5,  // An uninitialized common block
+    AX_STT_TLS = 6,     // Thread local data object
+    AX_STT_LOOS = 10,   // Lowest operating system-specific symbol type
+    AX_STT_HIOS = 12,   // Highest operating system-specific symbol type
+    AX_STT_LOPROC = 13, // Lowest processor-specific symbol type
+    AX_STT_HIPROC = 15, // Highest processor-specific symbol type
+};
+
+enum : uint32_t
+{
+    STV_DEFAULT = 0,  // Visibility is specified by binding type
+    STV_INTERNAL = 1, // Defined by processor supplements
+    STV_HIDDEN = 2,   // Not visible to other components
+    STV_PROTECTED = 3 // Visible in other components but not preemptable
+};
+
+struct AxELFSymbol
+{
+    std::string name;    // actual name
+    uint64_t st_name;    // index into the object file's symbol string table
+    uint64_t value;      // gives the value of the associated symbol. may be an absolute value, an address...
+    uint64_t size;       // symbol size. a data object's size is the number of bytes contained in the object
+    uint32_t binding;    // symbol binding type, extracted from st_info*
+    uint32_t type;       // symbol type, extracted from st_info*
+    uint32_t visibility; // currently specifies a symbol's visibility
+    uint32_t shndx;      // holds the relevant section header table index.
+};
+
 class AxELFFile
 {
 public:
     static std::optional<AxELFFile> from_file(const std::filesystem::path& path);
 
     std::vector<AxELFSection> sections;
+    std::vector<AxELFSymbol> symbols;
 };
 
 #endif
