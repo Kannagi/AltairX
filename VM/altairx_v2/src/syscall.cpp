@@ -35,47 +35,11 @@ void AxCore::execute_syscall()
             exit(reg1);
             break;
 
-        case 4:
-
-            break;
-
-        case 5:
-            break;
-
-        case 6:
-
-            break;
-
-        case 7:
-
-            break;
-
-        case 8:
-            break;
-
-        case 9:
-
-            break;
-
-        case 0xA:
-
-            break;
-
-        case 0xB:
-            break;
-
-        case 0xC:
-            break;
-
-        case 0xD:
-            break;
-
         case 0xE: // getchar
             m_regs.gpi[1] = getchar();
             break;
 
-        case 0xF: // GIF
-
+        default:
             break;
         }
     }
