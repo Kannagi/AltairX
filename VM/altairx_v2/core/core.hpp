@@ -14,6 +14,12 @@ class AxCore
 public:
     using Register = uint32_t;
     static constexpr Register REG_ACC = 56;
+    static constexpr Register REG_BA1 = 57;
+    static constexpr Register REG_BA2 = 58;
+    static constexpr Register REG_BF1 = 59;
+    static constexpr Register REG_BF2 = 60;
+    static constexpr Register REG_BL1 = 61;
+    static constexpr Register REG_BL2 = 62;
     static constexpr Register REG_ZERO = 63;
 
     static constexpr uint64_t ICACHE_SIZE = 0x10000 / 1024; //(64 KiB , 4-way)
@@ -147,11 +153,11 @@ private:
        6    |  MDU   |   VU
        7    |  BRU   |   /
     */
-    void execute_alu(AxOpcode op, uint64_t imm24);
+    void execute_alu(AxOpcode op, uint32_t slot, uint64_t imm24);
     void execute_mdu(AxOpcode op, uint64_t imm24);
-    void execute_lsu(AxOpcode op, uint64_t imm24);
+    void execute_lsu(AxOpcode op, uint32_t slot, uint64_t imm24);
     void execute_bru(AxOpcode op, uint64_t imm24);
-    void execute_fpu(AxOpcode op, uint64_t imm24);
+    void execute_fpu(AxOpcode op, uint32_t slot, uint64_t imm24);
     void execute_efu(AxOpcode op, uint64_t imm24);
     void execute_cu(AxOpcode op, uint64_t imm24);
     void execute_vu(AxOpcode op, uint64_t imm24);

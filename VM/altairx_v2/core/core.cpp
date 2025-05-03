@@ -126,17 +126,17 @@ void AxCore::execute_unit(AxOpcode opcode, uint32_t slot, uint64_t imm24)
     case 8:
         [[fallthrough]];
     case 9:
-        execute_alu(opcode, imm24);
+        execute_alu(opcode, slot, imm24);
         break;
     case 2:
         [[fallthrough]];
     case 10:
-        execute_lsu(opcode, imm24);
+        execute_lsu(opcode, slot, imm24);
         break;
     case 3:
         [[fallthrough]];
     case 11:
-        execute_fpu(opcode, imm24);
+        execute_fpu(opcode, slot, imm24);
         break;
     case 5:
         execute_efu(opcode, imm24);
@@ -241,34 +241,57 @@ void do_cmp(uint32_t& fr, T left, T right)
 
 }
 
-void AxCore::execute_alu(AxOpcode op, uint64_t imm24)
+void AxCore::execute_alu(AxOpcode op, uint32_t slot, uint64_t imm24)
 {
     // Define some "base" operations to compose the real operation
     // write reg A
-    const auto writeback = [this, op](auto value)
+    const auto writeback = [this, slot, op](auto value)
     {
-        m_regs.gpi[op.reg_a()] = static_cast<uint64_t>(value);
+        // always write bypass
+        m_regs.gpi[REG_BA1 + slot] = static_cast<uint64_t>(value);
+        if(op.reg_a() != REG_ACC)
+        {
+            m_regs.gpi[op.reg_a()] = static_cast<uint64_t>(value);
+        }
     };
 
     // write reg A by ORing content
-    const auto orback = [this, op](auto value)
+    const auto orback = [this, op, slot](auto value)
     {
-        m_regs.gpi[op.reg_a()] |= static_cast<uint64_t>(value);
+        if(op.reg_a() == REG_ACC) // orback the bypass directly
+        {
+            m_regs.gpi[REG_BA1 + slot] |= m_regs.gpi[op.reg_a()];
+        }
+        else // orback the destination, and update bypass
+        {
+            m_regs.gpi[op.reg_a()] |= static_cast<uint64_t>(value);
+            m_regs.gpi[REG_BA1 + slot] = m_regs.gpi[op.reg_a()];
+        }
+    };
+
+    const auto read_reg = [this, slot](uint32_t reg)
+    {
+        if(reg == REG_ACC) // get slot's bypass instead
+        {
+            return m_regs.gpi[REG_BA1 + slot];
+        }
+
+        return m_regs.gpi[reg];
     };
 
     // read reg B
-    const auto left = [this, op]()
+    const auto left = [this, op, read_reg]()
     {
-        return m_regs.gpi[op.reg_b()];
+        return read_reg(op.reg_b());
     };
 
     // if imm version, return imm with extended imm24
     // otherwise dereference reg C and apply shift
-    const auto right = [this, op, imm24]()
+    const auto right = [this, op, imm24, read_reg]()
     {
         if(!op.alu_has_imm())
         {
-            return m_regs.gpi[op.reg_c()] << op.alu_shift();
+            return read_reg(op.reg_c());
         }
 
         const uint64_t tmp = sext_bitsize(op.alu_imm9(), 9);
@@ -487,27 +510,38 @@ void AxCore::execute_mdu(AxOpcode op, uint64_t imm24)
     }
 }
 
-void AxCore::execute_lsu(AxOpcode op, uint64_t imm24)
+void AxCore::execute_lsu(AxOpcode op, uint32_t slot, uint64_t imm24)
 {
     // write in A
-    const auto writeback = [this, op](auto value)
+    const auto writeback = [this, op, slot](auto value)
     {
         m_regs.gpi[op.reg_a()] = static_cast<uint64_t>(value);
+        m_regs.gpi[REG_BL1 + slot] = static_cast<uint64_t>(value);
+    };
+
+    const auto read_reg = [this, slot](uint32_t reg)
+    {
+        if(reg == REG_ACC) // get slot's bypass instead
+        {
+            return m_regs.gpi[REG_BL1 + slot];
+        }
+
+        return m_regs.gpi[reg];
     };
 
     //  get addr
-    const auto addrreg = [this, op]()
+    const auto addrreg = [this, op, read_reg]()
     {
-        return m_regs.gpi[op.reg_b()] + (m_regs.gpi[op.reg_c()] << op.lsu_shift());
+        return read_reg(op.reg_b()) + (read_reg(op.reg_c()) << op.lsu_shift());
     };
 
     // if imm version, return imm with extended imm24
     // otherwise dereference reg C and apply shift
-    const auto addrimm = [this, op, imm24]()
+    const auto addrimm = [this, op, imm24, read_reg]()
     {
         const uint64_t tmp = sext_bitsize(op.lsu_imm10(), 10);
         const auto off = tmp ^ (imm24 << 9);
-        return toui(tosi(m_regs.gpi[op.reg_b()]) + tosi(off));
+        return toui(tosi(read_reg(op.reg_b())) + tosi(off));
     };
 
     // Trunc value to op size (8, 16, 32 or 64 bits)
@@ -671,7 +705,7 @@ void AxCore::execute_bru(AxOpcode op, uint64_t imm24)
     }
 }
 
-void AxCore::execute_fpu(AxOpcode op, uint64_t imm24)
+void AxCore::execute_fpu(AxOpcode op, uint32_t slot, uint64_t imm24)
 {
     ax_panic("FPU not supported yet");
 }
