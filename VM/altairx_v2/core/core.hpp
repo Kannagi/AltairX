@@ -41,25 +41,23 @@ public:
 
     struct RegisterSet
     {
-        uint32_t lr = 0; // link-register
-        uint32_t br = 0; // branch-register
-        uint32_t lc = 0; // loop counter
-        uint32_t fr = 0; // flag register
-        uint32_t pc = 0; // program-counter
-        uint32_t ir = 0; // interrupt-register
-        uint32_t cc = 0; // cycle counter
-        uint32_t ic = 0; // instruction counter
+        uint32_t lr{}; // link-register
+        uint32_t br{}; // branch-register
+        uint32_t lc{}; // loop counter
+        uint32_t fr{}; // flag register
+        uint32_t pc{}; // program-counter
+        uint32_t ir{}; // interrupt-register
+        uint32_t cc{}; // cycle counter
+        uint32_t ic{}; // instruction counter
 
         // General purpose integer regs
         std::array<uint64_t, IREG_COUNT> gpi{};
         // General purpose fp regs, use accessor functions for typed access (float ect)
-        std::array<double, VREG_COUNT> gpf{};
+        std::array<uint64_t, VREG_COUNT> gpf{};
         // MDU registers (Q, QR, PL, PH)
         std::array<uint64_t, 4> mdu{};
-
-        // EFU special registers
-        float efu_q = 0.0f;
-        double efu_qd = 0.0;
+        // EFU register
+        uint64_t efu_q{};
     };
 
     AxCore(AxMemory& memory);
@@ -165,7 +163,7 @@ private:
     void execute_syscall();
 
     std::array<uint8_t, SPM_SIZE> m_spm{};
-    RegisterSet m_regs;
+    RegisterSet m_regs{};
     AxMemory* m_memory{};
     const uint32_t* m_wram_begin{};
 

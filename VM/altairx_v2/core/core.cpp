@@ -181,8 +181,7 @@ void do_cmp(uint32_t& fr, T left, T right)
 
     // In C++ there will be integer promotion when doing the substraction
     // We cast to T once again to trunc the value, then make it unsigned again
-
-#if  defined(__clang__) || defined(__GNUC__)
+#if defined(__clang__) || defined(__GNUC__)
     T tmp2;
     if(__builtin_sub_overflow(left, right, &tmp2))
     {
@@ -197,8 +196,7 @@ void do_cmp(uint32_t& fr, T left, T right)
 #else
     const auto tmp = toui(static_cast<T>(toui(left) - toui(right)));
     // O: Set if result in a value too large for the register to contain.
-    if((right > 0 && left < std::numeric_limits<T>::min() + right)
-        || (right < 0 && left > std::numeric_limits<T>::max() + right))
+    if((right > 0 && left < std::numeric_limits<T>::min() + right) || (right < 0 && left > std::numeric_limits<T>::max() + right))
     {
         fr |= AxCore::O_MASK;
     }
@@ -228,7 +226,7 @@ void do_cmp(uint32_t& fr, T left, T right)
         fr &= 0xFFFFFFFFu - AxCore::C_MASK;
     }
 
-    // N: Set if the result of an operation is negative.
+    // N: Set if the result of an operation is negative. (this is SF in x86)
     if(tosi(tmp) < 0)
     {
         fr |= AxCore::N_MASK;
@@ -449,8 +447,6 @@ void AxCore::execute_alu(AxOpcode op, uint32_t slot, uint64_t imm24)
 
 void AxCore::execute_mdu(AxOpcode op, uint64_t imm24)
 {
-    // Define some "base" operations to compose the real operation
-
     // read reg B
     const auto left = [this, op]()
     {
@@ -519,6 +515,12 @@ void AxCore::execute_lsu(AxOpcode op, uint32_t slot, uint64_t imm24)
         m_regs.gpi[REG_BL1 + slot] = static_cast<uint64_t>(value);
     };
 
+    const auto writeback_float = [this, op, slot](auto value)
+    {
+        m_regs.gpf[op.reg_a()] = value;
+        m_regs.gpf[REG_BL1 + slot] = value;
+    };
+
     const auto read_reg = [this, slot](uint32_t reg)
     {
         if(reg == REG_ACC) // get slot's bypass instead
@@ -544,6 +546,13 @@ void AxCore::execute_lsu(AxOpcode op, uint32_t slot, uint64_t imm24)
         return toui(tosi(read_reg(op.reg_b())) + tosi(off));
     };
 
+    const auto fsize_to_isize = [op]() -> uint32_t
+    {
+        // 0 -> float -> i32 -> 2
+        // 1 -> double -> i64 -> 3
+        return op.size() + 2;
+    };
+
     // Trunc value to op size (8, 16, 32 or 64 bits)
     const auto trunc = [op](auto value)
     {
@@ -565,13 +574,13 @@ void AxCore::execute_lsu(AxOpcode op, uint32_t slot, uint64_t imm24)
         writeback(sext(do_load(addrreg(), op.size())));
         break;
     case AX_EXE_LSU_FLD:
-        ax_panic("AX_EXE_LSU_FLD not implemented");
+        writeback_float(do_load(addrreg(), fsize_to_isize()));
         break;
     case AX_EXE_LSU_ST:
         do_store(m_regs.gpi[op.reg_a()], addrreg(), op.size());
         break;
     case AX_EXE_LSU_FST:
-        ax_panic("AX_EXE_LSU_FST not implemented");
+        do_store(m_regs.gpf[op.reg_a()], addrreg(), fsize_to_isize());
         break;
     case AX_EXE_LSU_LDI:
         writeback(do_load(addrimm(), op.size()));
@@ -580,13 +589,13 @@ void AxCore::execute_lsu(AxOpcode op, uint32_t slot, uint64_t imm24)
         writeback(sext(do_load(addrimm(), op.size())));
         break;
     case AX_EXE_LSU_FLDI:
-        ax_panic("AX_EXE_LSU_FLDI not implemented");
+        writeback_float(do_load(addrimm(), fsize_to_isize()));
         break;
     case AX_EXE_LSU_STI:
         do_store(m_regs.gpi[op.reg_a()], addrimm(), op.size());
         break;
     case AX_EXE_LSU_FSTI:
-        ax_panic("AX_EXE_LSU_FSTI not implemented");
+        do_store(m_regs.gpf[op.reg_a()], addrimm(), fsize_to_isize());
         break;
     default:
         ax_panic("Unknown LSU operation");
@@ -705,14 +714,394 @@ void AxCore::execute_bru(AxOpcode op, uint64_t imm24)
     }
 }
 
+namespace
+{
+
+template<typename T>
+void do_fcmp(uint32_t& fr, T left, T right)
+{
+    static_assert(std::is_floating_point_v<T>, "do_fcmp expect fp type");
+
+    // Z: Set if the result of an operation is 0
+    if(left == right)
+    {
+        fr |= AxCore::Z_MASK;
+    }
+    else
+    {
+        fr &= 0xFFFFFFFFu - AxCore::Z_MASK;
+    }
+
+    // C: Set if the result of an operation is negative.
+    if(left < right)
+    {
+        fr |= AxCore::C_MASK;
+    }
+    else
+    {
+        fr &= 0xFFFFFFFFu - AxCore::C_MASK;
+    }
+
+    // clear other flags
+    fr &= 0xFFFFFFFFu - AxCore::N_MASK;
+    fr &= 0xFFFFFFFFu - AxCore::O_MASK;
+}
+
+// helpers for generic lambdas
+static constexpr uint16_t as_half{};
+static constexpr float as_float{};
+static constexpr double as_double{};
+static constexpr int64_t as_sint{};
+
+}
+
 void AxCore::execute_fpu(AxOpcode op, uint32_t slot, uint64_t imm24)
 {
-    ax_panic("FPU not supported yet");
+    // Define some "base" operations to compose the real operation
+
+    // write reg A
+    const auto writeback = [this, slot, op](auto value)
+    {
+        // always write bypass
+        m_regs.gpf[REG_BF1 + slot] = from_floating_point(value);
+        if(op.reg_a() != REG_ACC)
+        {
+            m_regs.gpf[op.reg_a()] = from_floating_point(value);
+        }
+    };
+
+    const auto read_reg = [this, slot](uint32_t reg, auto token)
+    {
+        if(reg == REG_ACC) // get slot's bypass instead
+        {
+            return to_floating_point<decltype(token)>(m_regs.gpf[REG_BF1 + slot]);
+        }
+
+        return to_floating_point<decltype(token)>(m_regs.gpf[reg]);
+    };
+
+    // read reg B
+    const auto left = [this, op, read_reg](auto token)
+    {
+        return read_reg(op.reg_b(), token);
+    };
+
+    // if imm version, return imm with extended imm24
+    // otherwise dereference reg C and apply shift
+    const auto right = [this, op, read_reg](auto token)
+    {
+        return read_reg(op.reg_c(), token);
+    };
+
+    switch(op.operation())
+    {
+    case AX_EXE_FPU_FADD:
+        switch(op.size())
+        {
+        case 0:
+            writeback(left(as_float) + right(as_float));
+        case 1:
+            writeback(left(as_double) + right(as_double));
+        case 3:
+            static_assert(AX_EXE_FPU_FADD == AX_EXE_FPU_HTOF, "Must be overlapped!");
+            writeback(half_to_float(left(as_half)));
+        default:
+            ax_panic("Cannot perform FPU operation with size: ", op.size());
+        }
+        break;
+    case AX_EXE_FPU_FSUB:
+        switch(op.size())
+        {
+        case 0:
+            writeback(left(as_float) - right(as_float));
+        case 1:
+            writeback(left(as_double) - right(as_double));
+        case 3:
+            static_assert(AX_EXE_FPU_FSUB == AX_EXE_FPU_FTOH, "Must be overlapped!");
+            writeback(float_to_half(left(as_float)));
+        default:
+            ax_panic("Cannot perform FPU operation with size: ", op.size());
+        }
+        break;
+    case AX_EXE_FPU_FMUL:
+        switch(op.size())
+        {
+        case 0:
+            writeback(left(as_float) * right(as_float));
+        case 1:
+            writeback(left(as_double) * right(as_double));
+        case 2:
+            ax_panic("Cannot perform FPU operation with size == 2");
+        case 3:
+            static_assert(AX_EXE_FPU_FMUL == AX_EXE_FPU_ITOF, "Must be overlapped!");
+            writeback(static_cast<float>(left(as_sint)));
+        default:
+            ax_panic("Cannot perform FPU operation with size: ", op.size());
+        }
+        break;
+    case AX_EXE_FPU_FNMUL:
+        switch(op.size())
+        {
+        case 0:
+            writeback(-left(as_float) * right(as_float));
+        case 1:
+            writeback(-left(as_double) * right(as_double));
+        case 3:
+            static_assert(AX_EXE_FPU_FNMUL == AX_EXE_FPU_FTOI, "Must be overlapped!");
+            writeback(static_cast<int64_t>(left(as_float)));
+        default:
+            ax_panic("Cannot perform FPU operation with size: ", op.size());
+        }
+        break;
+    case AX_EXE_FPU_FMIN:
+        switch(op.size())
+        {
+        case 0:
+            writeback(std::min(left(as_float), right(as_float)));
+        case 1:
+            writeback(std::min(left(as_double), right(as_double)));
+        case 3:
+            static_assert(AX_EXE_FPU_FMIN == AX_EXE_FPU_FTOD, "Must be overlapped!");
+            writeback(static_cast<double>(left(as_float)));
+        default:
+            ax_panic("Cannot perform FPU operation with size: ", op.size());
+        }
+        break;
+    case AX_EXE_FPU_FMAX:
+        switch(op.size())
+        {
+        case 0:
+            writeback(std::max(left(as_float), right(as_float)));
+        case 1:
+            writeback(std::max(left(as_double), right(as_double)));
+        case 3:
+            static_assert(AX_EXE_FPU_FMAX == AX_EXE_FPU_DTOF, "Must be overlapped!");
+            writeback(static_cast<float>(left(as_double)));
+        default:
+            ax_panic("Cannot perform FPU operation with size: ", op.size());
+        }
+        break;
+    case AX_EXE_FPU_FNEG:
+        switch(op.size())
+        {
+        case 0:
+            writeback(-left(as_float));
+        case 1:
+            writeback(-left(as_double));
+        case 3:
+            static_assert(AX_EXE_FPU_FNEG == AX_EXE_FPU_ITOD, "Must be overlapped!");
+            writeback(static_cast<double>(left(as_sint)));
+        default:
+            ax_panic("Cannot perform FPU operation with size: ", op.size());
+        }
+        break;
+    case AX_EXE_FPU_FABS:
+        switch(op.size())
+        {
+        case 0:
+            writeback(std::abs(left(as_float)));
+        case 1:
+            writeback(std::abs(left(as_double)));
+        case 3:
+            static_assert(AX_EXE_FPU_FABS == AX_EXE_FPU_DTOI, "Must be overlapped!");
+            writeback(static_cast<int64_t>(left(as_double)));
+        default:
+            ax_panic("Cannot perform FPU operation with size: ", op.size());
+        }
+        break;
+    case AX_EXE_FPU_FCMOVE:
+        if(left(as_sint) != 0) // values are only copied, use ints
+        {
+            writeback(right(as_sint));
+        }
+        break;
+    case AX_EXE_FPU_FE:
+        switch(op.size())
+        {
+        case 0:
+            writeback(static_cast<uint64_t>(left(as_float) == right(as_float)));
+        case 1:
+            writeback(static_cast<uint64_t>(left(as_double) == right(as_double)));
+        default:
+            ax_panic("Cannot perform FPU operation with size: ", op.size());
+        }
+        break;
+    case AX_EXE_FPU_FEN:
+        switch(op.size())
+        {
+        case 0:
+            writeback(static_cast<uint64_t>(left(as_float) != right(as_float)));
+        case 1:
+            writeback(static_cast<uint64_t>(left(as_double) != right(as_double)));
+        default:
+            ax_panic("Cannot perform FPU operation with size: ", op.size());
+        }
+        break;
+    case AX_EXE_FPU_FSLT:
+        switch(op.size())
+        {
+        case 0:
+            writeback(static_cast<uint64_t>(left(as_float) < right(as_float)));
+        case 1:
+            writeback(static_cast<uint64_t>(left(as_double) < right(as_double)));
+        default:
+            ax_panic("Cannot perform FPU operation with size: ", op.size());
+        }
+        break;
+    case AX_EXE_FPU_FMOVE:
+        writeback(left(as_sint));
+        break;
+    case AX_EXE_FPU_FCMP:
+        switch(op.size())
+        {
+        case 0:
+            do_fcmp(m_regs.fr, left(as_float), right(as_float));
+            break;
+        case 1:
+            do_fcmp(m_regs.fr, left(as_double), right(as_double));
+            break;
+        default:
+            ax_panic("Cannot perform FPU operation with size: ", op.size());
+        }
+        break;
+    default:
+        ax_panic("Unknown FPU operation");
+    }
 }
 
 void AxCore::execute_efu(AxOpcode op, uint64_t imm24)
 {
-    ax_panic("EFU not supported yet");
+    // write efu q
+    const auto writeback = [this, op](auto value)
+    {
+        m_regs.efu_q = from_floating_point(value);
+    };
+
+    const auto read_reg = [this](uint32_t reg, auto token)
+    {
+        // if(reg == REG_ACC) // not sure about that
+        //{
+        //   return to_floating_point<decltype(token)>(m_regs.efu_q);
+        // }
+
+        return to_floating_point<decltype(token)>(m_regs.gpf[reg]);
+    };
+
+    // read reg B
+    const auto left = [this, op, read_reg](auto token)
+    {
+        return read_reg(op.reg_b(), token);
+    };
+
+    // if imm version, return imm with extended imm24
+    // otherwise dereference reg C and apply shift
+    const auto right = [this, op, read_reg](auto token)
+    {
+        return read_reg(op.reg_c(), token);
+    };
+
+    switch(op.operation())
+    {
+    case AX_EXE_EFU_FDIV:
+        switch(op.size())
+        {
+        case 0:
+            writeback(left(as_float) / right(as_float));
+            break;
+        case 1:
+            writeback(left(as_double) / right(as_double));
+            break;
+        default:
+            ax_panic("Cannot perform FPU operation with size: ", op.size());
+        }
+        break;
+    case AX_EXE_EFU_FATAN2:
+        switch(op.size())
+        {
+        case 0:
+            writeback(std::atan2(left(as_float), right(as_float)));
+            break;
+        case 1:
+            writeback(std::atan2(left(as_double), right(as_double)));
+            break;
+        default:
+            ax_panic("Cannot perform FPU operation with size: ", op.size());
+        }
+        break;
+    case AX_EXE_EFU_FSQRT:
+        switch(op.size())
+        {
+        case 0:
+            writeback(std::sqrt(left(as_float)));
+            break;
+        case 1:
+            writeback(std::sqrt(left(as_double)));
+            break;
+        default:
+            ax_panic("Cannot perform FPU operation with size: ", op.size());
+        }
+        break;
+    case AX_EXE_EFU_FSIN:
+        switch(op.size())
+        {
+        case 0:
+            writeback(std::sin(left(as_float)));
+            break;
+        case 1:
+            writeback(std::sin(left(as_double)));
+            break;
+        default:
+            ax_panic("Cannot perform FPU operation with size: ", op.size());
+        }
+        break;
+    case AX_EXE_EFU_FATAN:
+        switch(op.size())
+        {
+        case 0:
+            writeback(std::atan(left(as_float)));
+            break;
+        case 1:
+            writeback(std::atan(left(as_double)));
+            break;
+        default:
+            ax_panic("Cannot perform FPU operation with size: ", op.size());
+        }
+        break;
+    case AX_EXE_EFU_FEXP:
+        switch(op.size())
+        {
+        case 0:
+            writeback(std::exp(left(as_float)));
+            break;
+        case 1:
+            writeback(std::exp(left(as_double)));
+            break;
+        default:
+            ax_panic("Cannot perform FPU operation with size: ", op.size());
+        }
+        break;
+    case AX_EXE_EFU_INVSQRT:
+        switch(op.size())
+        {
+        case 0:
+            writeback(1.0f / std::sqrt(left(as_float)));
+            break;
+        case 1:
+            writeback(1.0 / std::sqrt(left(as_double)));
+            break;
+        default:
+            ax_panic("Cannot perform FPU operation with size: ", op.size());
+        }
+        break;
+    case AX_EXE_EFU_SETEF:
+        m_regs.efu_q = m_regs.gpf[op.reg_a()];
+        break;
+    case AX_EXE_EFU_GETEF:
+        m_regs.gpf[op.reg_a()] = m_regs.efu_q;
+        break;
+    default:
+        ax_panic("Unknown EFU operation");
+    }
 }
 
 void AxCore::execute_cu(AxOpcode op, uint64_t imm24)

@@ -36,5 +36,6 @@ target_link_libraries(AltairXVMGUI PRIVATE AltairXVMCore ImGUI SDL3::SDL3)
 target_include_directories(AltairXVMGUI PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 
 if(AX_HAS_LTO)
+	set_target_properties(ImGUI PROPERTIES INTERPROCEDURAL_OPTIMIZATION ON)
 	set_target_properties(AltairXVMGUI PROPERTIES INTERPROCEDURAL_OPTIMIZATION ON)
 endif()

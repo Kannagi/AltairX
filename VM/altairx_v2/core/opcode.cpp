@@ -57,6 +57,20 @@ std::string format_as(Reg r)
     return fmt::format("r{}", reg);
 }
 
+struct FReg
+{
+    uint32_t id{};
+    explicit FReg(uint32_t r) noexcept
+        : id{r}
+    {
+    }
+};
+
+std::string format_as(FReg r)
+{
+    return fmt::format("v{}", r.id);
+}
+
 struct MDUReg
 {
     uint32_t id{};
@@ -138,6 +152,29 @@ std::string format_as(Size size) noexcept
     }
 }
 
+struct FSize
+{
+    explicit FSize(uint32_t val) noexcept
+        : value{val}
+    {
+    }
+
+    uint32_t value{};
+};
+
+std::string format_as(FSize size) noexcept
+{
+    switch(size.value)
+    {
+    case 0:
+        return ".s";
+    case 1:
+        return ".d";
+    default:
+        return ".?";
+    }
+}
+
 struct ShiftedReg
 {
     explicit ShiftedReg(uint32_t r, uint32_t val) noexcept
@@ -168,7 +205,7 @@ struct Operand
     {
     }
 
-    std::variant<Reg, MDUReg, ShiftedReg, SImm, UImm, Size> value;
+    std::variant<Reg, FReg, MDUReg, ShiftedReg, SImm, UImm, Size, FSize> value;
 };
 
 std::string format_as(Operand op) noexcept
@@ -392,6 +429,150 @@ std::string lsu_opcode_to_string(AxOpcode op, uint64_t imm24, bool issecond)
     }
 }
 
+std::string fpu_opcode_to_string(AxOpcode op, uint64_t imm24, bool issecond)
+{
+    const auto output = [op]() -> FReg
+    {
+        return FReg(op.reg_a());
+    };
+
+    const auto left = [op]() -> FReg
+    {
+        return FReg(op.reg_b());
+    };
+
+    const auto right = [op]() -> FReg
+    {
+        return FReg(op.reg_c());
+    };
+
+    const auto size = [op]() -> FSize
+    {
+        return FSize(op.size());
+    };
+
+    // Most opcodes share the same format!
+    const auto format_default = [&](auto&& name, bool unary = false)
+    {
+        if(unary)
+        {
+            return fmt::format("{}{}\t{}, {}", name, size(), output(), left());
+        }
+
+        return fmt::format("{}{}\t{}, {}, {}", name, size(), output(), left(), right());
+    };
+
+    const auto format_overlapped = [&](auto&& base_name, auto&& overlapped_name, bool unary = false)
+    {
+        if(op.size() == 3)
+        {
+            return fmt::format("{}\t {}, {}", overlapped_name, output(), left());
+        }
+
+        return format_default(base_name, unary);
+    };
+
+    switch(op.operation())
+    {
+    case AX_EXE_FPU_FADD:
+        static_assert(AX_EXE_FPU_FADD == AX_EXE_FPU_HTOF, "Must be overlapped!");
+        return format_overlapped("fadd", "htof");
+    case AX_EXE_FPU_FSUB:
+        static_assert(AX_EXE_FPU_FSUB == AX_EXE_FPU_FTOH, "Must be overlapped!");
+        return format_overlapped("fsub", "ftoh");
+    case AX_EXE_FPU_FMUL:
+        static_assert(AX_EXE_FPU_FMUL == AX_EXE_FPU_ITOF, "Must be overlapped!");
+        return format_overlapped("fmul", "itof");
+    case AX_EXE_FPU_FNMUL:
+        static_assert(AX_EXE_FPU_FNMUL == AX_EXE_FPU_FTOI, "Must be overlapped!");
+        return format_overlapped("fnmul", "ftoi");
+    case AX_EXE_FPU_FMIN:
+        static_assert(AX_EXE_FPU_FMIN == AX_EXE_FPU_FTOD, "Must be overlapped!");
+        return format_overlapped("fmin", "ftod");
+    case AX_EXE_FPU_FMAX:
+        static_assert(AX_EXE_FPU_FMAX == AX_EXE_FPU_DTOF, "Must be overlapped!");
+        return format_overlapped("fmax", "dtof");
+    case AX_EXE_FPU_FNEG:
+        static_assert(AX_EXE_FPU_FNEG == AX_EXE_FPU_ITOD, "Must be overlapped!");
+        return format_overlapped("fneg", "itod", true);
+    case AX_EXE_FPU_FABS:
+        static_assert(AX_EXE_FPU_FABS == AX_EXE_FPU_DTOI, "Must be overlapped!");
+        return format_overlapped("fabs", "dtoi", true);
+    case AX_EXE_FPU_FCMOVE:
+        return format_default("fcmove");
+    case AX_EXE_FPU_FE:
+        return format_default("fe");
+    case AX_EXE_FPU_FEN:
+        return format_default("fen");
+    case AX_EXE_FPU_FSLT:
+        return format_default("fslt");
+    case AX_EXE_FPU_FMOVE:
+        return format_default("fmove", true);
+    case AX_EXE_FPU_FCMP:
+        return fmt::format("fcmp{}\t{}, {}, {}", size(), left(), right());
+    default:
+        return {};
+    }
+}
+
+std::string efu_opcode_to_string(AxOpcode op, uint64_t imm24, bool issecond)
+{
+    const auto output = [op]() -> FReg
+    {
+        return FReg(op.reg_a());
+    };
+
+    const auto left = [op]() -> FReg
+    {
+        return FReg(op.reg_b());
+    };
+
+    const auto right = [op]() -> FReg
+    {
+        return FReg(op.reg_c());
+    };
+
+    const auto size = [op]() -> FSize
+    {
+        return FSize(op.size());
+    };
+
+    // Most opcodes share the same format!
+    const auto format_default = [&](auto&& name, bool unary = false)
+    {
+        if(unary)
+        {
+            return fmt::format("{}{}\t{}", name, size(), left());
+        }
+
+        return fmt::format("{}{}\t{}, {}", name, size(), left(), right());
+    };
+
+    switch(op.operation())
+    {
+    case AX_EXE_EFU_FDIV:
+        format_default("fdiv");
+    case AX_EXE_EFU_FATAN2:
+        format_default("fatan2");
+    case AX_EXE_EFU_FSQRT:
+        format_default("fsqrt", true);
+    case AX_EXE_EFU_FSIN:
+        format_default("fsin", true);
+    case AX_EXE_EFU_FATAN:
+        format_default("fatan", true);
+    case AX_EXE_EFU_FEXP:
+        format_default("fexp", true);
+    case AX_EXE_EFU_INVSQRT:
+        format_default("finvsqrt", true);
+    case AX_EXE_EFU_SETEF:
+        return fmt::format("setef\t{}", left());
+    case AX_EXE_EFU_GETEF:
+        return fmt::format("getef\t{}", output());
+    default:
+        return {};
+    }
+}
+
 std::string bru_opcode_to_string(AxOpcode op, uint64_t imm24, bool issecond)
 {
     const auto reg_a = [op]() -> Reg
@@ -450,6 +631,27 @@ std::string bru_opcode_to_string(AxOpcode op, uint64_t imm24, bool issecond)
     }
 }
 
+std::string cu_opcode_to_string(AxOpcode op, uint64_t imm24, bool issecond)
+{
+    switch(op.operation())
+    {
+    case AX_EXE_CU_GETIR:
+        return "getir";
+    case AX_EXE_CU_SETFR:
+        return "setfr";
+    case AX_EXE_CU_MMU:
+        return "mmu";
+    case AX_EXE_CU_SYNC:
+        return "sync";
+    case AX_EXE_CU_SYSCALL:
+        return "syscall";
+    case AX_EXE_CU_RETI:
+        return "reti";
+    default:
+        return {};
+    }
+}
+
 std::string opcode_to_string(AxOpcode opcode, uint32_t slot, uint64_t imm24)
 {
     const auto issue = (slot << 3) | opcode.unit();
@@ -467,21 +669,18 @@ std::string opcode_to_string(AxOpcode opcode, uint32_t slot, uint64_t imm24)
         return lsu_opcode_to_string(opcode, imm24, false);
     case 10:
         return lsu_opcode_to_string(opcode, imm24, true);
-    // case 3:
-    //     [[fallthrough]];
-    // case 11:
-    //     execute_fpu(opcode, imm24);
-    //     break;
-    // case 5:
-    //     execute_efu(opcode, imm24);
-    //     break;
+    case 3:
+        return fpu_opcode_to_string(opcode, imm24, false);
+    case 11:
+        return fpu_opcode_to_string(opcode, imm24, true);
+    case 5:
+        return efu_opcode_to_string(opcode, imm24, false);
     case 6:
         return mdu_opcode_to_string(opcode, imm24, false);
     case 7:
         return bru_opcode_to_string(opcode, imm24, false);
-    // case 13:
-    //     execute_cu(opcode, imm24);
-    //     break;
+    case 13:
+        return cu_opcode_to_string(opcode, imm24, false);
     // case 14:
     //     execute_vu(opcode, imm24);
     //     break;

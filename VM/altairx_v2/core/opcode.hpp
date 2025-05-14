@@ -8,9 +8,11 @@ struct AxOpcode
 {
     uint32_t value{};
 
-    // implicit conversion
-    constexpr AxOpcode(uint32_t val)
-    : value{val}
+    constexpr AxOpcode() noexcept = default;
+
+    // implicit conversions
+    constexpr AxOpcode(uint32_t val) noexcept
+        : value{val}
     {
     }
 
@@ -112,7 +114,7 @@ struct AxOpcode
 
     uint64_t bru_imm23() const noexcept
     {
-      return (value >> 9) & 0x007FFFFFu;
+        return (value >> 9) & 0x007FFFFFu;
     }
 
     uint64_t bru_imm24() const noexcept
@@ -139,7 +141,8 @@ struct AxOpcode
     static std::pair<std::string, std::string> to_string(AxOpcode first, AxOpcode second);
 };
 
-enum BRCondCode : std::uint32_t {
+enum BRCondCode : std::uint32_t
+{
     NE = 0b000,  // Not equal
     EQ = 0b001,  // Equal
     LT = 0b010,  // Less
@@ -221,15 +224,25 @@ enum AxOpcodes : uint32_t
     AX_EXE_FPU_FMUL,
     AX_EXE_FPU_FNMUL,
 
-    AX_EXE_FPU_HTOF,
-    AX_EXE_FPU_FTOH,
-    AX_EXE_FPU_ITOF,
-    AX_EXE_FPU_FTOI,
-
-    AX_EXE_FPU_FNEG,
-    AX_EXE_FPU_FABS,
     AX_EXE_FPU_FMIN,
     AX_EXE_FPU_FMAX,
+    AX_EXE_FPU_FNEG,
+    AX_EXE_FPU_FABS,
+
+    // casts overlap with previous opcode (with size == 3)
+    AX_EXE_FPU_HTOF = AX_EXE_FPU_FADD,
+    AX_EXE_FPU_FTOH = AX_EXE_FPU_FSUB,
+    AX_EXE_FPU_ITOF = AX_EXE_FPU_FMUL,
+    AX_EXE_FPU_FTOI = AX_EXE_FPU_FNMUL,
+    AX_EXE_FPU_FTOD = AX_EXE_FPU_FMIN,
+    AX_EXE_FPU_DTOF = AX_EXE_FPU_FMAX,
+    AX_EXE_FPU_ITOD = AX_EXE_FPU_FNEG,
+    AX_EXE_FPU_DTOI = AX_EXE_FPU_FABS,
+
+    AX_EXE_FPU_FCMOVE,
+    AX_EXE_FPU_FE,
+    AX_EXE_FPU_FEN,
+    AX_EXE_FPU_FSLT,
 
     AX_EXE_FPU_FMOVE,
     AX_EXE_FPU_FCMP,
@@ -244,18 +257,18 @@ enum AxOpcodes : uint32_t
 
     AX_EXE_EFU_FATAN,
     AX_EXE_EFU_FEXP,
-    AX_EXE_EFU_ISQRT,
-    AX_EXE_EFU_EMOVEFROM,
+    AX_EXE_EFU_INVSQRT,
+    AX_EXE_EFU_EMPTY0,
 
-    AX_EXE_EFU_DDIV,
-    AX_EXE_EFU_DATAN2,
-    AX_EXE_EFU_DSQRT,
-    AX_EXE_EFU_DSIN,
+    AX_EXE_EFU_EMPTY1,
+    AX_EXE_EFU_EMPTY2,
+    AX_EXE_EFU_EMPTY3,
+    AX_EXE_EFU_EMPTY4,
 
-    AX_EXE_EFU_DATAN,
-    AX_EXE_EFU_DEXP,
-    AX_EXE_EFU_ISQRT2,
-    AX_EXE_EFU_EMOVETO,
+    AX_EXE_EFU_EMPTY5,
+    AX_EXE_EFU_EMPTY6,
+    AX_EXE_EFU_SETEF,
+    AX_EXE_EFU_GETEF,
 
     //------------- MDU(6) -----
     AX_EXE_MDU_DIV = 0x60,

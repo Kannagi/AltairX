@@ -180,5 +180,17 @@ inline AxOpcode make_bru_indirect_opcode(uint32_t op, uint32_t ra, uint32_t rb)
     return make_alu_reg_reg_opcode(op, 0, ra, rb, ax_no_reg, 0); // same encoding
 }
 
+inline AxOpcode make_fpu_reg_reg_opcode(uint32_t op, uint32_t size, uint32_t ra, uint32_t rb, uint32_t rc)
+{
+  const AxOpcode output = 0u | (op << 1) | (size << 8) | (rc << 14) | (rb << 20) | (ra << 26);
+
+  ax_check(output.operation() == op, "Invalid op encoding");
+  ax_check(output.size() == size, "Invalid size encoding");
+  ax_check(output.reg_c() == rc, "Invalid rc encoding");
+  ax_check(output.reg_b() == rb, "Invalid rb encoding");
+  ax_check(output.reg_a() == ra, "Invalid ra encoding");
+
+  return output;
+}
 
 #endif

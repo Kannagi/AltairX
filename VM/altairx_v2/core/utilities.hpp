@@ -33,26 +33,46 @@ inline uint64_t sext_bytesize(uint64_t val, uint64_t bytesize) noexcept
     return sext_bitsize(val, 8ull * bytesize);
 }
 
+// Note: these function may take non-floating point values (e.g. u16 for half)
+template<typename T>
+inline T to_floating_point(uint64_t val) noexcept
+{
+  static_assert(sizeof(T) <= sizeof(uint64_t), "Output too small for T");
+
+  T output{};
+  std::memcpy(&output, &val, sizeof(T));
+  return output;
+}
+
+template<typename T>
+inline uint64_t from_floating_point(T val) noexcept
+{
+  static_assert(sizeof(T) <= sizeof(uint64_t), "Input too large");
+
+  uint64_t output{};
+  std::memcpy(&output, &val, sizeof(T));
+  return output;
+}
+
 inline uint16_t float_to_half(float fval)
 {
     uint32_t val;
     std::memcpy(&val, &fval, sizeof(val));
 
     // float to half
-    const uint32_t mant = (val >> 13) & 0x03FF; // mantisse
-    const uint32_t sign = (val >> 16) & 0x8000; // sign
-
-    const uint32_t texp = (val >> 23) & 0x00FF; // exp
-    uint32_t exp = (texp & 0x0F) << 10;
+    const uint16_t mant = (val >> 13) & 0x03FF; // mantisse
+    const uint16_t sign = (val >> 16) & 0x8000; // sign
+    const uint16_t texp = (val >> 23) & 0x00FF; // exp
+    uint16_t exp = (texp & 0x0F) << 10;
     if(texp & 0x80)
     {
         exp |= 0x4000;
     }
 
-    return sign + mant + exp;
+    return sign | mant | exp;
 }
 
-inline float half_to_float(uint32_t half)
+inline float half_to_float(uint16_t half)
 {
     uint32_t exp = (half & 0x3C00) >> 3;
 
