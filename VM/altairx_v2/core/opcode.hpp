@@ -299,8 +299,8 @@ enum AxOpcodes : uint32_t
 
     AX_EXE_BRU_BLTU,
     AX_EXE_BRU_BGEU,
-    AX_EXE_BRU_EMPTY0,
-    AX_EXE_BRU_EMPTY1,
+    AX_EXE_BRU_BEQU,
+    AX_EXE_BRU_BNEU,
 
     AX_EXE_BRU_BRA,
     AX_EXE_BRU_CALLR,

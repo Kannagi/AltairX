@@ -147,4 +147,11 @@ constexpr inline bool is_uint(uint64_t x [[maybe_unused]] ) noexcept
     return true;
 }
 
+template<typename T>
+bool is_real(T value) noexcept
+{
+  const auto value_class = std::fpclassify(value);
+  return value_class == FP_ZERO || value_class == FP_NORMAL;
+}
+
 #endif

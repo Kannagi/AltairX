@@ -45,8 +45,6 @@ TEST_CASE("Basic operations", "[basic]")
     }
 }
 
-#include <iostream>
-
 TEMPLATE_TEST_CASE("Conditional jumps (ints)", "[brc]", int8_t, int16_t, int32_t, int64_t, uint8_t, uint16_t, uint32_t, uint64_t)
 {
     AxMemory memory{8, 8, 8};
@@ -171,10 +169,14 @@ TEMPLATE_TEST_CASE("Conditional jumps (floats)", "[brc]", float, double)
 
     const auto check_for = [&](TestType left, TestType right)
     {
-        test_conditional_branch(left, right, AX_EXE_BRU_BEQ, left == right);
-        test_conditional_branch(left, right, AX_EXE_BRU_BNE, left != right);
-        test_conditional_branch(left, right, AX_EXE_BRU_BLTU, left < right);
-        test_conditional_branch(left, right, AX_EXE_BRU_BGEU, left >= right);
+        test_conditional_branch(left, right, AX_EXE_BRU_BEQ, is_real(left) && is_real(right) && left == right);
+        test_conditional_branch(left, right, AX_EXE_BRU_BEQU, !is_real(left) || !is_real(right) || left == right);
+        test_conditional_branch(left, right, AX_EXE_BRU_BNE, is_real(left) && is_real(right) && left != right);
+        test_conditional_branch(left, right, AX_EXE_BRU_BNEU, !is_real(left) || !is_real(right) || left != right);
+        test_conditional_branch(left, right, AX_EXE_BRU_BLT, is_real(left) && is_real(right) && left < right);
+        test_conditional_branch(left, right, AX_EXE_BRU_BLTU, !is_real(left) || !is_real(right) || left < right);
+        test_conditional_branch(left, right, AX_EXE_BRU_BGE, is_real(left) && is_real(right) && left >= right);
+        test_conditional_branch(left, right, AX_EXE_BRU_BGEU, !is_real(left) || !is_real(right) || left >= right);
     };
 
     const auto left = GENERATE(
@@ -185,6 +187,8 @@ TEMPLATE_TEST_CASE("Conditional jumps (floats)", "[brc]", float, double)
         std::numeric_limits<TestType>::min(),
         std::numeric_limits<TestType>::max(),
         std::numeric_limits<TestType>::lowest(),
+        std::numeric_limits<TestType>::quiet_NaN(),
+        std::numeric_limits<TestType>::infinity(),
         take(2, random(std::numeric_limits<TestType>::lowest(), std::numeric_limits<TestType>::max())));
 
     const auto right = GENERATE(
@@ -195,6 +199,8 @@ TEMPLATE_TEST_CASE("Conditional jumps (floats)", "[brc]", float, double)
         std::numeric_limits<TestType>::min(),
         std::numeric_limits<TestType>::max(),
         std::numeric_limits<TestType>::lowest(),
+        std::numeric_limits<TestType>::quiet_NaN(),
+        std::numeric_limits<TestType>::infinity(),
         take(2, random(std::numeric_limits<TestType>::lowest(), std::numeric_limits<TestType>::max())));
 
     check_for(left, right);

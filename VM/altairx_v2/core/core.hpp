@@ -33,6 +33,7 @@ public:
     static constexpr uint32_t C_MASK = 0x02;
     static constexpr uint32_t N_MASK = 0x04;
     static constexpr uint32_t O_MASK = 0x08;
+    static constexpr uint32_t U_MASK = 0x10;
 
     static constexpr uint64_t MAX_CORES = 64;
     static constexpr uint64_t IREG_COUNT = 64;

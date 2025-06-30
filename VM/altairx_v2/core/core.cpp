@@ -235,6 +235,8 @@ void do_cmp(uint32_t& fr, T left, T right)
     {
         fr &= 0xFFFFFFFFu - AxCore::N_MASK;
     }
+
+    fr &= 0xFFFFFFFFu - AxCore::U_MASK; // always clear unordered mask
 }
 
 }
@@ -649,40 +651,57 @@ void AxCore::execute_bru(AxOpcode op, uint64_t imm24)
         return (m_regs.fr >> 3) & 1u;
     };
 
+    const auto u_mask = [this]()
+    {
+      return (m_regs.fr >> 4) & 1u;
+    };
+
     switch(op.operation())
     {
     case AX_EXE_BRU_BEQ:
-        if(z_mask())
+        if(z_mask() && !u_mask())
         {
             add_pc(relative23());
         }
         break;
     case AX_EXE_BRU_BNE:
-        if(!z_mask())
+        if(!z_mask() && !u_mask())
         {
             add_pc(relative23());
         }
         break;
     case AX_EXE_BRU_BLT:
-        if(n_mask() != o_mask())
+        if((n_mask() != o_mask()) && !u_mask())
         {
             add_pc(relative23());
         }
         break;
     case AX_EXE_BRU_BGE:
-        if(z_mask() || n_mask() == o_mask())
+        if((z_mask() || n_mask() == o_mask()) && !u_mask())
         {
             add_pc(relative23());
         }
         break;
     case AX_EXE_BRU_BLTU:
-        if(c_mask())
+        if(c_mask() || u_mask())
         {
             add_pc(relative23());
         }
         break;
     case AX_EXE_BRU_BGEU:
-        if(z_mask() || !c_mask())
+        if(z_mask() || !c_mask() || u_mask())
+        {
+            add_pc(relative23());
+        }
+        break;
+    case AX_EXE_BRU_BEQU:
+        if(z_mask() || u_mask())
+        {
+            add_pc(relative23());
+        }
+        break;
+    case AX_EXE_BRU_BNEU:
+        if(!z_mask() || u_mask())
         {
             add_pc(relative23());
         }
@@ -722,7 +741,13 @@ void do_fcmp(uint32_t& fr, T left, T right)
 {
     static_assert(std::is_floating_point_v<T>, "do_fcmp expect fp type");
 
-    // Z: Set if the result of an operation is 0
+    if(!is_real(left) || !is_real(right))
+    {
+      fr = AxCore::U_MASK;
+      return;
+    }
+
+    // Z: Set if equal
     if(left == right)
     {
         fr |= AxCore::Z_MASK;
@@ -732,18 +757,20 @@ void do_fcmp(uint32_t& fr, T left, T right)
         fr &= 0xFFFFFFFFu - AxCore::Z_MASK;
     }
 
-    // C: Set if the result of an operation is negative.
+    // C and N: Set if the result of an operation is negative.
     if(left < right)
     {
+        fr |= AxCore::N_MASK;
         fr |= AxCore::C_MASK;
     }
     else
     {
+        fr &= 0xFFFFFFFFu - AxCore::N_MASK;
         fr &= 0xFFFFFFFFu - AxCore::C_MASK;
     }
 
-    // clear other flags
-    fr &= 0xFFFFFFFFu - AxCore::N_MASK;
+    // Unused
+    fr &= 0xFFFFFFFFu - AxCore::U_MASK;
     fr &= 0xFFFFFFFFu - AxCore::O_MASK;
 }
 
@@ -762,6 +789,12 @@ void AxCore::execute_fpu(AxOpcode op, uint32_t slot, uint64_t imm24)
     // write reg A
     const auto writeback = [this, slot, op](auto value)
     {
+        // Non finite value decay to NaR (qNaN)
+        if(!is_real(value))
+        {
+            value = std::numeric_limits<decltype(value)>::quiet_NaN();
+        }
+
         // always write bypass
         m_regs.gpf[REG_BF1 + slot] = from_floating_point(value);
         if(op.reg_a() != REG_ACC)
